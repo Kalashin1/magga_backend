@@ -45,3 +45,22 @@ Content-Type: application/json
   "email": "kinaneesamsonjohn@gmail.com",
   "password": "Test1234"
 }
+### LOGIN WITH USERNAME
+
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "kalashin",
+  "password": "Test1234"
+}
+
+### LOGIN WITH PHONE
+
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913",
+  "password": "Test1234"
+}

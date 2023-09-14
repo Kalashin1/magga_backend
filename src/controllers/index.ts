@@ -44,9 +44,14 @@ export const CreateUser = async (req: Request, res: Response) => {
 };
 
 export const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, username, phone } = req.body;
   try {
-    const user = await authService.login({ email, password });
+    const user = await authService.login({ 
+      email, 
+      password,
+      phone,
+      username
+    });
     return res.json(user);
   } catch (error) {
     return res.status(400).json(error);
