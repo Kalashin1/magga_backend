@@ -5,7 +5,7 @@ export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
 export class User {
 
     @PrimaryGeneratedColumn('uuid')
-    id: number;
+    id: string;
 
     @Column()
     first_name: string;
@@ -34,6 +34,9 @@ export class User {
 			default: "employee"
 		})
 		role: UserRoleType
+
+    @Column()
+    resetPasswordToken: number;
 
 		@CreateDateColumn()
 		createdAt: string;

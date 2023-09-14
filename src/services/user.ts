@@ -1,6 +1,6 @@
 import { User } from "../entity/User";
 import { AppDataSource } from "../data-source";
-import { CreateUserParam } from "../types";
+import { AuthUser, CreateUserParam } from "../types";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
@@ -89,6 +89,55 @@ export class UserService {
     return user;
   }
 
+  async requestPasswordResetCode({email, phone}: Partial<Pick<User, 'email'| 'phone'>>) {
+    const Users = await AppDataSource.getRepository(User);
+    const user = await Users.findOne({
+      where: {
+        email,
+        phone,
+      },
+    });
+    if (!user) throw new AuthError('password-reset-code', 'no account with email/password');
+    user.resetPasswordToken = this.generatePasswordResetCode();
+    await Users.save(user);
+    return user.resetPasswordToken;
+  }
+
+  async updateUserPassword({email, phone, password, resetPasswordToken}: Partial<Pick<User, 'email' | 'phone' | 'password' | 'resetPasswordToken'>>) {
+    const Users = await AppDataSource.getRepository(User);
+    const user = await Users.findOne({
+      where: {
+        email,
+        phone,
+        resetPasswordToken
+      }
+    });
+    if (!user) throw new AuthError('update-password', 'no user with that code');
+    user.password = await this.hashPassword(password);
+    await Users.save(user);
+    return user;
+  }
+
+  async updateProfile({
+    first_name,
+    last_name,
+    phone,
+    email,
+    username,
+    id
+  }: Partial<AuthUser>) {
+    const Users = await AppDataSource.getRepository(User);
+    const user = await Users.findOneBy({ id })
+    if (!user) throw new AuthError('user-profile-update', 'no user with that id');
+    user.first_name = first_name;
+    user.email = email;
+    user.last_name = last_name;
+    user.phone = phone;
+    user.username = username;
+    await Users.save(user);
+    return user;
+  }
+
   hashPassword(password: string) {
     return bcrypt.hash(password, 12);
   }
@@ -109,5 +158,9 @@ export class UserService {
 
   verifyToken(token: string) {
     return jwt.verify(token, "1234");
+  }
+
+  generatePasswordResetCode() {
+    return Math.floor(Math.random() * 9999999)
   }
 }
