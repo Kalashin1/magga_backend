@@ -4,6 +4,13 @@ WORKDIR /usr/src/app
 
 ENV PORT 8080
 
+ENV DB_USERNAME=magga_app
+ENV DB_PASSWORD=magga_app
+ENV DB=magga_app
+ENV PORT=8080
+ENV DB_HOST=db4free.net
+ENV DB_PORT=3306
+
 COPY package*.json ./
 
 RUN npm install
