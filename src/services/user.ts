@@ -138,6 +138,21 @@ export class UserService {
     return user;
   }
 
+  async getUserByEmail(email: string) {
+    const Users = AppDataSource.getRepository(User);
+    return await Users.findOneBy({email});
+  }
+
+  async getUserByPhone(phone: string) {
+    const Users = AppDataSource.getRepository(User);
+    return await Users.findOneBy({phone});
+  }
+
+  async getUserByUsername(username: string) {
+    const Users = AppDataSource.getRepository(User);
+    return await Users.findOneBy({username});
+  }
+
   hashPassword(password: string) {
     return bcrypt.hash(password, 12);
   }

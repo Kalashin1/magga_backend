@@ -7,9 +7,12 @@ const authService = new UserService();
 export const CreateUser = async (req: Request, res: Response) => {
   const { email, password, role, type, phone, username } = req.body;
   let user: Partial<User> = {};
+  let existingUser: Partial<User> = {}
   try {
     switch (type) {
       case "EMAIL":
+        existingUser = await authService.getUserByEmail(email);
+        if (existingUser) return res.status(400).json({ message: 'email already exits'}) 
         user = await authService.createUserWithEmailAndPassword({
           email,
           password,
@@ -17,13 +20,17 @@ export const CreateUser = async (req: Request, res: Response) => {
         });
         return res.json(user);
       case "PHONE":
+        existingUser = await authService.getUserByPhone(phone);
+        if (existingUser) return res.status(400).json({ message: 'phone already exists'}) 
         user = await authService.createUserWithPhoneAndPassword({
           phone,
           password,
           role,
         });
         return res.json(user);
-      case "EMAIL":
+      case "USERNAME":
+        existingUser = await authService.getUserByUsername(username);
+        if (existingUser) return res.status(400).json({ message: 'username already exists'}) 
         user = await authService.createUserWithUsernameAndPassword({
           username,
           password,
@@ -39,7 +46,10 @@ export const CreateUser = async (req: Request, res: Response) => {
         return res.json(user);
     }
   } catch (error) {
-    return res.status(400).json(error);
+    if (error.message.includes('Duplicate entry'))
+    return res.status(400).json({
+      message: `${type.toLowerCase()} is already in use`
+    });
   }
 };
 
