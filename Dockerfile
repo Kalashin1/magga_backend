@@ -10,6 +10,7 @@ ENV DB=magga_app
 ENV PORT=8080
 ENV DB_HOST=db4free.net
 ENV DB_PORT=3306
+ENV environment=PRODUCTION
 
 COPY package*.json ./
 

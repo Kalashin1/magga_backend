@@ -38,6 +38,8 @@ export const CreateUser = async (req: Request, res: Response) => {
         });
         return res.json(user);
       default:
+        existingUser = await authService.getUserByEmail(email);
+        if (existingUser) return res.status(400).json({ message: 'email already exits'}) 
         user = await authService.createUserWithEmailAndPassword({
           email,
           password,
