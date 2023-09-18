@@ -1,11 +1,66 @@
 GET http://localhost:3000/
 
-### CREATE USER
+### CREATE USER with email
 
 POST http://localhost:3000/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn",
+  "email": "kinaneesamsonjohn@gmail.com",
+  "password": "Test1234",
+  "role": "admin",
+  "type": "EMAIL"
+
+}
+### CREATE USER with phone
+
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913",
+  "password": "Test1234",
+  "role": "admin",
+  "type": "PHONE"
+}
+
+### CREATE USER with username
+
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "kalashin",
+  "password": "Test1234",
+  "role": "admin",
+  "type": "USERNAME"
+}
+
+### LOGIN WITH EMAIL
+
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "kinaneesamsonjohn@gmail.com",
+  "password": "Test1234"
+}
+### LOGIN WITH USERNAME
+
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "kalashin",
+  "password": "Test1234"
+}
+
+### LOGIN WITH PHONE
+
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913",
   "password": "Test1234"
 }
