@@ -1,8 +1,11 @@
-GET http://localhost:3000/
+GET https://magga-676xiecbma-uc.a.run.app
+
+###
+GET http://localhost:8080/
 
 ### CREATE USER with email
 
-POST http://localhost:3000/register
+POST http://localhost:8080/register
 Content-Type: application/json
 
 {
@@ -14,7 +17,7 @@ Content-Type: application/json
 }
 ### CREATE USER with phone
 
-POST http://localhost:3000/register
+POST http://localhost:8080/register
 Content-Type: application/json
 
 {
@@ -26,7 +29,7 @@ Content-Type: application/json
 
 ### CREATE USER with username
 
-POST http://localhost:3000/register
+POST http://localhost:8080/register
 Content-Type: application/json
 
 {
@@ -38,7 +41,7 @@ Content-Type: application/json
 
 ### LOGIN WITH EMAIL
 
-POST http://localhost:3000/login
+POST http://localhost:8080/login
 Content-Type: application/json
 
 {
@@ -47,7 +50,7 @@ Content-Type: application/json
 }
 ### LOGIN WITH USERNAME
 
-POST http://localhost:3000/login
+POST http://localhost:8080/login
 Content-Type: application/json
 
 {
@@ -57,7 +60,7 @@ Content-Type: application/json
 
 ### LOGIN WITH PHONE
 
-POST http://localhost:3000/login
+POST http://localhost:8080/login
 Content-Type: application/json
 
 {
