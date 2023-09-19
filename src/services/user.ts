@@ -4,78 +4,39 @@ import { AuthUser, CreateUserParam } from "../types";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
+import { ObjectId } from "mongodb";
 
 export class UserService {
-  async createUserWithEmailAndPassword({
+  async createUser({
     email,
     password,
-    role,
-  }: Pick<CreateUserParam, "email" | "password" | "role">) {
-    const Users = await AppDataSource.getRepository(User);
-    const user = await Users.create();
-    user.email = email;
-    user.password = await this.hashPassword(password);
-    user.role = role;
-    user.token = this.generateToken({ email, role, id: user.id });
-    await Users.save(user);
-    console.log(user)
-    return user;
-  }
-
-  async createUserWithUsernameAndPassword({
     username,
-    password,
-    role,
-  }: Pick<CreateUserParam, "username" | "password" | "role">) {
-    const Users = await AppDataSource.getRepository(User);
-    const user = await Users.create();
-    user.username = username;
-    user.password = await this.hashPassword(password);
-    user.token = this.generateToken({ username, role, id: user.id });
-    user.role = role;
-    await Users.save(user);
-    return user;
-  }
-
-  async createUserWithPhoneAndPassword({
     phone,
-    password,
     role,
-  }: Pick<CreateUserParam, "phone" | "password" | "role">) {
+  }: Partial<CreateUserParam>) {
     const Users = await AppDataSource.getRepository(User);
-    const user = await Users.create();
-    user.phone = phone;
-    user.password = await this.hashPassword(password);
-    user.token = this.generateToken({ phone, role, id: user.id });
-    user.role = role;
+    const user = await Users.create({
+      email: email?.toLocaleLowerCase()?.trim() || "",
+      password: await this.hashPassword(password),
+      role: role,
+      phone: phone?.trim() || "",
+      username: username?.trim() || "",
+    });
+    user.token = this.generateToken({ email, role, _id: user._id });
     await Users.save(user);
+    console.log(user);
     return user;
   }
 
   async login({ email, phone, username, password }: Partial<CreateUserParam>) {
-    const Users = await AppDataSource.getRepository(User);
-    let user: Partial<User>;
-
-    if (email && !username && !phone) {
-      user = await Users.findOneBy({
-        email,
-      });
-      if (!user) throw new AuthError("login-email", "no user with that email");
-    }
-
-    if (!email && !username && phone) {
-      user = await Users.findOneBy({
-        phone,
-      });
-      if (!user) throw new AuthError("login-phone", "no user with that phone number");
-    }
-    
-    if (!email && username && !phone) {
-      user = await Users.findOneBy({
-        phone,
-      });
-      if (!user) throw new AuthError("login-username", "no user with that username");
-    }
+    const Users = await AppDataSource.getMongoRepository(User);
+    let user: Partial<User> = await Users.findOne({
+      where: {
+        $or: [{ email }, { phone }, { username }],
+      },
+    });
+    if (!user)
+      throw new AuthError("login-password", "incorrect email/phone/username");
 
     const passwordVerified = await this.verifyPassword(password, user.password);
     if (!passwordVerified)
@@ -84,36 +45,50 @@ export class UserService {
     user.token = this.generateToken({
       email,
       role: user.role,
-      id: user.id,
+      _id: user._id,
     });
     await Users.save(user);
+    console.log(user);
     return user;
   }
 
-  async requestPasswordResetCode({email, phone}: Partial<Pick<User, 'email'| 'phone'>>) {
-    const Users = await AppDataSource.getRepository(User);
-    const user = await Users.findOne({
+  async requestPasswordResetCode({
+    email,
+    phone,
+  }: Partial<Pick<User, "email" | "phone">>) {
+    const Users = await AppDataSource.getMongoRepository(User);
+    let user: Partial<User> = await Users.findOne({
       where: {
-        email,
-        phone,
+        $or: [{ phone }, { email }],
       },
     });
-    if (!user) throw new AuthError('password-reset-code', 'no account with email/password');
+    if (!user)
+      throw new AuthError(
+        "password-reset-code",
+        "no account with email/password"
+      );
     user.resetPasswordToken = this.generatePasswordResetCode();
     await Users.save(user);
     return user.resetPasswordToken;
   }
 
-  async updateUserPassword({email, phone, password, resetPasswordToken}: Partial<Pick<User, 'email' | 'phone' | 'password' | 'resetPasswordToken'>>) {
-    const Users = await AppDataSource.getRepository(User);
+  async updateUserPassword({
+    email,
+    phone,
+    password,
+    resetPasswordToken,
+  }: Partial<
+    Pick<User, "email" | "phone" | "password" | "resetPasswordToken">
+  >) {
+    const Users = await AppDataSource.getMongoRepository(User);
+    console.table({ resetPasswordToken, password, email, phone });
     const user = await Users.findOne({
       where: {
-        email,
-        phone,
-        resetPasswordToken
-      }
+        resetPasswordToken,
+        $or: [{ email }, { phone }],
+      },
     });
-    if (!user) throw new AuthError('update-password', 'no user with that code');
+    if (!user) throw new AuthError("update-password", "no user with that code");
     user.password = await this.hashPassword(password);
     await Users.save(user);
     return user;
@@ -125,33 +100,37 @@ export class UserService {
     phone,
     email,
     username,
-    id
+    avatar,
+    _id,
   }: Partial<AuthUser>) {
-    const Users = await AppDataSource.getRepository(User);
-    const user = await Users.findOneBy({ id })
-    if (!user) throw new AuthError('user-profile-update', 'no user with that id');
+    const user = await this.getUser({ _id });
+    if (!user)
+      throw new AuthError("user-profile-update", "no user with that id");
     user.first_name = first_name;
-    user.email = email;
     user.last_name = last_name;
-    user.phone = phone;
-    user.username = username;
-    await Users.save(user);
+    const existingEmail = await this.getUser({ email });
+    if (existingEmail)
+      throw new AuthError("email-update-error", "email already exists");
+    user.email = email || "";
+    const existingPhone = await this.getUser({ phone });
+    if (existingPhone)
+      throw new AuthError("phone-update-error", "phone number already exists");
+    user.phone = phone || "";
+    const existingUsername = username && (await this.getUser({ username }));
+    if (existingUsername)
+      throw new AuthError("username-update-error", "username already exists");
+    user.username = username || "";
+    user.avatar = avatar || "";
+    await AppDataSource.manager.save(user);
     return user;
   }
 
-  async getUserByEmail(email: string) {
-    const Users = AppDataSource.getRepository(User);
-    return await Users.findOneBy({email});
-  }
-
-  async getUserByPhone(phone: string) {
-    const Users = AppDataSource.getRepository(User);
-    return await Users.findOneBy({phone});
-  }
-
-  async getUserByUsername(username: string) {
-    const Users = AppDataSource.getRepository(User);
-    return await Users.findOneBy({username});
+  getUser({ email, phone, username, _id: id }: Partial<AuthUser>) {
+    return AppDataSource.mongoManager.findOne(User, {
+      where: {
+        $or: [{ email }, { phone }, { username }, { _id: new ObjectId(id) }],
+      },
+    });
   }
 
   hashPassword(password: string) {
@@ -163,7 +142,9 @@ export class UserService {
   }
 
   generateToken(
-    payload: Partial<Pick<User, "email" | "role" | "username" | "phone" | "id">>
+    payload: Partial<
+      Pick<User, "email" | "role" | "username" | "phone" | "_id">
+    >
   ) {
     return jwt.sign(payload, "1234");
   }
@@ -177,6 +158,6 @@ export class UserService {
   }
 
   generatePasswordResetCode() {
-    return Math.floor(Math.random() * 9999999)
+    return Math.floor(Math.random() * 9999999);
   }
 }

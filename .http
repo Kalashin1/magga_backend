@@ -1,4 +1,12 @@
-GET https://magga-676xiecbma-uc.a.run.app
+POST https://magga-676xiecbma-uc.a.run.app/register
+Content-Type: application/json
+
+{
+  "email": "kinaneesamsonjohn@gmail.com",
+  "password": "Test1234",
+  "role": "admin",
+  "type": "EMAIL"
+}
 
 ###
 GET http://localhost:8080/
@@ -9,7 +17,7 @@ POST http://localhost:8080/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@outlook.com",
+  "email": "kinaneesamsonjohn@gmail.com",
   "password": "Test1234",
   "role": "admin",
   "type": "EMAIL"
@@ -45,7 +53,7 @@ POST http://localhost:8080/login
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@gmail.com",
+  "email": "kinaneesamsonjohn@gmai.com",
   "password": "Test1234"
 }
 ### LOGIN WITH USERNAME
@@ -66,4 +74,34 @@ Content-Type: application/json
 {
   "phone": "+2348149793913",
   "password": "Test1234"
+}
+
+### Edit Profile
+PATCH http://localhost:8080/user/65098649ed952d12cf7afe52
+Content-Type: application/json
+
+{
+  "first_name": "Kinanee",
+  "last_name": "Samson",
+  "phone": "+2348149793913",
+  "username": "kalashin"
+}
+### FORGOT PASSWORD
+
+POST http://localhost:8080/request-password-reset
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913"
+}
+
+
+### Update Password
+POST http://localhost:8080/reset-password
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913",
+  "password": "Test123",
+  "token": 8903695
 }
