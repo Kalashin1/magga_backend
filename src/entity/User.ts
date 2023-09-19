@@ -7,6 +7,7 @@ import {
   ObjectId,
 } from "typeorm";
 import { randomUUID } from "crypto";
+import { Signature } from "../types";
 export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
 
 @Entity()
@@ -58,4 +59,7 @@ export class User {
 
   @Column()
   avatar: string
+
+  @Column()
+  signatures: Signature[] 
 }

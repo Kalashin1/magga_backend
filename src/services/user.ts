@@ -5,8 +5,9 @@ import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
 import { ObjectId } from "mongodb";
-
+require('dotenv').config()
 export class UserService {
+
   async createUser({
     email,
     password,
@@ -16,13 +17,19 @@ export class UserService {
   }: Partial<CreateUserParam>) {
     const Users = await AppDataSource.getRepository(User);
     const user = await Users.create({
-      email: email?.toLocaleLowerCase()?.trim() || "",
+      email: email?.toLocaleLowerCase()?.trim(),
       password: await this.hashPassword(password),
       role: role,
-      phone: phone?.trim() || "",
-      username: username?.trim() || "",
+      phone: phone?.trim(),
+      username: username?.trim(),
     });
-    user.token = this.generateToken({ email, role, _id: user._id });
+    user.token = this.generateToken({
+      email,
+      role,
+      _id: user._id,
+      phone,
+      username,
+    });
     await Users.save(user);
     console.log(user);
     return user;
@@ -30,13 +37,34 @@ export class UserService {
 
   async login({ email, phone, username, password }: Partial<CreateUserParam>) {
     const Users = await AppDataSource.getMongoRepository(User);
-    let user: Partial<User> = await Users.findOne({
-      where: {
-        $or: [{ email }, { phone }, { username }],
-      },
-    });
-    if (!user)
-      throw new AuthError("login-password", "incorrect email/phone/username");
+    console.log(email);
+    let user: Partial<User>;
+
+    if (email) {
+      user = await Users.findOne({
+        where: {
+          email: { $eq: email },
+        },
+      });
+      if (!user)
+        throw new AuthError("login-password", "incorrect email");
+    } else if (phone) {
+      user = await Users.findOne({
+        where: {
+          phone: { $eq: phone },
+        },
+      });
+      if (!user)
+        throw new AuthError("login-password", "incorrect phone");
+    } else {
+      user = await Users.findOne({
+        where: {
+          phone: { $eq: email },
+        },
+      });
+      if (!user)
+        throw new AuthError("login-password", "incorrect username");
+    }
 
     const passwordVerified = await this.verifyPassword(password, user.password);
     if (!passwordVerified)
@@ -46,6 +74,8 @@ export class UserService {
       email,
       role: user.role,
       _id: user._id,
+      phone: user.phone,
+      username: user.username,
     });
     await Users.save(user);
     console.log(user);
@@ -111,16 +141,23 @@ export class UserService {
     const existingEmail = await this.getUser({ email });
     if (existingEmail)
       throw new AuthError("email-update-error", "email already exists");
-    user.email = email || "";
+    if (email) user.email = email;
     const existingPhone = await this.getUser({ phone });
     if (existingPhone)
       throw new AuthError("phone-update-error", "phone number already exists");
-    user.phone = phone || "";
+    if (phone) user.phone = phone;
     const existingUsername = username && (await this.getUser({ username }));
     if (existingUsername)
       throw new AuthError("username-update-error", "username already exists");
-    user.username = username || "";
-    user.avatar = avatar || "";
+    if (username) user.username = username;
+    if (avatar) user.avatar = avatar;
+    user.token = await this.generateToken({
+      username,
+      email,
+      phone,
+      _id: user._id,
+      role: user.role,
+    });
     await AppDataSource.manager.save(user);
     return user;
   }
@@ -146,7 +183,9 @@ export class UserService {
       Pick<User, "email" | "role" | "username" | "phone" | "_id">
     >
   ) {
-    return jwt.sign(payload, "1234");
+    return jwt.sign(payload, process.env.JWT_SECRETE, {
+      expiresIn: 60 * 60 * 24 * 3,
+    });
   }
 
   decodeToken(token: string) {
@@ -154,7 +193,7 @@ export class UserService {
   }
 
   verifyToken(token: string) {
-    return jwt.verify(token, "1234");
+    return jwt.verify(token, process.env.JWT_SECRETE);
   }
 
   generatePasswordResetCode() {

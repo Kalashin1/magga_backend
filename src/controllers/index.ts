@@ -24,7 +24,7 @@ export const CreateUser = async (req: Request, res: Response) => {
     console.log(user);
     return res.json(user);
   } catch (error) {
-    return res.status(400).json(error)
+    return res.status(400).json(error);
   }
 };
 
@@ -78,6 +78,17 @@ export const resetPassword = async (req: Request, res: Response) => {
       resetPasswordToken: token,
     });
     return res.json(user);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
+export const getUser = async (req: Request, res: Response) => {
+  const {token} = req.params;
+
+  try {
+    const user = await authService.verifyToken(token);
+    return res.json(user)
   } catch (error) {
     return res.status(400).json(error);
   }
