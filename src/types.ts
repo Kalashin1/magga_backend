@@ -1,7 +1,8 @@
+import { ObjectId } from "typeorm";
 import { UserRoleType } from "./entity/User";
 
 export interface AuthUser {
-  id: string;
+  id: ObjectId;
   first_name: string;
   last_name: string;
   email: string;

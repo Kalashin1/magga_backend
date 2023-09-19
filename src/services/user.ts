@@ -18,6 +18,7 @@ export class UserService {
     user.role = role;
     user.token = this.generateToken({ email, role, id: user.id });
     await Users.save(user);
+    console.log(user)
     return user;
   }
 

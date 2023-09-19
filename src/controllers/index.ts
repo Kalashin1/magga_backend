@@ -18,6 +18,7 @@ export const CreateUser = async (req: Request, res: Response) => {
           password,
           role,
         });
+        console.log(user)
         return res.json(user);
       case "PHONE":
         existingUser = await authService.getUserByPhone(phone);

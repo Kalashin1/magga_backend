@@ -9,7 +9,7 @@ POST http://localhost:8080/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@gmail.com",
+  "email": "kinaneesamsonjohn@outlook.com",
   "password": "Test1234",
   "role": "admin",
   "type": "EMAIL"
