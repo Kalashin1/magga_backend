@@ -1,11 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Entity, ObjectIdColumn, ObjectId, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
 export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
 
 @Entity()
 export class User {
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @ObjectIdColumn()
+    id: ObjectId;
 
     @Column()
     first_name: string;
