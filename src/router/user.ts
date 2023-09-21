@@ -4,7 +4,8 @@ import {
   loginUser,
   getPasswordResetCode,
   resetPassword,
-  updateProfile
+  updateProfile,
+  getUser,
 } from "../controllers";
 
 const UserRouter = Router();
@@ -18,5 +19,7 @@ UserRouter.post('/request-password-reset', getPasswordResetCode);
 UserRouter.post('/reset-password', resetPassword);
 
 UserRouter.patch('/user/:id', updateProfile);
+
+UserRouter.get('/user/:token', getUser);
 
 export default UserRouter;

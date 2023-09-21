@@ -1,46 +1,65 @@
-import { Entity, ObjectIdColumn, ObjectId, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import {
+  Entity,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ObjectIdColumn,
+  ObjectId,
+} from "typeorm";
+import { randomUUID } from "crypto";
+import { Signature } from "../types";
 export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
 
 @Entity()
 export class User {
+  @ObjectIdColumn()
+  _id: ObjectId;
 
-    @ObjectIdColumn()
-    id: ObjectId;
+  @Column({
+    default: randomUUID(),
+  })
+  id: string;
 
-    @Column()
-    first_name: string;
+  @Column()
+  first_name: string;
 
-    @Column()
-    last_name: string;
+  @Column()
+  last_name: string;
 
-    @Column()
-    email: string;
-    
-    @Column()
-    password: string;
+  @Column()
+  email: string;
 
-    @Column()
-    phone: string;
+  @Column()
+  password: string;
 
-    @Column()
-    username: string;
+  @Column()
+  phone: string;
 
-    @Column()
-    token: string;
+  @Column()
+  username: string;
 
-		@Column({
-			type: "enum",
-			enum: ["admin", "contractor", "executor", "employee"],
-			default: "employee"
-		})
-		role: UserRoleType
+  @Column()
+  token: string;
 
-    @Column()
-    resetPasswordToken: number;
+  @Column({
+    type: "enum",
+    enum: ["admin", "contractor", "executor", "employee"],
+    default: "employee",
+  })
+  role: UserRoleType;
 
-		@CreateDateColumn()
-		createdAt: string;
+  @Column()
+  resetPasswordToken: number;
 
-		@UpdateDateColumn()
-		updatedAt: string;
+  @CreateDateColumn()
+  createdAt: string;
+
+  @UpdateDateColumn()
+  updatedAt: string;
+
+  @Column()
+  avatar: string
+
+  @Column()
+  signatures: Signature[] 
 }

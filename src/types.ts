@@ -2,7 +2,7 @@ import { ObjectId } from "typeorm";
 import { UserRoleType } from "./entity/User";
 
 export interface AuthUser {
-  id: ObjectId;
+  _id: ObjectId;
   first_name: string;
   last_name: string;
   email: string;
@@ -13,6 +13,14 @@ export interface AuthUser {
   createdAt: string;
   updatedAt: string;
   role: UserRoleType;
+  avatar: string;
+  signature: [Signature];
+}
+
+export type Signature = {
+  signedFor: string
+  tag: string;
+  symbol: string;
 }
 
 export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role'>

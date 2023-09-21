@@ -1,4 +1,12 @@
-GET https://magga-676xiecbma-uc.a.run.app
+POST https://magga-676xiecbma-uc.a.run.app/register
+Content-Type: application/json
+
+{
+  "email": "kinaneesamsonjohn@gmail.com",
+  "password": "Test1234",
+  "role": "admin",
+  "type": "EMAIL"
+}
 
 ###
 GET http://localhost:8080/
@@ -9,7 +17,7 @@ POST http://localhost:8080/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@outlook.com",
+  "email": "kinaneesamsonjohn@gmail.com",
   "password": "Test1234",
   "role": "admin",
   "type": "EMAIL"
@@ -67,3 +75,33 @@ Content-Type: application/json
   "phone": "+2348149793913",
   "password": "Test1234"
 }
+
+### Edit Profile
+PATCH http://localhost:8080/user/65098649ed952d12cf7afe52
+Content-Type: application/json
+
+{
+  "email": "kinaneesamsonjohn@gmail.com"
+}
+### FORGOT PASSWORD
+
+POST http://localhost:8080/request-password-reset
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913"
+}
+
+
+### Update Password
+POST http://localhost:8080/reset-password
+Content-Type: application/json
+
+{
+  "phone": "+2348149793913",
+  "password": "Test123",
+  "token": 8903695
+}
+
+### GET USER
+GET http://localhost:8080/user/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbmFuZWVzYW1zb25qb2huQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsIl9pZCI6IjY1MDk4NjQ5ZWQ5NTJkMTJjZjdhZmU1MiIsInBob25lIjoiKzIzNDgxNDk3OTM5MTMiLCJ1c2VybmFtZSI6ImthbGFzaGluIiwiaWF0IjoxNjk1MTY1MDY5LCJleHAiOjE2OTU0MjQyNjl9.BVR6KYTiV8EshF1Sd_RHwPJ5Rb2tFVqTAWJZo_kEdmQ
