@@ -46,6 +46,7 @@ export const loginUser = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   const { id } = req.params;
   const updatePayload = req.body;
+  console.log("updatePayload", updatePayload)
   console.log(id);
   try {
     const user = await authService.updateProfile({ ...updatePayload, _id: id });
@@ -57,12 +58,14 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 export const getPasswordResetCode = async (req: Request, res: Response) => {
   const { email, phone } = req.body;
+  console.log(email, phone)
   try {
     const passwordResetCode = await authService.requestPasswordResetCode({
       email,
       phone,
     });
-    return res.json(passwordResetCode);
+
+    return res.json({passwordResetCode});
   } catch (error) {
     return res.status(400).json(error);
   }
@@ -87,7 +90,9 @@ export const getUser = async (req: Request, res: Response) => {
   const {token} = req.params;
 
   try {
-    const user = await authService.verifyToken(token);
+    const verifiedUser = await authService.verifyToken(token);
+    //@ts-ignore
+    const user = await authService.getUser({ _id: verifiedUser._id})
     return res.json(user)
   } catch (error) {
     return res.status(400).json(error);

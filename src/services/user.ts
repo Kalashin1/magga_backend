@@ -5,9 +5,8 @@ import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
 import { ObjectId } from "mongodb";
-require('dotenv').config()
+require("dotenv").config();
 export class UserService {
-
   async createUser({
     email,
     password,
@@ -46,24 +45,21 @@ export class UserService {
           email: { $eq: email },
         },
       });
-      if (!user)
-        throw new AuthError("login-password", "incorrect email");
+      if (!user) throw new AuthError("login-password", "incorrect email");
     } else if (phone) {
       user = await Users.findOne({
         where: {
           phone: { $eq: phone },
         },
       });
-      if (!user)
-        throw new AuthError("login-password", "incorrect phone");
+      if (!user) throw new AuthError("login-password", "incorrect phone");
     } else {
       user = await Users.findOne({
         where: {
           phone: { $eq: email },
         },
       });
-      if (!user)
-        throw new AuthError("login-password", "incorrect username");
+      if (!user) throw new AuthError("login-password", "incorrect username");
     }
 
     const passwordVerified = await this.verifyPassword(password, user.password);
@@ -87,19 +83,37 @@ export class UserService {
     phone,
   }: Partial<Pick<User, "email" | "phone">>) {
     const Users = await AppDataSource.getMongoRepository(User);
-    let user: Partial<User> = await Users.findOne({
-      where: {
-        $or: [{ phone }, { email }],
-      },
-    });
-    if (!user)
-      throw new AuthError(
-        "password-reset-code",
-        "no account with email/password"
-      );
-    user.resetPasswordToken = this.generatePasswordResetCode();
-    await Users.save(user);
-    return user.resetPasswordToken;
+    const token = await this.generatePasswordResetCode();
+    let user: Partial<User>;
+    if (email) {
+      let user = await Users.findOne({
+        where: {
+          email: { $eq: email },
+        },
+      });
+      console.log(user);
+      user.resetPasswordToken = token;
+      await AppDataSource.mongoManager.save(User, user);
+      if (!user)
+        throw new AuthError(
+          "password-reset-code",
+          "no account with that email"
+        );
+    } else if (phone && !user) {
+      user = await Users.findOne({
+        where: {
+          phone: { $eq: phone },
+        },
+      });
+      if (!user)
+        throw new AuthError(
+          "password-reset-code",
+          "no account with that phone"
+        );
+      user.resetPasswordToken = token;
+      await AppDataSource.mongoManager.save(User, user);
+    }
+    return token;
   }
 
   async updateUserPassword({
@@ -115,7 +129,7 @@ export class UserService {
     const user = await Users.findOne({
       where: {
         resetPasswordToken,
-        $or: [{ email }, { phone }],
+        email
       },
     });
     if (!user) throw new AuthError("update-password", "no user with that code");
@@ -133,12 +147,14 @@ export class UserService {
     avatar,
     _id,
   }: Partial<AuthUser>) {
+    console.log(first_name, last_name, phone, username);
     const user = await this.getUser({ _id });
     if (!user)
       throw new AuthError("user-profile-update", "no user with that id");
     user.first_name = first_name;
     user.last_name = last_name;
     const existingEmail = await this.getUser({ email });
+    console.log(existingEmail);
     if (existingEmail)
       throw new AuthError("email-update-error", "email already exists");
     if (email) user.email = email;
@@ -162,12 +178,23 @@ export class UserService {
     return user;
   }
 
-  getUser({ email, phone, username, _id: id }: Partial<AuthUser>) {
-    return AppDataSource.mongoManager.findOne(User, {
-      where: {
-        $or: [{ email }, { phone }, { username }, { _id: new ObjectId(id) }],
-      },
-    });
+  getUser(payload: Partial<AuthUser>) {
+    for (const key in payload) {
+      if (payload[key]) {
+        if (key == "_id") {
+          return AppDataSource.mongoManager.findOne(User, {
+            where: {
+              _id: new ObjectId(payload[key]),
+            },
+          });
+        }
+        return AppDataSource.mongoManager.findOne(User, {
+          where: {
+            key: payload[key],
+          },
+        });
+      }
+    }
   }
 
   hashPassword(password: string) {
