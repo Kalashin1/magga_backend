@@ -1,6 +1,6 @@
-import { User } from "../entity/User";
+import { User, UserRoleType } from "../entity/User";
 import { AppDataSource } from "../data-source";
-import { AuthUser, CreateUserParam } from "../types";
+import { AuthUser, BankDetails, CreateUserParam, ReferrerType } from "../types";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
@@ -56,7 +56,7 @@ export class UserService {
     } else {
       user = await Users.findOne({
         where: {
-          phone: { $eq: email },
+          username: { $eq: username },
         },
       });
       if (!user) throw new AuthError("login-password", "incorrect username");
@@ -76,6 +76,26 @@ export class UserService {
     await Users.save(user);
     console.log(user);
     return user;
+  }
+
+  async generateId(role: UserRoleType, referrer: ObjectId) {
+    const user = await this.getUser({ _id: referrer });
+    if (!user) throw Error("Your referrer is invalid");
+    if (role === "contractor" && user.role !== 'admin') {
+      throw Error('Invalid operation, you do not have the privillages')
+    }
+    if (role === "executor" && (user.role !== 'admin' || 'contractor') ) {
+      throw Error('Invalid operation, you do not have the privillages')
+    }
+
+    let userObj = {
+      email: user.email,
+      id: user._id,
+      role: user.role,
+    };
+    const subUser = await AppDataSource.mongoManager.create(User, {creator: userObj, role });
+    await AppDataSource.mongoManager.save(User, subUser);
+    return subUser;
   }
 
   async requestPasswordResetCode({
@@ -129,7 +149,7 @@ export class UserService {
     const user = await Users.findOne({
       where: {
         resetPasswordToken,
-        email
+        email,
       },
     });
     if (!user) throw new AuthError("update-password", "no user with that code");
@@ -146,15 +166,16 @@ export class UserService {
     username,
     avatar,
     _id,
-  }: Partial<AuthUser>) {
-    console.log(first_name, last_name, phone, username);
+    bankDetails,
+    billingDetails,
+  }: Partial<Omit<AuthUser, 'bankDetails'>> & { bankDetails?: BankDetails}) {
     const user = await this.getUser({ _id });
     if (!user)
       throw new AuthError("user-profile-update", "no user with that id");
     user.first_name = first_name;
     user.last_name = last_name;
     const existingEmail = await this.getUser({ email });
-    console.log(existingEmail);
+    console.log('bank details', bankDetails);
     if (existingEmail)
       throw new AuthError("email-update-error", "email already exists");
     if (email) user.email = email;
@@ -167,14 +188,15 @@ export class UserService {
       throw new AuthError("username-update-error", "username already exists");
     if (username) user.username = username;
     if (avatar) user.avatar = avatar;
+    const existingBankDetails = user.bankDetails ?? [];
+    if (bankDetails) user.bankDetails = [bankDetails, ...existingBankDetails];
+    if (billingDetails) user.billingDetails = billingDetails;
     user.token = await this.generateToken({
-      username,
       email,
-      phone,
       _id: user._id,
       role: user.role,
     });
-    await AppDataSource.manager.save(user);
+    await AppDataSource.mongoManager.save(user);
     return user;
   }
 
@@ -190,7 +212,7 @@ export class UserService {
         }
         return AppDataSource.mongoManager.findOne(User, {
           where: {
-            key: payload[key],
+            [key]: payload[key],
           },
         });
       }
