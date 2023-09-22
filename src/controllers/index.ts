@@ -1,15 +1,40 @@
+import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
 import { UserService } from "../services/user";
 import { Request, Response } from "express";
 
 const authService = new UserService();
 
+export const generateUserId = async (req: Request, res: Response) => {
+  const { role, referrer } = req.body
+  console.log(role)
+  const user = await authService.generateId(role, referrer);
+  console.log(user)
+  return res.json(user);
+}
+
+export const completeGeneratedUserId = async (req: Request, res: Response) => {
+  const {generatedId} = req.params;
+  const {email, password} = req.body;
+  try {
+    const generatedAccount = await authService.getUser({ _id: generatedId });
+    if (!generatedAccount) throw Error('Invalid token');
+    const hashedPassword = await authService.hashPassword(password);
+    const user = await authService.updateProfile({ email, _id: generatedId });
+    user.password = hashedPassword;
+    await AppDataSource.mongoManager.save(User, user);
+    return res.json({ user })
+  } catch (error) {
+    return res.status(400).json(error)
+  }
+}
+
 export const CreateUser = async (req: Request, res: Response) => {
   const { email, password, role, type, phone, username } = req.body;
   let user: Partial<User> = {};
   let existingUser: Partial<User> = {};
   try {
-    existingUser = await authService.getUser({ email, phone, username });
+    existingUser = await authService.getUser({ email });
     if (existingUser)
       return res
         .status(400)
@@ -46,7 +71,6 @@ export const loginUser = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   const { id } = req.params;
   const updatePayload = req.body;
-  console.log("updatePayload", updatePayload)
   console.log(id);
   try {
     const user = await authService.updateProfile({ ...updatePayload, _id: id });
