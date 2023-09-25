@@ -11,7 +11,7 @@ export enum USER_ROUTES {
   GET_STAND_IN = '/stand-in/:owner_id',
   DELETE_STAND_IN = '/stand-in',
   ADD_TRADE = '/add-trade/:owner_id/:tradeId',
-  ASSIGN_EMPLOYEE = '/assign_employee/:owner_id/:tradeId',
+  ASSIGN_EMPLOYEE = '/assign_employee/:owner_id/:employee_id',
   DELETE_BANK_DETAILS = '/delete-bank-details/:owner_id',
   REMOVE_TRADES = '/remove-trades/:owner_id/:tradeId',
   DELETE_EMPLOYEE = '/delete-employee/:ownerId/:employee_id',

@@ -74,7 +74,7 @@ export const assingEmployee = async (req: Request, res: Response) => {
     const payload = await userService.assingEmployee(owner_id, employee_id);
     return res.json(payload);
   } catch (error) {
-    return res.status(400).json(error);
+    return res.status(400).json({error: error.message});
   }
 }
 
@@ -84,7 +84,7 @@ export const retrieveEmployees = async (req:Request, res: Response) => {
     const payload = await userService.retrieveEmployees(owner_id);
     return res.json(payload);
   } catch (error) {
-    return res.status(400).json(error)
+    return res.status(400).json({error: error.message})
   }
 }
 

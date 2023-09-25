@@ -80,4 +80,7 @@ export class User implements AuthUser {
 
   @Column()
   trades: TradeInterface[];
+
+  @Column()
+  employees: ReferrerType[];
 }

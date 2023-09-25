@@ -15,6 +15,7 @@ export interface AuthUser {
   updatedAt: string;
   role: UserRoleType;
   avatar: string;
+  employees: ReferrerType[]
   bankDetails: BankDetails[]|BankDetails;
   billingDetails: BillingDetails;
   numberRanges: NumberRanges;
@@ -48,8 +49,9 @@ export type ReferrerType =  {
   role: string;
   id: string|ObjectId;
   email: string;
-  generatedAt: string;
-}
+} & Partial<
+    Pick<AuthUser, 'first_name' | 'last_name' | 'phone' | 'username' | 'avatar' >
+  >
 
 export type StandIn = {
   role: 'employee';

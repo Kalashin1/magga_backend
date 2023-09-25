@@ -2,9 +2,9 @@ POST https://magga-676xiecbma-uc.a.run.app/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@gmail.com",
+  "email": "samson.employee@gmail.com",
   "password": "Test1234",
-  "role": "admin",
+  "role": "employee",
   "type": "EMAIL"
 }
 
@@ -17,11 +17,10 @@ POST http://localhost:8080/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@gmail.com",
+  "email": "samson.employee@gmail.com",
   "password": "Test1234",
-  "role": "admin",
+  "role": "employee",
   "type": "EMAIL"
-
 }
 ### CREATE USER with phone
 
@@ -134,3 +133,18 @@ Content-Type: application/json
     "bic": "23443ss"
   }
 }
+
+### CREATE EMPLOYEE
+PATCH http://localhost:8080/assign_employee/6509e68cbf9854a46adc40d0/6511f319b4dc5488587e0e71
+
+### GET EMPLOYEES
+GET http://localhost:8080/employee/6509e68cbf9854a46adc40d0
+
+### DELETE EMPLOYEES
+DELETE http://localhost:8080/delete-employee/6509e68cbf9854a46adc40d0/6511f319b4dc5488587e0e71
+
+### ASSIGN STAND IN
+
+
+### GET STAND IN
+GET http://localhost:8080/stand-in/
