@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { User } from "./entity/User";
+import { Trades } from "./entity/trades";
 require("dotenv").config();
 
 export const AppDataSource = new DataSource({
@@ -9,5 +10,5 @@ export const AppDataSource = new DataSource({
   useUnifiedTopology: true,
   useNewUrlParser: true,
   synchronize: false,
-  entities: [User],
+  entities: [User, Trades],
 });

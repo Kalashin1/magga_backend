@@ -105,3 +105,20 @@ Content-Type: application/json
 
 ### GET USER
 GET http://localhost:8080/user/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbmFuZWVzYW1zb25qb2huQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsIl9pZCI6IjY1MDk4NjQ5ZWQ5NTJkMTJjZjdhZmU1MiIsInBob25lIjoiKzIzNDgxNDk3OTM5MTMiLCJ1c2VybmFtZSI6ImthbGFzaGluIiwiaWF0IjoxNjk1MTY1MDY5LCJleHAiOjE2OTU0MjQyNjl9.BVR6KYTiV8EshF1Sd_RHwPJ5Rb2tFVqTAWJZo_kEdmQ
+
+### UPDATE BANK DETAILS
+PATCH http://localhost:8080/update-bank/650d6002aa58b8332aac7f02
+Content-Type: application/json
+
+{
+  "existingDetails": {
+    "bank": "Kuda",
+    "iban": "12345678ASDF",
+    "bic": "BIC-2345-JDHK"
+  },
+  "newDetails": {
+    "bank": "Kuda Bank",
+    "iban": "12345678ASDF-DFVG",
+    "bic": "BIC-2345-JDHK-MAGGA"
+  }
+}

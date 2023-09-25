@@ -1,5 +1,6 @@
 import { ObjectId } from "typeorm";
 import { UserRoleType } from "./entity/User";
+import { TradeColorEnum } from "./entity/trades";
 
 export interface AuthUser {
   _id: ObjectId|string;
@@ -16,12 +17,23 @@ export interface AuthUser {
   avatar: string;
   bankDetails: BankDetails[]|BankDetails;
   billingDetails: BillingDetails;
+  numberRanges: NumberRanges;
+  numberRangesLocal: NumberRanges;
+  trades: TradeInterface[];
 }
 
 export type BankDetails = {
   bank: string;
   iban: string;
   bic: string;
+}
+
+export type NumberRangesType = 'DRAFT' | 'Invoice';
+
+export type NumberRanges = {
+  prefix: string;
+  nextNumber: number;
+  type: NumberRangesType;
 }
 
 export type BillingDetails = {
@@ -39,4 +51,16 @@ export type ReferrerType =  {
   generatedAt: string;
 }
 
-export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role'>
+export type StandIn = {
+  role: 'employee';
+  _id: string;
+  email: string;
+}
+
+export interface TradeInterface {
+  _id: string|ObjectId;
+  name: string;
+  color: [keyof typeof TradeColorEnum];
+}
+
+export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role'>;

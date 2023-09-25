@@ -7,40 +7,40 @@ import {
   ObjectId,
 } from "typeorm";
 import { randomUUID } from "crypto";
-import { BankDetails, BillingDetails, ReferrerType } from "../types";
+import { BankDetails, BillingDetails, ReferrerType, StandIn, AuthUser, NumberRanges, TradeInterface } from "../types";
 export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
 
 @Entity()
-export class User {
+export class User implements AuthUser {
   @ObjectIdColumn()
   _id: ObjectId;
-
+  
   @Column({
     default: randomUUID(),
   })
   id: string;
-
+  
   @Column()
   first_name: string;
-
+  
   @Column()
   last_name: string;
-
+  
   @Column()
   email: string;
 
   @Column()
   password: string;
-
+  
   @Column()
   phone: string;
 
   @Column()
   username: string;
-
+  
   @Column()
   token: string;
-
+  
   @Column({
     type: "enum",
     enum: ["admin", "contractor", "executor", "employee"],
@@ -53,19 +53,31 @@ export class User {
 
   @CreateDateColumn()
   createdAt: string;
-
+  
   @UpdateDateColumn()
   updatedAt: string;
-
+  
   @Column()
   avatar: string;
-
+  
   @Column()
   creator: ReferrerType;
+  
+  @Column()
+  bankDetails: BankDetails[];
+  
+  @Column()
+  billingDetails: BillingDetails;
+  
+  @Column()
+  standIn: StandIn[];
 
   @Column()
-  bankDetails: BankDetails[]
+  numberRanges: NumberRanges;
 
   @Column()
-  billingDetails: BillingDetails
+  numberRangesLocal: NumberRanges;
+
+  @Column()
+  trades: TradeInterface[];
 }
