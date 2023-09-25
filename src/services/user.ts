@@ -234,11 +234,14 @@ export class UserService {
   }
 
   async assignStandIn({ _id, email, role }: StandIn, owner_id: string) {
+    console.log(_id);
     const employee = await this.getUser({ _id });
+    console.log(employee)
     if (!employee) throw Error("No employee with that Id");
-    const owner = await this.getUser({ _id: owner_id });
-    if (!owner) throw Error("No employee with that Id");
-    if (employee.creator.id !== owner_id)
+    const owner = await this.getUser({_id: owner_id });
+    if (!owner) throw Error("No user with that Id");
+    console.log(employee.creator.id.toString() !== owner._id.toString())
+    if (employee.creator.id.toString() !== owner._id.toString())
       throw Error("Employee is not assigned");
     if (employee.role !== "employee")
       throw Error("This user is not an employee");
@@ -266,10 +269,10 @@ export class UserService {
       throw Error("You cannot take this action");
     const existingStandIns = owner.standIn;
     const updatedStandIns = existingStandIns.filter(
-      (extStd) => extStd._id !== employee_id
+      (extStd) => extStd._id.toString() !== employee_id
     );
     owner.standIn = updatedStandIns;
-    await AppDataSource.mongoManager.save(User, owner);
+    // await AppDataSource.mongoManager.save(User, owner);
     return owner;
   }
 
@@ -312,11 +315,14 @@ export class UserService {
   }
 
   async addTrade(owner_id: string, tradeId: string) {
+    console.log('owner_id', owner_id);
+    console.log('tradeId', tradeId);
     const owner = await this.getUser({ _id: owner_id });
     const trade = await AppDataSource.mongoManager.findOne(Trades, {
       where: { _id: new ObjectId(tradeId) },
     });
-    owner.trades = [trade, ...owner.trades];
+    const existingTrades = owner.trades ?? [];
+    owner.trades = [trade, ...existingTrades];
     await AppDataSource.mongoManager.save(User, owner);
     return owner;
   }
@@ -324,7 +330,7 @@ export class UserService {
   async removeTrades(owner_id: string, tradeId: string) {
     const owner = await this.getUser({ _id: owner_id });
     const existingTrades = owner.trades;
-    const filteredTrade = existingTrades.filter((exT) => exT._id !== tradeId);
+    const filteredTrade = existingTrades.filter((exT) => exT._id.toString() !== tradeId);
     owner.trades = filteredTrade;
     await AppDataSource.mongoManager.save(User, owner);
     return owner;

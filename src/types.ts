@@ -62,7 +62,7 @@ export type StandIn = {
 export interface TradeInterface {
   _id: string|ObjectId;
   name: string;
-  color: [keyof typeof TradeColorEnum];
+  color: TradeColorEnum;
 }
 
 export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role'>;

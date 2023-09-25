@@ -37,7 +37,7 @@ UserRouter.patch(USER_ROUTES.ASSIGN_EMPLOYEE, assingEmployee)
 
 UserRouter.patch(USER_ROUTES.ADD_TRADE, addTrade);
 
-UserRouter.post(USER_ROUTES.DELETE_STAND_IN, deleteStandIn);
+UserRouter.delete(USER_ROUTES.DELETE_STAND_IN, deleteStandIn);
 
 UserRouter.get(USER_ROUTES.GET_STAND_IN, getStandIn);
 

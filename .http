@@ -144,7 +144,23 @@ GET http://localhost:8080/employee/6509e68cbf9854a46adc40d0
 DELETE http://localhost:8080/delete-employee/6509e68cbf9854a46adc40d0/6511f319b4dc5488587e0e71
 
 ### ASSIGN STAND IN
+POST http://localhost:8080/assign-stand-in/6509e68cbf9854a46adc40d0
+Content-Type: application/json
 
+{
+  "email": "samson.employee@gmail.com",
+  "role": "employee",
+  "_id": "6511f319b4dc5488587e0e71"
+}
 
 ### GET STAND IN
-GET http://localhost:8080/stand-in/
+GET http://localhost:8080/stand-in/6509e68cbf9854a46adc40d0
+
+### DELETE STAND-IN
+DELETE http://localhost:8080/stand-in
+Content-Type: application/json
+
+{
+  "owner_id": "6509e68cbf9854a46adc40d0", 
+  "employee_id": "6511f319b4dc5488587e0e71"
+}

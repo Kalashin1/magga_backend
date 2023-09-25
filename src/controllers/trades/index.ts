@@ -21,7 +21,7 @@ export const retrieveAllTrades = async (
     const trades = await tradeService.retrieveAllTrades();
     return res.json(trades);
   } catch (error) {
-    return res.status(400).json(error);
+    return res.status(400).json({error: error.message});
   }
 }
 
@@ -34,7 +34,7 @@ export const retrieveTrade = async (
     const trade = await tradeService.retrieveTrade(id);
     return res.json(trade);
   } catch (error) {
-    return res.status(400).json(error);
+    return res.status(400).json({error: error.message});
   }
 }
 
@@ -45,7 +45,7 @@ export const deleteTrade = async (
   const {id} = await req.params;
   try {
     const trade = await tradeService.deleteTrade(id);
-    return trade;
+    return res.json(trade);
   } catch (error) {
     return res.status(400).json(error)
   }
