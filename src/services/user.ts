@@ -264,6 +264,8 @@ export class UserService {
     const owner = await this.getUser({_id: owner_id});
     const bankDetails = owner.bankDetails;
     let foundBankDetails = bankDetails.find((bD) => bD.iban === existingDetails.iban);
+    console.log("foundBankDetails",foundBankDetails)
+    if (!foundBankDetails) throw Error('Existing bank details not found')
     const updatedBankDetails = bankDetails.filter((bD) => bD.iban !== foundBankDetails.iban);
     foundBankDetails = newDetails;
     updatedBankDetails.push(foundBankDetails);
@@ -273,10 +275,13 @@ export class UserService {
   }
 
   async deleteBankDetails(owner_id: string, existingBankDetails: BankDetails) {
-    const owner = await this.getUser({ _id: owner_id })
+    const owner = await this.getUser({ _id: owner_id });
     const bankDetails = owner.bankDetails;
+    let foundBankDetails = bankDetails.find((bD) => bD.iban === existingBankDetails.iban);
+    if (!foundBankDetails) throw Error('Existing bank details not found')
     const updateBankDetails = bankDetails.filter((bD) => bD.iban !== existingBankDetails.iban);
     owner.bankDetails = updateBankDetails;
+    console.log(updateBankDetails);
     await AppDataSource.mongoManager.save(User, owner);
     return owner.bankDetails;
   }

@@ -122,3 +122,15 @@ Content-Type: application/json
     "bic": "BIC-2345-JDHK-MAGGA"
   }
 }
+
+### DELETE BANK DETAILS
+DELETE http://localhost:8080/delete-bank-details/650d6002aa58b8332aac7f02
+Content-Type: application/json
+
+{
+  "existingBankDetails": {
+    "bank": "union",
+    "iban": "hjhdtst",
+    "bic": "23443ss"
+  }
+}

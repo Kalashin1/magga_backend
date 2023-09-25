@@ -31,7 +31,7 @@ UserRouter.delete(USER_ROUTES.DELETE_EMPLOYEE, deleteEmployee);
 
 UserRouter.delete(USER_ROUTES.REMOVE_TRADES, removeTrades);
 
-UserRouter.patch(USER_ROUTES.DELETE_BANK_DETAILS, deleteBankDetails)
+UserRouter.delete(USER_ROUTES.DELETE_BANK_DETAILS, deleteBankDetails)
 
 UserRouter.patch(USER_ROUTES.ASSIGN_EMPLOYEE, assingEmployee)
 
@@ -40,6 +40,8 @@ UserRouter.patch(USER_ROUTES.ADD_TRADE, addTrade);
 UserRouter.post(USER_ROUTES.DELETE_STAND_IN, deleteStandIn);
 
 UserRouter.get(USER_ROUTES.GET_STAND_IN, getStandIn);
+
+UserRouter.post(USER_ROUTES.ASSIGN_STAND_IN, assignStandIn);
 
 UserRouter.post(USER_ROUTES.CREATE_ACCOUNT, CreateUser);
 
@@ -57,6 +59,5 @@ UserRouter.get(USER_ROUTES.USER_TOKEN, getUser);
 
 UserRouter.post(USER_ROUTES.COMPLETE_REGISTRATION, completeGeneratedUserId);
 
-UserRouter.post(USER_ROUTES.ASSIGN_STAND_IN, assignStandIn);
 
 export default UserRouter;
