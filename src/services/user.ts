@@ -1,10 +1,17 @@
 import { User, UserRoleType } from "../entity/User";
 import { AppDataSource } from "../data-source";
-import { AuthUser, BankDetails, CreateUserParam, ReferrerType } from "../types";
+import {
+  AuthUser,
+  BankDetails,
+  CreateUserParam,
+  ReferrerType,
+  StandIn,
+} from "../types";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
 import { ObjectId } from "mongodb";
+import { Trades } from "../entity/trades";
 require("dotenv").config();
 export class UserService {
   async createUser({
@@ -81,11 +88,11 @@ export class UserService {
   async generateId(role: UserRoleType, referrer: ObjectId) {
     const user = await this.getUser({ _id: referrer });
     if (!user) throw Error("Your referrer is invalid");
-    if (role === "contractor" && user.role !== 'admin') {
-      throw Error('Invalid operation, you do not have the privillages')
+    if (role === "contractor" && user.role !== "admin") {
+      throw Error("Invalid operation, you do not have the privillages");
     }
-    if (role === "executor" && (user.role !== 'admin' || 'contractor') ) {
-      throw Error('Invalid operation, you do not have the privillages')
+    if (role === "executor" && (user.role !== "admin" || "contractor")) {
+      throw Error("Invalid operation, you do not have the privillages");
     }
 
     let userObj = {
@@ -93,7 +100,10 @@ export class UserService {
       id: user._id,
       role: user.role,
     };
-    const subUser = await AppDataSource.mongoManager.create(User, {creator: userObj, role });
+    const subUser = await AppDataSource.mongoManager.create(User, {
+      creator: userObj,
+      role,
+    });
     await AppDataSource.mongoManager.save(User, subUser);
     return subUser;
   }
@@ -168,14 +178,16 @@ export class UserService {
     _id,
     bankDetails,
     billingDetails,
-  }: Partial<Omit<AuthUser, 'bankDetails'>> & { bankDetails?: BankDetails}) {
+    numberRanges,
+    numberRangesLocal,
+  }: Partial<Omit<AuthUser, "bankDetails">> & { bankDetails?: BankDetails }) {
     const user = await this.getUser({ _id });
     if (!user)
       throw new AuthError("user-profile-update", "no user with that id");
     user.first_name = first_name;
     user.last_name = last_name;
     const existingEmail = await this.getUser({ email });
-    console.log('bank details', bankDetails);
+    console.log("bank details", bankDetails);
     if (existingEmail)
       throw new AuthError("email-update-error", "email already exists");
     if (email) user.email = email;
@@ -191,6 +203,9 @@ export class UserService {
     const existingBankDetails = user.bankDetails ?? [];
     if (bankDetails) user.bankDetails = [bankDetails, ...existingBankDetails];
     if (billingDetails) user.billingDetails = billingDetails;
+    if (numberRanges) user.numberRanges = numberRanges;
+    console.log(numberRangesLocal)
+    if (numberRangesLocal) user.numberRangesLocal = numberRangesLocal;
     user.token = await this.generateToken({
       email,
       _id: user._id,
@@ -217,6 +232,160 @@ export class UserService {
         });
       }
     }
+  }
+
+  async assignStandIn({ _id, email, role }: StandIn, owner_id: string) {
+    console.log(_id);
+    const employee = await this.getUser({ _id });
+    console.log(employee)
+    if (!employee) throw Error("No employee with that Id");
+    const owner = await this.getUser({_id: owner_id });
+    if (!owner) throw Error("No user with that Id");
+    console.log(employee.creator.id.toString() !== owner._id.toString())
+    if (employee.creator.id.toString() !== owner._id.toString())
+      throw Error("Employee is not assigned");
+    if (employee.role !== "employee")
+      throw Error("This user is not an employee");
+    const existingStandIns = owner.standIn ?? [];
+    owner.standIn = [
+      {
+        _id,
+        email,
+        role,
+      },
+      ...existingStandIns,
+    ];
+    await AppDataSource.mongoManager.save(User, owner);
+    return employee;
+  }
+
+  async retrieveStandIn(owner_id: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    return owner.standIn ?? [];
+  }
+
+  async deleteStandIn(owner_id: string, employee_id: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    if (!owner || owner.role == "employee")
+      throw Error("You cannot take this action");
+    const existingStandIns = owner.standIn;
+    const updatedStandIns = existingStandIns.filter(
+      (extStd) => extStd._id.toString() !== employee_id
+    );
+    owner.standIn = updatedStandIns;
+    // await AppDataSource.mongoManager.save(User, owner);
+    return owner;
+  }
+
+  async updateBankDetails(
+    owner_id: string,
+    existingDetails: BankDetails,
+    newDetails: BankDetails
+  ) {
+    const owner = await this.getUser({ _id: owner_id });
+    const bankDetails = owner.bankDetails;
+    let foundBankDetails = bankDetails.find(
+      (bD) => bD.iban === existingDetails.iban
+    );
+    console.log("foundBankDetails", foundBankDetails);
+    if (!foundBankDetails) throw Error("Existing bank details not found");
+    const updatedBankDetails = bankDetails.filter(
+      (bD) => bD.iban !== foundBankDetails.iban
+    );
+    foundBankDetails = newDetails;
+    updatedBankDetails.push(foundBankDetails);
+    owner.bankDetails = updatedBankDetails;
+    await AppDataSource.mongoManager.save(User, owner);
+    return owner;
+  }
+
+  async deleteBankDetails(owner_id: string, existingBankDetails: BankDetails) {
+    const owner = await this.getUser({ _id: owner_id });
+    const bankDetails = owner.bankDetails;
+    let foundBankDetails = bankDetails.find(
+      (bD) => bD.iban === existingBankDetails.iban
+    );
+    if (!foundBankDetails) throw Error("Existing bank details not found");
+    const updateBankDetails = bankDetails.filter(
+      (bD) => bD.iban !== existingBankDetails.iban
+    );
+    owner.bankDetails = updateBankDetails;
+    console.log(updateBankDetails);
+    await AppDataSource.mongoManager.save(User, owner);
+    return owner.bankDetails;
+  }
+
+  async addTrade(owner_id: string, tradeId: string) {
+    console.log('owner_id', owner_id);
+    console.log('tradeId', tradeId);
+    const owner = await this.getUser({ _id: owner_id });
+    const trade = await AppDataSource.mongoManager.findOne(Trades, {
+      where: { _id: new ObjectId(tradeId) },
+    });
+    const existingTrades = owner.trades ?? [];
+    owner.trades = [trade, ...existingTrades];
+    await AppDataSource.mongoManager.save(User, owner);
+    return owner;
+  }
+
+  async removeTrades(owner_id: string, tradeId: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    const existingTrades = owner.trades;
+    const filteredTrade = existingTrades.filter((exT) => exT._id.toString() !== tradeId);
+    owner.trades = filteredTrade;
+    await AppDataSource.mongoManager.save(User, owner);
+    return owner;
+  }
+
+  async assingEmployee(owner_id: string, employee_id: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    const employee = await this.getUser({ _id: employee_id });
+    if (owner.role === "employee")
+      throw Error("employee cannot create another employee");
+    const existingEmployees = owner.employees ?? [];
+    existingEmployees.push({
+      id: employee._id,
+      email: employee.email,
+      role: employee.role,
+      avatar: employee.avatar,
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      phone: employee.phone,
+      username: employee.username
+    });
+    const employeeCreator: ReferrerType = {
+      email: owner.email,
+      id: owner._id,
+      role: owner.role,
+      avatar: owner.avatar,
+      first_name: owner.first_name,
+      last_name: owner.last_name,
+      phone: owner.phone,
+      username: owner.username
+    };
+    owner.employees = existingEmployees;
+    employee.creator = employeeCreator;
+    await AppDataSource.mongoManager.save(User, employee);
+    await AppDataSource.mongoManager.save(User, owner);
+    return { employee, owner };
+  }
+
+  async retrieveEmployees(owner_id: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    const employees = owner.employees;
+    return employees;
+  }
+
+  async deleteEmployee(ownerId: string, employee_id: string) {
+    const owner = await this.getUser({ _id: ownerId });
+    const employee = await this.getUser({ _id: employee_id });
+    employee.creator = null;
+    let existingEmployees = owner.employees;
+    let filteredEmployees = existingEmployees.filter((employee) => employee.id != employee_id);
+    owner.employees = filteredEmployees;
+    await AppDataSource.mongoManager.save(User, employee);
+    await AppDataSource.mongoManager.save(User, owner);
+    return {employee, owner};
   }
 
   hashPassword(password: string) {

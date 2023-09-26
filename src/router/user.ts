@@ -1,4 +1,5 @@
 import { Router } from "express";
+import {USER_ROUTES} from '../router/routes';
 import {
   CreateUser, 
   loginUser,
@@ -8,24 +9,55 @@ import {
   getUser,
   generateUserId,
   completeGeneratedUserId,
+  assignStandIn,
+  getStandIn,
+  deleteStandIn,
+  addTrade,
+  assingEmployee,
+  deleteBankDetails,
+  deleteEmployee,
+  removeTrades,
+  retrieveEmployees,
+  updateBankDetails,
 } from "../controllers";
 
 const UserRouter = Router();
 
-UserRouter.post('/register', CreateUser);
+UserRouter.patch(USER_ROUTES.UPDATE_BANK_DETAILS, updateBankDetails);
 
-UserRouter.post('/login', loginUser);
+UserRouter.get(USER_ROUTES.RETRIEVE_EMPLOYEE, retrieveEmployees);
 
-UserRouter.post('/request-password-reset', getPasswordResetCode);
+UserRouter.delete(USER_ROUTES.DELETE_EMPLOYEE, deleteEmployee);
 
-UserRouter.post('/reset-password', resetPassword);
+UserRouter.delete(USER_ROUTES.REMOVE_TRADES, removeTrades);
 
-UserRouter.post('/make-user', generateUserId)
+UserRouter.delete(USER_ROUTES.DELETE_BANK_DETAILS, deleteBankDetails)
 
-UserRouter.patch('/user/:id', updateProfile);
+UserRouter.patch(USER_ROUTES.ASSIGN_EMPLOYEE, assingEmployee)
 
-UserRouter.get('/user/:token', getUser);
+UserRouter.patch(USER_ROUTES.ADD_TRADE, addTrade);
 
-UserRouter.post('/complete-registration/:generatedId', completeGeneratedUserId);
+UserRouter.delete(USER_ROUTES.DELETE_STAND_IN, deleteStandIn);
+
+UserRouter.get(USER_ROUTES.GET_STAND_IN, getStandIn);
+
+UserRouter.post(USER_ROUTES.ASSIGN_STAND_IN, assignStandIn);
+
+UserRouter.post(USER_ROUTES.CREATE_ACCOUNT, CreateUser);
+
+UserRouter.post(USER_ROUTES.LOGIN, loginUser);
+
+UserRouter.post(USER_ROUTES.REQUEST_PASSWORD_RESET, getPasswordResetCode);
+
+UserRouter.post(USER_ROUTES.RESET_PASSWORD, resetPassword);
+
+UserRouter.post(USER_ROUTES.GENERATE_ACCOUNT, generateUserId)
+
+UserRouter.patch(USER_ROUTES.USER_ID, updateProfile);
+
+UserRouter.get(USER_ROUTES.USER_TOKEN, getUser);
+
+UserRouter.post(USER_ROUTES.COMPLETE_REGISTRATION, completeGeneratedUserId);
+
 
 export default UserRouter;

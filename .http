@@ -2,9 +2,9 @@ POST https://magga-676xiecbma-uc.a.run.app/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@gmail.com",
+  "email": "samson.employee@gmail.com",
   "password": "Test1234",
-  "role": "admin",
+  "role": "employee",
   "type": "EMAIL"
 }
 
@@ -17,11 +17,10 @@ POST http://localhost:8080/register
 Content-Type: application/json
 
 {
-  "email": "kinaneesamsonjohn@gmail.com",
+  "email": "samson.employee@gmail.com",
   "password": "Test1234",
-  "role": "admin",
+  "role": "employee",
   "type": "EMAIL"
-
 }
 ### CREATE USER with phone
 
@@ -105,3 +104,69 @@ Content-Type: application/json
 
 ### GET USER
 GET http://localhost:8080/user/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbmFuZWVzYW1zb25qb2huQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsIl9pZCI6IjY1MDk4NjQ5ZWQ5NTJkMTJjZjdhZmU1MiIsInBob25lIjoiKzIzNDgxNDk3OTM5MTMiLCJ1c2VybmFtZSI6ImthbGFzaGluIiwiaWF0IjoxNjk1MTY1MDY5LCJleHAiOjE2OTU0MjQyNjl9.BVR6KYTiV8EshF1Sd_RHwPJ5Rb2tFVqTAWJZo_kEdmQ
+
+### UPDATE BANK DETAILS
+PATCH http://localhost:8080/update-bank/650d6002aa58b8332aac7f02
+Content-Type: application/json
+
+{
+  "existingDetails": {
+    "bank": "Kuda",
+    "iban": "12345678ASDF",
+    "bic": "BIC-2345-JDHK"
+  },
+  "newDetails": {
+    "bank": "Kuda Bank",
+    "iban": "12345678ASDF-DFVG",
+    "bic": "BIC-2345-JDHK-MAGGA"
+  }
+}
+
+### DELETE BANK DETAILS
+DELETE http://localhost:8080/delete-bank-details/650d6002aa58b8332aac7f02
+Content-Type: application/json
+
+{
+  "existingBankDetails": {
+    "bank": "union",
+    "iban": "hjhdtst",
+    "bic": "23443ss"
+  }
+}
+
+### CREATE EMPLOYEE
+PATCH http://localhost:8080/assign_employee/6509e68cbf9854a46adc40d0/6511f319b4dc5488587e0e71
+
+### GET EMPLOYEES
+GET http://localhost:8080/employee/6509e68cbf9854a46adc40d0
+
+### DELETE EMPLOYEES
+DELETE http://localhost:8080/delete-employee/6509e68cbf9854a46adc40d0/6511f319b4dc5488587e0e71
+
+### ASSIGN STAND IN
+POST http://localhost:8080/assign-stand-in/6509e68cbf9854a46adc40d0
+Content-Type: application/json
+
+{
+  "email": "samson.employee@gmail.com",
+  "role": "employee",
+  "_id": "6511f319b4dc5488587e0e71"
+}
+
+### GET STAND IN
+GET http://localhost:8080/stand-in/6509e68cbf9854a46adc40d0
+
+### DELETE STAND-IN
+DELETE http://localhost:8080/stand-in
+Content-Type: application/json
+
+{
+  "owner_id": "6509e68cbf9854a46adc40d0", 
+  "employee_id": "6511f319b4dc5488587e0e71"
+}
+
+### ADD TRADE
+PATCH http://localhost:8080/add-trade/6509e68cbf9854a46adc40d0/651206c44cbbe7bda66dc7c2
+
+### DELETE TRADE
+DELETE http://localhost:8080/remove-trades/6509e68cbf9854a46adc40d0/651206c44cbbe7bda66dc7c2
