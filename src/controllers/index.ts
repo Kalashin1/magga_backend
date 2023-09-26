@@ -216,11 +216,19 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const getUser = async (req: Request, res: Response) => {
   const {token} = req.params;
-
   try {
     const verifiedUser = await userService.verifyToken(token);
     //@ts-ignore
-    const user = await userService.getUser({ _id: verifiedUser._id})
+    const user = await userService.getUser({ _id: verifiedUser._id});
+    return res.json(user)
+  } catch (error) {
+    return res.status(400).json({error: error.message});
+  }
+};
+export const getUserById = async (req: Request, res: Response) => {
+  const {id} = req.params;
+  try {
+    const user = await userService.getUser({_id: id})
     return res.json(user)
   } catch (error) {
     return res.status(400).json(error);

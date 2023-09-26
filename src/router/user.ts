@@ -19,9 +19,12 @@ import {
   removeTrades,
   retrieveEmployees,
   updateBankDetails,
+  getUserById,
 } from "../controllers";
 
 const UserRouter = Router();
+
+UserRouter.get(USER_ROUTES.GET_USER_BY_ID, getUserById);
 
 UserRouter.patch(USER_ROUTES.UPDATE_BANK_DETAILS, updateBankDetails);
 

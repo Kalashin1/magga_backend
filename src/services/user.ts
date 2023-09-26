@@ -204,7 +204,6 @@ export class UserService {
     if (bankDetails) user.bankDetails = [bankDetails, ...existingBankDetails];
     if (billingDetails) user.billingDetails = billingDetails;
     if (numberRanges) user.numberRanges = numberRanges;
-    console.log(numberRangesLocal)
     if (numberRangesLocal) user.numberRangesLocal = numberRangesLocal;
     user.token = await this.generateToken({
       email,
@@ -234,7 +233,7 @@ export class UserService {
     }
   }
 
-  async assignStandIn({ _id, email, role }: StandIn, owner_id: string) {
+  async assignStandIn({ id: _id, email, role }: StandIn, owner_id: string) {
     console.log(_id);
     const employee = await this.getUser({ _id });
     console.log(employee)
@@ -273,7 +272,7 @@ export class UserService {
       (extStd) => extStd._id.toString() !== employee_id
     );
     owner.standIn = updatedStandIns;
-    // await AppDataSource.mongoManager.save(User, owner);
+    await AppDataSource.mongoManager.save(User, owner);
     return owner;
   }
 
