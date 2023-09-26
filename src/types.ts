@@ -18,8 +18,8 @@ export interface AuthUser {
   employees: ReferrerType[]
   bankDetails: BankDetails[]|BankDetails;
   billingDetails: BillingDetails;
-  numberRanges: NumberRanges;
-  numberRangesLocal: NumberRanges;
+  numberRanges: NumberRanges[];
+  numberRangesLocal: NumberRanges[];
   trades: TradeInterface[];
 }
 
@@ -29,7 +29,7 @@ export type BankDetails = {
   bic: string;
 }
 
-export type NumberRangesType = 'DRAFT' | 'Invoice';
+export type NumberRangesType = 'DRAFT' | 'INVOICE';
 
 export type NumberRanges = {
   prefix: string;

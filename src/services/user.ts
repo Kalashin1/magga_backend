@@ -204,7 +204,8 @@ export class UserService {
     if (bankDetails) user.bankDetails = [bankDetails, ...existingBankDetails];
     if (billingDetails) user.billingDetails = billingDetails;
     if (numberRanges) user.numberRanges = numberRanges;
-    if (numberRangesLocal) user.numberRangesLocal = numberRanges;
+    console.log(numberRangesLocal)
+    if (numberRangesLocal) user.numberRangesLocal = numberRangesLocal;
     user.token = await this.generateToken({
       email,
       _id: user._id,

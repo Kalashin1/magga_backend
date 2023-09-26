@@ -164,3 +164,9 @@ Content-Type: application/json
   "owner_id": "6509e68cbf9854a46adc40d0", 
   "employee_id": "6511f319b4dc5488587e0e71"
 }
+
+### ADD TRADE
+PATCH http://localhost:8080/add-trade/6509e68cbf9854a46adc40d0/651206c44cbbe7bda66dc7c2
+
+### DELETE TRADE
+DELETE http://localhost:8080/remove-trades/6509e68cbf9854a46adc40d0/651206c44cbbe7bda66dc7c2

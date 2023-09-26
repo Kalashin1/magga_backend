@@ -73,10 +73,10 @@ export class User implements AuthUser {
   standIn: StandIn[];
 
   @Column()
-  numberRanges: NumberRanges;
+  numberRanges: NumberRanges[];
 
   @Column()
-  numberRangesLocal: NumberRanges;
+  numberRangesLocal: NumberRanges[];
 
   @Column()
   trades: TradeInterface[];
