@@ -56,6 +56,7 @@ export type ReferrerType =  {
 export type StandIn = {
   role: 'employee';
   _id: string;
+  id?: string;
   email: string;
 }
 

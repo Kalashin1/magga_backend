@@ -5,6 +5,7 @@ export enum USER_ROUTES {
   RESET_PASSWORD = '/reset-password',
   GENERATE_ACCOUNT = '/make-user',
   USER_ID = '/user/:id',
+  GET_USER_BY_ID = '/user/id/:id',
   USER_TOKEN = '/user/:token',
   COMPLETE_REGISTRATION = '/complete-registration/:generatedId',
   ASSIGN_STAND_IN = '/assign-stand-in/:owner_id',
