@@ -20,6 +20,9 @@ export class UserService {
     username,
     phone,
     role,
+    first_name,
+    last_name,
+    position,
   }: Partial<CreateUserParam>) {
     const Users = await AppDataSource.getRepository(User);
     const user = await Users.create({
@@ -28,6 +31,9 @@ export class UserService {
       role: role,
       phone: phone?.trim(),
       username: username?.trim(),
+      first_name: first_name.trim(),
+      last_name: last_name.trim(),
+      position,
     });
     user.token = this.generateToken({
       email,
@@ -233,8 +239,7 @@ export class UserService {
     }
   }
 
-  async assignStandIn({ id: _id, email, role }: StandIn, owner_id: string) {
-    console.log(_id);
+  async assignStandIn({ _id, email, role }: StandIn, owner_id: string) {
     const employee = await this.getUser({ _id });
     console.log(employee)
     if (!employee) throw Error("No employee with that Id");
@@ -322,6 +327,10 @@ export class UserService {
       where: { _id: new ObjectId(tradeId) },
     });
     const existingTrades = owner.trades ?? [];
+    const foundTrade = existingTrades.find((trade) => trade._id === tradeId);
+    if (foundTrade) {
+      return owner;
+    }
     owner.trades = [trade, ...existingTrades];
     await AppDataSource.mongoManager.save(User, owner);
     return owner;

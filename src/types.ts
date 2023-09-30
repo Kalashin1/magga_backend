@@ -14,6 +14,7 @@ export interface AuthUser {
   createdAt: string;
   updatedAt: string;
   role: UserRoleType;
+  position: string;
   avatar: string;
   employees: ReferrerType[]
   bankDetails: BankDetails[]|BankDetails;
@@ -66,4 +67,4 @@ export interface TradeInterface {
   color: TradeColorEnum;
 }
 
-export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role'>;
+export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role' | 'first_name' | 'last_name'| 'position'>;
