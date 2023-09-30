@@ -134,7 +134,7 @@ export const completeGeneratedUserId = async (req: Request, res: Response) => {
 }
 
 export const CreateUser = async (req: Request, res: Response) => {
-  const { email, password, role, type, phone, username } = req.body;
+  const { email, password, role, type, phone, username, first_name, last_name, position } = req.body;
   let user: Partial<User> = {};
   let existingUser: Partial<User> = {};
   try {
@@ -142,13 +142,16 @@ export const CreateUser = async (req: Request, res: Response) => {
     if (existingUser)
       return res
         .status(400)
-        .json({ message: `${type.toLowerCase()} already exits` });
+        .json({message: `${type.toLowerCase()} already exits`});
     user = await userService.createUser({
       email,
       password,
       role,
       phone,
       username,
+      first_name,
+      last_name,
+      position
     });
     console.log(user);
     return res.json(user);

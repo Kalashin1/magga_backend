@@ -83,4 +83,7 @@ export class User implements AuthUser {
 
   @Column()
   employees: ReferrerType[];
+
+  @Column()
+  position: string;
 }
