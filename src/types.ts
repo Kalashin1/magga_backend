@@ -22,6 +22,8 @@ export interface AuthUser {
   numberRanges: NumberRanges[];
   numberRangesLocal: NumberRanges[];
   trades: TradeInterface[];
+  documents: UserDocuments;
+  logoUrl: LogoUrl;
 }
 
 export type BankDetails = {
@@ -68,3 +70,32 @@ export interface TradeInterface {
 }
 
 export type CreateUserParam = Pick<AuthUser, 'email' | 'password' | 'username' | 'phone' | 'role' | 'first_name' | 'last_name'| 'position'>;
+
+export type UserDocuments = {
+  BusinessRegistration: string;
+  MasterScertificate: string;
+  CommercialRegisterExtract: string;
+  Craftscroll: string;
+  CertificateOfExistenceBusinessLiability: string;
+  CertificateOfExemptionAccording: string;
+  CertificateInTaxMatters: string;
+  MinimumWageProof: string; 
+  GlobalMinimumWageCertificate: string;
+  CertificareOfSafetyFromTheBG: string;
+  CertificateOfClearanceOfHealthInsuranceAndSocialSecurity: string;
+  SalesTaxIdentification: string;
+  Letterhead: string;
+  A1Certificate: string;
+  CertificateOfClearanceFromTheCollectiveSocialInsuranceFund: string
+  ProofOfOccupationalSafetyTraining: string;
+  EmployeeList: string;
+  TrainingAndInstructionCertificates: string;  
+  InstallerIDCard: string;
+  ProofOfExpertiseAccordingToTRGS: string;
+}
+
+export type LogoUrl = {
+  logo: string;
+  icon: string;
+  invoiceLogo: string
+}

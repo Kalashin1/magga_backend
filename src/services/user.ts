@@ -186,6 +186,8 @@ export class UserService {
     billingDetails,
     numberRanges,
     numberRangesLocal,
+    documents,
+    logoUrl
   }: Partial<Omit<AuthUser, "bankDetails">> & { bankDetails?: BankDetails }) {
     const user = await this.getUser({ _id });
     if (!user)
@@ -211,6 +213,8 @@ export class UserService {
     if (billingDetails) user.billingDetails = billingDetails;
     if (numberRanges) user.numberRanges = numberRanges;
     if (numberRangesLocal) user.numberRangesLocal = numberRangesLocal;
+    if (documents) user.documents = documents;
+    if (logoUrl) user.logoUrl = logoUrl;
     user.token = await this.generateToken({
       email,
       _id: user._id,
@@ -237,6 +241,19 @@ export class UserService {
         });
       }
     }
+  }
+
+  searchEmployee({email, name, role }: {
+    name: string;
+    email: string;
+    role: 'employee'
+  }) {
+    return AppDataSource.mongoManager.find(User, {
+      where: {
+        role,
+        or: [{ email }, {first_name: name.substring(0, name.indexOf(' '))}]
+      }
+    })
   }
 
   async assignStandIn({ _id, email, role }: StandIn, owner_id: string) {

@@ -24,3 +24,11 @@ export enum TRADE_ROUTES {
   TRADE = '/trade',
   GET_TRADE = '/trade/:id'
 }
+
+export enum BUCKET_ROUTES {
+  BUCKETS = '/buckets',
+  TEST_UPLOAD = '/test-upload',
+  PROFILE_PHOTO = '/profile-photo/:_id',
+  DOCUMENT = '/document/:_id/:document',
+  LOGO_URL = '/logo_url/:_id/:logoType',
+}

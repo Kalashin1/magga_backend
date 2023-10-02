@@ -26,7 +26,7 @@ export const getStandIn = async(req: Request, res: Response) => {
   }
 }
 
-export const deleteStandIn =async (req: Request, res: Response) => {
+export const deleteStandIn = async (req: Request, res: Response) => {
   const {owner_id, employee_id} = req.body;
   try {
     const payload = await userService.deleteStandIn(owner_id, employee_id);
@@ -36,7 +36,7 @@ export const deleteStandIn =async (req: Request, res: Response) => {
   }
 }
 
-export const updateBankDetails =async (req:Request, res: Response) => {
+export const updateBankDetails = async (req:Request, res: Response) => {
   const {owner_id} = req.params;
   const {existingDetails, newDetails} = req.body;
   try {
@@ -58,7 +58,7 @@ export const deleteBankDetails =async (req: Request, res: Response) => {
   }
 }
 
-export const removeTrades =async (req:Request, res: Response) => {
+export const removeTrades = async (req:Request, res: Response) => {
   const {owner_id, tradeId} = req.params;
   try {
     const payload = await userService.removeTrades(owner_id, tradeId);
@@ -89,7 +89,7 @@ export const retrieveEmployees = async (req:Request, res: Response) => {
 }
 
 
-export const deleteEmployee =async (req:Request, res: Response) => {
+export const deleteEmployee = async (req:Request, res: Response) => {
   const {ownerId, employee_id} = req.params;
   try {
     const payload = await userService.deleteEmployee(ownerId, employee_id);
@@ -99,7 +99,7 @@ export const deleteEmployee =async (req:Request, res: Response) => {
   }
 }
 
-export const addTrade =async (req:Request, res: Response) => {
+export const addTrade = async (req:Request, res: Response) => {
   const {owner_id, tradeId} = req.params;
   try {
     const payload = await userService.addTrade(owner_id, tradeId);
@@ -228,6 +228,7 @@ export const getUser = async (req: Request, res: Response) => {
     return res.status(400).json({error: error.message});
   }
 };
+
 export const getUserById = async (req: Request, res: Response) => {
   const {id} = req.params;
   try {
