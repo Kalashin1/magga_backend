@@ -2,6 +2,7 @@ import { Storage } from "@google-cloud/storage";
 import path = require("path");
 import * as crypto from "crypto";
 import { UserDocuments } from "../types";
+import * as Key from './key.json'
 require("dotenv").config();
 
 export class StorageService {
@@ -9,7 +10,8 @@ export class StorageService {
   constructor() {
     this.storage = new Storage({
       projectId: process.env.GOOGLE_PROJECT_ID,
-      keyFilename: path.join(__dirname + "../../../key.json"),
+      // keyFilename: path.join(__dirname + "../../../key.json"),
+      keyFile: "./key.json"
     });
   }
 
