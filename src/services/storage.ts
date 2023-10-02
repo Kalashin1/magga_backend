@@ -6,7 +6,7 @@ import * as Key from './key.json'
 require("dotenv").config();
 
 export class StorageService {
-  private storage: Storage;
+  storage: Storage;
   constructor() {
     this.storage = new Storage({
       projectId: process.env.GOOGLE_PROJECT_ID,
