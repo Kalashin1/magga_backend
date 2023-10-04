@@ -3,7 +3,8 @@ import {
   showAllBuckets, 
   uploadProfilePhoto, 
   uploadDocument,
-  uploadLogo
+  uploadLogo,
+  getAllEmployeesFolder
 } from "../controllers/storage";
 import { BUCKET_ROUTES } from "./routes";
 import { getTestingForm } from "../controllers/storage/getTestingForm";
@@ -23,5 +24,7 @@ router.post(BUCKET_ROUTES.PROFILE_PHOTO, upload.single('image'), uploadProfilePh
 router.post(BUCKET_ROUTES.DOCUMENT, upload.single('document'), uploadDocument);
 
 router.post(BUCKET_ROUTES.LOGO_URL, upload.single('logo'), uploadLogo);
+
+router.get(BUCKET_ROUTES.EMPLOYEES_FOLDER, getAllEmployeesFolder);
 
 export default router;

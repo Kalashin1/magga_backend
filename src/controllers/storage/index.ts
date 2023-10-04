@@ -128,3 +128,13 @@ export const uploadLogo = async (req: Request, res: Response) => {
     return res.json({ message: error.message });
   }
 };
+
+export const getAllEmployeesFolder = async (req: Request, res: Response) => {
+  const {role} = req.params;
+  try {
+    const users = await userService.getUsersFolders(role);
+    return res.json(users)
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+}

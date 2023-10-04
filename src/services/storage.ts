@@ -2,7 +2,7 @@ import { Storage } from "@google-cloud/storage";
 import path = require("path");
 import * as crypto from "crypto";
 import { UserDocuments } from "../types";
-import * as Key from './key.json'
+import * as Key from "./key.json";
 require("dotenv").config();
 
 export class StorageService {
@@ -11,7 +11,7 @@ export class StorageService {
     this.storage = new Storage({
       projectId: process.env.GOOGLE_PROJECT_ID,
       // keyFilename: path.join(__dirname + "../../../key.json"),
-      keyFile: "./key.json"
+      keyFile: "./key.json",
     });
   }
 
@@ -19,9 +19,12 @@ export class StorageService {
     const [buckets] = await this.storage.getBuckets();
     return await buckets[0].getFiles();
   }
-  
 
-  async uploadFile(bucketName: string, buffer: Buffer, destFileName: string) {
+  async uploadFile(
+    bucketName: string,
+    buffer: Buffer | string,
+    destFileName: string
+  ) {
     const file = await this.storage.bucket(bucketName).file(destFileName);
     await file.save(buffer);
     await file.makePublic();
@@ -42,7 +45,7 @@ export class StorageService {
     last_name: string;
     _id: string;
     extension: string;
-    file: Buffer;
+    file: Buffer | string;
     folder: string;
   }) {
     try {
@@ -68,5 +71,78 @@ export class StorageService {
     };
 
     return { uploadParams, key, extension };
+  }
+
+  parseFileTree(string: string) {
+    const levels = string.split("/");
+    const fileTree = {
+      name: levels[0],
+      children: [],
+    };
+    for (let i = 1; i < levels.length; i++) {
+      if (!levels[i]) continue;
+      const fileTreeNode = {
+        name: levels[i],
+        children: [],
+      };
+      fileTree.children.push(fileTreeNode);
+
+      if (i !== levels.length - 1) {
+        fileTreeNode["parent"] = fileTree.name;
+      }
+    }
+    return fileTree;
+  }
+
+  parseFileTreeWithChildren(string, children) {
+    const levels = string.split("/");
+    const fileTree = {
+      name: levels[0],
+      children: [],
+    };
+    for (let i = 1; i < levels.length; i++) {
+      if (!levels[i]) continue;
+      let fileTreeNode;
+      if (levels.length > 1) {
+        fileTreeNode = {
+          name: levels[i],
+          children: [],
+        };
+        fileTree.children.push(fileTreeNode);
+      } else {
+        fileTreeNode = {
+          name: levels[i],
+          children: children ? children.map((c) => ({ name: c, children: []})): [],
+        };
+        fileTree.children.push(fileTreeNode);
+      }
+      fileTreeNode["parent"] = fileTree.name;
+      if (i !== levels.length - 1) {
+      }
+      // const newFileTreeNode = {
+      //   name: levels[i],
+      //   children: children,
+      // };
+      // fileTreeNode.children.push(newFileTreeNode);
+      // if (children.includes(levels[i])) {
+      // }
+    }
+    return fileTree;
+  }
+
+  parseFileTrees(strings: string[], children?: string[]) {
+    const fileTrees = [];
+    let fileTree;
+    for (const string of strings) {
+      if (!string) continue;
+      if (children) {
+        fileTree = this.parseFileTreeWithChildren(string, children);
+      } else {
+        fileTree = this.parseFileTree(string);
+      }
+      fileTrees.push(fileTree);
+      console.log(fileTrees)
+    }
+    return fileTrees;
   }
 }

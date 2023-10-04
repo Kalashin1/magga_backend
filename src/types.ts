@@ -94,8 +94,31 @@ export type UserDocuments = {
   ProofOfExpertiseAccordingToTRGS: string;
 }
 
+export const userDocumentsArray = [
+  'BusinessRegistration',
+  'MasterScertificate',
+  'CommercialRegisterExtract',
+  'Craftscroll',
+  'CertificateOfExistenceBusinessLiability',
+  'CertificateOfExemptionAccording',
+  'CertificateInTaxMatters',
+  'MinimumWageProof', 
+  'GlobalMinimumWageCertificate',
+  'CertificareOfSafetyFromTheBG',
+  'CertificateOfClearanceOfHealthInsuranceAndSocialSecurity',
+  'SalesTaxIdentification',
+  'Letterhead',
+  'A1Certificate',
+  'CertificateOfClearanceFromTheCollectiveSocialInsuranceFund',
+  'ProofOfOccupationalSafetyTraining',
+  'EmployeeList',
+  'TrainingAndInstructionCertificates',  
+  'InstallerIDCard',
+  'ProofOfExpertiseAccordingToTRGS',
+]
+
 export type LogoUrl = {
   logo: string;
   icon: string;
-  invoiceLogo: string
+  invoiceLogo: string;
 }

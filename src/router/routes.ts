@@ -31,4 +31,5 @@ export enum BUCKET_ROUTES {
   PROFILE_PHOTO = '/profile-photo/:_id',
   DOCUMENT = '/document/:_id/:document',
   LOGO_URL = '/logo_url/:_id/:logoType',
+  EMPLOYEES_FOLDER = '/users/folders/:role',
 }

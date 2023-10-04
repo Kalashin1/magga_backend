@@ -6,14 +6,19 @@ import {
   CreateUserParam,
   ReferrerType,
   StandIn,
+  userDocumentsArray,
 } from "../types";
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
 import { ObjectId } from "mongodb";
 import { Trades } from "../entity/trades";
+import { StorageService } from "./storage";
 require("dotenv").config();
+
+const storageService: StorageService = new StorageService();
 export class UserService {
+
   async createUser({
     email,
     password,
@@ -411,6 +416,30 @@ export class UserService {
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
     return {employee, owner};
+  }
+
+  async getUsersFolders(role: string) {
+    const users = await AppDataSource.mongoManager.find(User, {
+      where: {
+        role,
+      }
+    })
+    const urls = (users.map((emp) => {
+      if (emp.first_name && emp.last_name) {
+        return this.generateFolders(emp.first_name, emp.last_name, emp._id.toString())
+      }
+    }))
+
+    const folders = storageService.parseFileTrees(urls)
+    return folders;
+  }
+
+  generateFolders(first_name: string, last_name: string, id: string){
+    let str =  `${first_name}-${last_name}-${id}/profile-photo/`;
+    userDocumentsArray.forEach((userDocArr) => {
+      str +=`${userDocArr}/`
+    })
+    return str;
   }
 
   hashPassword(password: string) {
