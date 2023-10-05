@@ -95,6 +95,8 @@ export type UserDocuments = {
 }
 
 export const userDocumentsArray = [
+  'Executors',
+  'Employees',
   'BusinessRegistration',
   'MasterScertificate',
   'CommercialRegisterExtract',

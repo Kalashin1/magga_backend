@@ -132,9 +132,18 @@ export const uploadLogo = async (req: Request, res: Response) => {
 export const getAllEmployeesFolder = async (req: Request, res: Response) => {
   const {role} = req.params;
   try {
-    const users = await userService.getUsersFolders(role);
+    const users = await storage.getUsersFolders(role);
     return res.json(users)
   } catch (error) {
     return res.json({ message: error.message });
+  }
+}
+export const getFiles = async (req: Request, res: Response) => {
+  const {prefix} = req.body;
+  try {
+    const files = await storage.listAllFiles(process.env.BUCKET_NAME, prefix);
+    return res.json(files);
+  } catch (error) {
+    return res.json({message: error.message})
   }
 }

@@ -1,8 +1,10 @@
 import { Storage } from "@google-cloud/storage";
 import path = require("path");
 import * as crypto from "crypto";
-import { UserDocuments } from "../types";
+import { UserDocuments, userDocumentsArray } from "../types";
 import * as Key from "./key.json";
+import { AppDataSource } from "../data-source";
+import { User } from "../entity/User";
 require("dotenv").config();
 
 export class StorageService {
@@ -10,8 +12,8 @@ export class StorageService {
   constructor() {
     this.storage = new Storage({
       projectId: process.env.GOOGLE_PROJECT_ID,
-      // keyFilename: path.join(__dirname + "../../../key.json"),
-      keyFile: "./key.json",
+      keyFilename: path.join(__dirname + "../../../key.json"),
+      // keyFile: "./key.json",
     });
   }
 
@@ -119,13 +121,6 @@ export class StorageService {
       fileTreeNode["parent"] = fileTree.name;
       if (i !== levels.length - 1) {
       }
-      // const newFileTreeNode = {
-      //   name: levels[i],
-      //   children: children,
-      // };
-      // fileTreeNode.children.push(newFileTreeNode);
-      // if (children.includes(levels[i])) {
-      // }
     }
     return fileTree;
   }
@@ -144,5 +139,37 @@ export class StorageService {
       console.log(fileTrees)
     }
     return fileTrees;
+  }
+
+  async getUsersFolders(role: string) {
+    const users = await AppDataSource.mongoManager.find(User, {
+      where: {
+        role,
+      }
+    })
+    const urls = (users.map((emp) => {
+      if (emp.first_name && emp.last_name) {
+        return this.generateFolders(emp.first_name, emp.last_name, emp._id.toString())
+      }
+    }))
+
+    const folders = this.parseFileTrees(urls)
+    return folders;
+  }
+
+  generateFolders(first_name: string, last_name: string, id: string){
+    let str =  `${first_name}-${last_name}-${id}/profile-photo/`;
+    userDocumentsArray.forEach((userDocArr) => {
+      str +=`${userDocArr}/`
+    })
+    return str;
+  }
+
+  async listAllFiles(bucket: string, prefix: string) {
+    const files = await this.storage.bucket(bucket).getFiles({
+      prefix,
+    });
+    console.log(files)
+    return files[0].map((file) => (file.metadata))
   }
 }

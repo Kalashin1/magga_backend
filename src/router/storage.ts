@@ -4,7 +4,8 @@ import {
   uploadProfilePhoto, 
   uploadDocument,
   uploadLogo,
-  getAllEmployeesFolder
+  getAllEmployeesFolder,
+  getFiles
 } from "../controllers/storage";
 import { BUCKET_ROUTES } from "./routes";
 import { getTestingForm } from "../controllers/storage/getTestingForm";
@@ -26,5 +27,7 @@ router.post(BUCKET_ROUTES.DOCUMENT, upload.single('document'), uploadDocument);
 router.post(BUCKET_ROUTES.LOGO_URL, upload.single('logo'), uploadLogo);
 
 router.get(BUCKET_ROUTES.EMPLOYEES_FOLDER, getAllEmployeesFolder);
+
+router.patch(BUCKET_ROUTES.GET_FILE, getFiles);
 
 export default router;
