@@ -140,6 +140,7 @@ export const getAllEmployeesFolder = async (req: Request, res: Response) => {
 }
 export const getFiles = async (req: Request, res: Response) => {
   const {prefix} = req.body;
+  console.log(req.body)
   try {
     const files = await storage.listAllFiles(process.env.BUCKET_NAME, prefix);
     return res.json(files);

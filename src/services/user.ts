@@ -53,28 +53,29 @@ export class UserService {
   }
 
   async login({ email, phone, username, password }: Partial<CreateUserParam>) {
-    const Users = await AppDataSource.getMongoRepository(User);
+    const appSource = await AppDataSource.mongoManager;
     console.log(email);
     let user: Partial<User>;
-
+    console.log('email', email)
     if (email) {
-      user = await Users.findOne({
+      user = await appSource.findOne(User, {
         where: {
-          email: { $eq: email },
+          email: email.toLocaleLowerCase(),
         },
       });
-      if (!user) throw new AuthError("login-password", "incorrect email");
+      console.log(user)
+      if (!user) throw new AuthError("login-email", "incorrect email");
     } else if (phone) {
-      user = await Users.findOne({
+      user = await appSource.findOne(User, {
         where: {
-          phone: { $eq: phone },
+          phone: phone,
         },
       });
-      if (!user) throw new AuthError("login-password", "incorrect phone");
+      if (!user) throw new AuthError("login-email", "incorrect phone");
     } else {
-      user = await Users.findOne({
+      user = await appSource.findOne(User, {
         where: {
-          username: { $eq: username },
+          username,
         },
       });
       if (!user) throw new AuthError("login-password", "incorrect username");
@@ -91,7 +92,7 @@ export class UserService {
       phone: user.phone,
       username: user.username,
     });
-    await Users.save(user);
+    await appSource.save(User, user);
     console.log(user);
     return user;
   }
@@ -418,29 +419,7 @@ export class UserService {
     return {employee, owner};
   }
 
-  async getUsersFolders(role: string) {
-    const users = await AppDataSource.mongoManager.find(User, {
-      where: {
-        role,
-      }
-    })
-    const urls = (users.map((emp) => {
-      if (emp.first_name && emp.last_name) {
-        return this.generateFolders(emp.first_name, emp.last_name, emp._id.toString())
-      }
-    }))
-
-    const folders = storageService.parseFileTrees(urls)
-    return folders;
-  }
-
-  generateFolders(first_name: string, last_name: string, id: string){
-    let str =  `${first_name}-${last_name}-${id}/profile-photo/`;
-    userDocumentsArray.forEach((userDocArr) => {
-      str +=`${userDocArr}/`
-    })
-    return str;
-  }
+  
 
   hashPassword(password: string) {
     return bcrypt.hash(password, 12);

@@ -166,6 +166,7 @@ export class StorageService {
   }
 
   async listAllFiles(bucket: string, prefix: string) {
+    console.log(prefix)
     const files = await this.storage.bucket(bucket).getFiles({
       prefix,
     });
