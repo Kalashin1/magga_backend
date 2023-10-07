@@ -1,9 +1,11 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
+import { StorageService } from "../services/storage";
 import { UserService } from "../services/user";
 import { Request, Response } from "express";
 
 const userService = new UserService();
+const storageService = new StorageService();
 
 export const assignStandIn = async (req: Request, res: Response) => {
   const {owner_id} = req.params;
@@ -88,11 +90,41 @@ export const retrieveEmployees = async (req:Request, res: Response) => {
   }
 }
 
-
 export const deleteEmployee = async (req:Request, res: Response) => {
   const {ownerId, employee_id} = req.params;
   try {
     const payload = await userService.deleteEmployee(ownerId, employee_id);
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({error: error.message})
+  }
+}
+
+export const assingExecutor = async (req: Request, res: Response) => {
+  const {owner_id, executor_id} = req.params;
+  try {
+    const payload = await userService.assingExecutor(owner_id, executor_id);
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({error: error.message});
+  }
+}
+
+export const retrieveExecutors = async (req:Request, res: Response) => {
+  const {owner_id} = req.params;
+  try {
+    const payload = await userService.retrieveExecutors(owner_id);
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({error: error.message})
+  }
+}
+
+
+export const deleteExecutor = async (req:Request, res: Response) => {
+  const {ownerId, executor_id} = req.params;
+  try {
+    const payload = await userService.deleteExecutor(ownerId, executor_id);
     return res.json(payload);
   } catch (error) {
     return res.status(400).json({error: error.message})
@@ -110,11 +142,13 @@ export const addTrade = async (req:Request, res: Response) => {
 }
 
 export const generateUserId = async (req: Request, res: Response) => {
-  const { role, referrer } = req.body
-  console.log(role)
-  const user = await userService.generateId(role, referrer);
-  console.log(user)
-  return res.json(user);
+  const {role, referrer} = req.body
+  try {
+    const user = await userService.generateId(role, referrer);
+    return res.json(user);
+  } catch (error) {
+    return res.status(400).json({error: error.message})
+  }
 }
 
 export const completeGeneratedUserId = async (req: Request, res: Response) => {
@@ -125,6 +159,7 @@ export const completeGeneratedUserId = async (req: Request, res: Response) => {
     if (!generatedAccount) throw Error('Invalid token');
     const hashedPassword = await userService.hashPassword(password);
     const user = await userService.updateProfile({ email, _id: generatedId });
+    await storageService
     user.password = hashedPassword;
     await AppDataSource.mongoManager.save(User, user);
     return res.json({ user })
@@ -238,6 +273,27 @@ export const getUserById = async (req: Request, res: Response) => {
     return res.status(400).json(error);
   }
 };
+
+export const assignOwner = async (req: Request, res: Response) => {
+  const {owner_id, subAccount_id} = req.params;
+  console.log("owner_id", owner_id)
+  console.log("subAccount_id", subAccount_id);
+  try {
+    const payload = await userService.completeRegistration(owner_id, subAccount_id);
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({message: error.message})
+  }
+}
+
+export const getContractors = async (req: Request, res: Response) => {
+  try {
+    const contractors = await userService.getContractors();
+    return res.json(contractors);
+  } catch (error) {
+    return res.status(400).json({ message: error.message })
+  }
+}
 
 export default {
   CreateUser,

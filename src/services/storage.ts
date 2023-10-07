@@ -4,7 +4,8 @@ import * as crypto from "crypto";
 import { UserDocuments, userDocumentsArray } from "../types";
 import * as Key from "./key.json";
 import { AppDataSource } from "../data-source";
-import { User } from "../entity/User";
+import { User, UserRoleType } from "../entity/User";
+import { ObjectId } from "mongodb";
 require("dotenv").config();
 
 export class StorageService {
@@ -157,12 +158,16 @@ export class StorageService {
     return folders;
   }
 
-  generateFolders(first_name: string, last_name: string, id: string){
+  generateFolders(first_name: string, last_name: string, id: string, role?: UserRoleType){
     let str =  `${first_name}-${last_name}-${id}/profile-photo/`;
-    userDocumentsArray.forEach((userDocArr) => {
-      str +=`${userDocArr}/`
-    })
-    return str;
+    if (role && role === 'employee') {
+      return str
+    } else {
+      userDocumentsArray.forEach((userDocArr) => {
+        str +=`${userDocArr}/`
+      })
+      return str;
+    }
   }
 
   async listAllFiles(bucket: string, prefix: string) {
@@ -172,5 +177,35 @@ export class StorageService {
     });
     console.log(files)
     return files[0].map((file) => (file.metadata))
+  }
+
+  async getEmployeesFolder(owner_id: string) {
+    const owner = await AppDataSource.mongoManager.findOneBy(User, {
+      _id: new ObjectId(owner_id)
+    });
+
+    const employees = owner.employees || []
+    const employeesFolderStrings = employees.map((emp) => this.generateFolders(
+      emp.first_name,
+      emp.last_name,
+      emp.id.toString(),
+      "employee"
+    ));
+    const folders = this.parseFileTrees(employeesFolderStrings);
+    return folders;
+  }
+  
+  async getExecutorsFolders(owner_id: string) {
+    const owner = await AppDataSource.mongoManager.findOneBy(User, {
+      _id: new ObjectId(owner_id)
+    });
+    const executors = owner.executors || [];
+    const executorsFolderStrings = executors.map((emp) => this.generateFolders(
+      emp.first_name,
+      emp.last_name,
+      emp.id.toString()
+    ));
+    const folders = this.parseFileTrees(executorsFolderStrings);
+    return folders;
   }
 }

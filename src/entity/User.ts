@@ -7,7 +7,7 @@ import {
   ObjectId,
 } from "typeorm";
 import { randomUUID } from "crypto";
-import { BankDetails, BillingDetails, ReferrerType, StandIn, AuthUser, NumberRanges, TradeInterface, UserDocuments, LogoUrl } from "../types";
+import { BankDetails, BillingDetails, ReferrerType, StandIn, AuthUser, NumberRanges, TradeInterface, UserDocuments, LogoUrl, Address } from "../types";
 export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
 
 @Entity()
@@ -92,4 +92,10 @@ export class User implements AuthUser {
 
   @Column()
   logoUrl: LogoUrl;
+
+  @Column()
+  executors: ReferrerType[];
+
+  @Column()
+  address: Address;
 }

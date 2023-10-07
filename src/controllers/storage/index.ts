@@ -148,3 +148,24 @@ export const getFiles = async (req: Request, res: Response) => {
     return res.json({message: error.message})
   }
 }
+
+
+export const getEmployeesFolder =async (req:Request, res: Response) => {
+  const {owner_id} = req.params;
+  try {
+    const employeesFolder = await storage.getEmployeesFolder(owner_id);
+    return res.json(employeesFolder);
+  } catch (error) {
+    return res.json({message: error.message})
+  }
+}
+
+export const getExecutorsFolder =async (req:Request, res: Response) => {
+  const {owner_id} = req.params;
+  try {
+    const executorsFolder = await storage.getExecutorsFolders(owner_id);
+    return res.json(executorsFolder);
+  } catch (error) {
+    return res.json({message: error.message})
+  }
+}

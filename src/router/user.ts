@@ -20,9 +20,21 @@ import {
   retrieveEmployees,
   updateBankDetails,
   getUserById,
+  assingExecutor,
+  retrieveExecutors,
+  deleteExecutor,
+  assignOwner,
+  getContractors
 } from "../controllers";
+import { User } from "../entity/User";
 
 const UserRouter = Router();
+
+UserRouter.patch(USER_ROUTES.ASSIGN_EXECUTOR, assingExecutor)
+
+UserRouter.get(USER_ROUTES.RETRIEVE_EXECUTOR, retrieveExecutors);
+
+UserRouter.delete(USER_ROUTES.DELETE_EXECUTOR, deleteExecutor);
 
 UserRouter.get(USER_ROUTES.GET_USER_BY_ID, getUserById);
 
@@ -61,6 +73,10 @@ UserRouter.patch(USER_ROUTES.USER_ID, updateProfile);
 UserRouter.get(USER_ROUTES.USER_TOKEN, getUser);
 
 UserRouter.post(USER_ROUTES.COMPLETE_REGISTRATION, completeGeneratedUserId);
+
+UserRouter.patch(USER_ROUTES.ASSIGN_OWNER, assignOwner);
+
+UserRouter.get(USER_ROUTES.GET_CONTRACTORS, getContractors)
 
 
 export default UserRouter;
