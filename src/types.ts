@@ -17,6 +17,7 @@ export interface AuthUser {
   position: string;
   avatar: string;
   employees: ReferrerType[]
+  executors: ReferrerType[];
   bankDetails: BankDetails[]|BankDetails;
   billingDetails: BillingDetails;
   numberRanges: NumberRanges[];
@@ -24,6 +25,13 @@ export interface AuthUser {
   trades: TradeInterface[];
   documents: UserDocuments;
   logoUrl: LogoUrl;
+  address: Address;
+}
+
+export type Address = {
+  street: string;
+  zip: string;
+  province: string
 }
 
 export type BankDetails = {
@@ -113,7 +121,6 @@ export const userDocumentsArray = [
   'A1Certificate',
   'CertificateOfClearanceFromTheCollectiveSocialInsuranceFund',
   'ProofOfOccupationalSafetyTraining',
-  'EmployeeList',
   'TrainingAndInstructionCertificates',  
   'InstallerIDCard',
   'ProofOfExpertiseAccordingToTRGS',

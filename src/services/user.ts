@@ -193,7 +193,8 @@ export class UserService {
     numberRanges,
     numberRangesLocal,
     documents,
-    logoUrl
+    logoUrl,
+    address
   }: Partial<Omit<AuthUser, "bankDetails">> & { bankDetails?: BankDetails }) {
     const user = await this.getUser({ _id });
     if (!user)
@@ -202,16 +203,9 @@ export class UserService {
     user.last_name = last_name;
     const existingEmail = await this.getUser({ email });
     console.log("bank details", bankDetails);
-    if (existingEmail)
-      throw new AuthError("email-update-error", "email already exists");
+    
     if (email) user.email = email;
-    const existingPhone = await this.getUser({ phone });
-    if (existingPhone)
-      throw new AuthError("phone-update-error", "phone number already exists");
     if (phone) user.phone = phone;
-    const existingUsername = username && (await this.getUser({ username }));
-    if (existingUsername)
-      throw new AuthError("username-update-error", "username already exists");
     if (username) user.username = username;
     if (avatar) user.avatar = avatar;
     const existingBankDetails = user.bankDetails ?? [];
@@ -221,6 +215,7 @@ export class UserService {
     if (numberRangesLocal) user.numberRangesLocal = numberRangesLocal;
     if (documents) user.documents = documents;
     if (logoUrl) user.logoUrl = logoUrl;
+    if (address) user.address = address;
     user.token = await this.generateToken({
       email,
       _id: user._id,
@@ -419,7 +414,89 @@ export class UserService {
     return {employee, owner};
   }
 
-  
+  async assingExecutor(owner_id: string, executor_id: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    const executor = await this.getUser({ _id: executor_id });
+    if (owner.role !== 'contractor')
+      throw Error("only a contracor can create an executor");
+    const existingExecutor = owner.executors ?? [];
+    existingExecutor.push({
+      id: executor._id,
+      email: executor.email,
+      role: executor.role,
+      avatar: executor.avatar,
+      first_name: executor.first_name,
+      last_name: executor.last_name,
+      phone: executor.phone,
+      username: executor.username
+    });
+    const executorCreator: ReferrerType = {
+      email: owner.email,
+      id: owner._id,
+      role: owner.role,
+      avatar: owner.avatar,
+      first_name: owner.first_name,
+      last_name: owner.last_name,
+      phone: owner.phone,
+      username: owner.username
+    };
+    owner.executors = existingExecutor;
+    executor.creator = executorCreator;
+    await AppDataSource.mongoManager.save(User, executor);
+    await AppDataSource.mongoManager.save(User, owner);
+    return { executor, owner };
+  }
+
+  async retrieveExecutors(owner_id: string) {
+    const owner = await this.getUser({ _id: owner_id });
+    const employee = owner.executors;
+    return employee;
+  }
+
+  async deleteExecutor(ownerId: string, executor_id: string) {
+    const owner = await this.getUser({ _id: ownerId });
+    const executor = await this.getUser({ _id: executor_id });
+    executor.creator = null;
+    let existingExecutors = owner.executors;
+    let filteredExecutors = existingExecutors.filter((executor) => executor.id != executor_id);
+    owner.executors = filteredExecutors;
+    await AppDataSource.mongoManager.save(User, executor);
+    await AppDataSource.mongoManager.save(User, owner);
+    return {executor, owner};
+  }
+
+  async completeRegistration(owner_id: string, subAccount_id: string){
+    const owner = await this.getUser({ _id: owner_id });
+    const subAccount = await this.getUser({ _id: subAccount_id });
+    if (!owner || !subAccount) throw Error('owner account or sub-account does not exist.');
+    subAccount.creator = {
+      first_name: owner.first_name,
+      last_name: owner.last_name,
+      email: owner.email,
+      role: owner.role,
+      phone: owner.phone,
+      username: owner.username,
+      avatar: owner.avatar,
+      id: owner._id,
+    }
+    if (subAccount.role === 'executor') {
+      const executors = owner.executors ?? [];
+      owner.executors = [subAccount, ...executors];
+    }
+    await AppDataSource.mongoManager.save(User, subAccount);
+    await AppDataSource.mongoManager.save(User, owner);
+    return {subAccount, owner}
+  }
+
+  async getContractors() {
+    const Users = AppDataSource.getMongoRepository(User);
+    const contractors = await Users.find({
+      where:{
+        role: 'contractor'
+      }
+    }) 
+    return contractors;
+  }
 
   hashPassword(password: string) {
     return bcrypt.hash(password, 12);

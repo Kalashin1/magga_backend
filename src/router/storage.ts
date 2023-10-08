@@ -5,7 +5,9 @@ import {
   uploadDocument,
   uploadLogo,
   getAllEmployeesFolder,
-  getFiles
+  getFiles,
+  getEmployeesFolder,
+  getExecutorsFolder
 } from "../controllers/storage";
 import { BUCKET_ROUTES } from "./routes";
 import { getTestingForm } from "../controllers/storage/getTestingForm";
@@ -15,6 +17,10 @@ import * as multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() })
 
 const router = Router();
+
+router.get(BUCKET_ROUTES.OWNER_EMPLOYEE, getEmployeesFolder)
+
+router.get(BUCKET_ROUTES.OWNER_EXECUTORS, getExecutorsFolder)
 
 router.get(BUCKET_ROUTES.BUCKETS, showAllBuckets);
 
