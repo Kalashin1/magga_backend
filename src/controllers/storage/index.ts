@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
-import { Document, LogoUrl, UserDocuments } from "../../types";
+import { Document, LogoUrl } from "../../types";
 
 const storage = new StorageService();
 const userService = new UserService();

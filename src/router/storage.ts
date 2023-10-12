@@ -37,6 +37,6 @@ router.get(BUCKET_ROUTES.EMPLOYEES_FOLDER, getAllEmployeesFolder);
 
 router.patch(BUCKET_ROUTES.GET_FILE, getFiles);
 
-router.post(BUCKET_ROUTES.UPLOAD_PROJECT, uploadProject);
+router.post(BUCKET_ROUTES.UPLOAD_PROJECT, upload.single('project'), uploadProject);
 
 export default router;
