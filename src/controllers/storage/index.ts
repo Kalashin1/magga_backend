@@ -147,6 +147,38 @@ export const uploadLogo = async (req: Request, res: Response) => {
   }
 };
 
+export const uploadProject = async (req: Request, res: Response) => {
+  const {id} = req.params
+  const imageMimeTypes = [
+    "application/pdf", 
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'
+  ];
+
+  const mimeType = imageMimeTypes.find((mT) => mT === req.file.mimetype);
+
+  if (req.file && !mimeType) {
+    res.writeHead(400, { "Content-Type": "text/plain" });
+    return res.json({ message: "Only images allowed!" });
+  }
+
+  try {
+    const {
+      extension,
+      uploadParams: { Body },
+    } = storage.boostrapFile(req.file);
+    const response = await storage.uploadProject(
+      id,
+      Body,
+      'projects',
+      extension
+    )
+    return res.json(response)
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+};
+
 export const getAllEmployeesFolder = async (req: Request, res: Response) => {
   const { role } = req.params;
   try {

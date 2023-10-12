@@ -62,6 +62,23 @@ export class StorageService {
       throw error;
     }
   }
+  async uploadProject(
+    project_id: string,
+    file: Buffer | string,
+    folder: string,
+    extension: string
+  ) {
+    try {
+      const response = await this.uploadFile(
+        process.env.BUCKET_NAME,
+        file,
+        `${folder}/${project_id}/${project_id}.${extension}`
+      );
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
 
   boostrapFile(file) {
     const key = crypto.randomBytes(32).toString("hex");
@@ -115,7 +132,9 @@ export class StorageService {
       } else {
         fileTreeNode = {
           name: levels[i],
-          children: children ? children.map((c) => ({ name: c, children: []})): [],
+          children: children
+            ? children.map((c) => ({ name: c, children: [] }))
+            : [],
         };
         fileTree.children.push(fileTreeNode);
       }
@@ -137,7 +156,7 @@ export class StorageService {
         fileTree = this.parseFileTree(string);
       }
       fileTrees.push(fileTree);
-      console.log(fileTrees)
+      console.log(fileTrees);
     }
     return fileTrees;
   }
@@ -146,65 +165,74 @@ export class StorageService {
     const users = await AppDataSource.mongoManager.find(User, {
       where: {
         role,
-      }
-    })
-    const urls = (users.map((emp) => {
+      },
+    });
+    const urls = users.map((emp) => {
       if (emp.first_name && emp.last_name) {
-        return this.generateFolders(emp.first_name, emp.last_name, emp._id.toString())
+        return this.generateFolders(
+          emp.first_name,
+          emp.last_name,
+          emp._id.toString()
+        );
       }
-    }))
+    });
 
-    const folders = this.parseFileTrees(urls)
+    const folders = this.parseFileTrees(urls);
     return folders;
   }
 
-  generateFolders(first_name: string, last_name: string, id: string, role?: UserRoleType){
-    let str =  `${first_name}-${last_name}-${id}/profile-photo/`;
-    if (role && role === 'employee') {
-      return str
+  generateFolders(
+    first_name: string,
+    last_name: string,
+    id: string,
+    role?: UserRoleType
+  ) {
+    let str = `${first_name}-${last_name}-${id}/profile-photo/`;
+    if (role && role === "employee") {
+      return str;
     } else {
       userDocumentsArray.forEach((userDocArr) => {
-        str +=`${userDocArr}/`
-      })
+        str += `${userDocArr}/`;
+      });
       return str;
     }
   }
 
   async listAllFiles(bucket: string, prefix: string) {
-    console.log(prefix)
+    console.log(prefix);
     const files = await this.storage.bucket(bucket).getFiles({
       prefix,
     });
-    console.log(files)
-    return files[0].map((file) => (file.metadata))
+    console.log(files);
+    return files[0].map((file) => file.metadata);
   }
 
   async getEmployeesFolder(owner_id: string) {
     const owner = await AppDataSource.mongoManager.findOneBy(User, {
-      _id: new ObjectId(owner_id)
+      _id: new ObjectId(owner_id),
     });
 
-    const employees = owner.employees || []
-    const employeesFolderStrings = employees.map((emp) => this.generateFolders(
-      emp.first_name,
-      emp.last_name,
-      emp.id.toString(),
-      "employee"
-    ));
+    const employees = owner.employees || [];
+    const employeesFolderStrings = employees.map((emp) =>
+      this.generateFolders(
+        emp.first_name,
+        emp.last_name,
+        emp.id.toString(),
+        "employee"
+      )
+    );
     const folders = this.parseFileTrees(employeesFolderStrings);
     return folders;
   }
-  
+
   async getExecutorsFolders(owner_id: string) {
     const owner = await AppDataSource.mongoManager.findOneBy(User, {
-      _id: new ObjectId(owner_id)
+      _id: new ObjectId(owner_id),
     });
     const executors = owner.executors || [];
-    const executorsFolderStrings = executors.map((emp) => this.generateFolders(
-      emp.first_name,
-      emp.last_name,
-      emp.id.toString()
-    ));
+    const executorsFolderStrings = executors.map((emp) =>
+      this.generateFolders(emp.first_name, emp.last_name, emp.id.toString())
+    );
     const folders = this.parseFileTrees(executorsFolderStrings);
     return folders;
   }

@@ -41,4 +41,5 @@ export enum BUCKET_ROUTES {
   GET_FILE = '/files/',
   OWNER_EMPLOYEE = '/owner/employee/:owner_id',
   OWNER_EXECUTORS = '/owner/executor/:owner_id',
+  UPLOAD_PROJECT = '/project/upload/:id'
 }
