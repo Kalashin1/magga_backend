@@ -22,7 +22,8 @@ export enum USER_ROUTES {
   RETRIEVE_EXECUTOR = '/executor/:owner_id',
   UPDATE_BANK_DETAILS = '/update-bank/:owner_id',
   ASSIGN_OWNER = '/assign/owner/:owner_id/:subAccount_id',
-  GET_CONTRACTORS = '/contractors'
+  GET_CONTRACTORS = '/contractors',
+  UPDATE_DOCUMENT = '/update/document/'
 }
 
 export enum TRADE_ROUTES {

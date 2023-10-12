@@ -23,9 +23,11 @@ export interface AuthUser {
   numberRanges: NumberRanges[];
   numberRangesLocal: NumberRanges[];
   trades: TradeInterface[];
-  documents: UserDocuments;
+  documents: Document[];
   logoUrl: LogoUrl;
   address: Address;
+  socialSecurityNumber: string;
+  taxIdNumber: string;
 }
 
 export type Address = {
@@ -102,6 +104,15 @@ export type UserDocuments = {
   ProofOfExpertiseAccordingToTRGS: string;
 }
 
+export type Document = {
+  name: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: string;
+}
+
+export type DocumentStatus = "UPLOADED" | "APPROVED" | "REJECTED" | "EXPIRED"
+
 export const userDocumentsArray = [
   'Executors',
   'Employees',
@@ -124,7 +135,7 @@ export const userDocumentsArray = [
   'TrainingAndInstructionCertificates',  
   'InstallerIDCard',
   'ProofOfExpertiseAccordingToTRGS',
-]
+] as const
 
 export type LogoUrl = {
   logo: string;
