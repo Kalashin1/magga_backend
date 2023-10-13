@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
-import { Document, LogoUrl } from "../../types";
+import { Document, LogoUrl, userDocumentsArray } from "../../types";
 
 const storage = new StorageService();
 const userService = new UserService();
@@ -51,8 +51,13 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
   }
 };
 
+type DocumentUploadParamMap = {
+  document: typeof userDocumentsArray[number],
+  _id: string;
+}
+
 export const uploadDocument = async (req: Request, res: Response) => {
-  const { _id, document } = req.params;
+  const { _id, document } = req.params as DocumentUploadParamMap;
 
   const mimeTypes = [
     "image/png",
@@ -167,13 +172,14 @@ export const uploadProject = async (req: Request, res: Response) => {
       extension,
       uploadParams: { Body },
     } = storage.boostrapFile(req.file);
+    // storage.parsePDF(Body);
     const response = await storage.uploadProject(
       id,
       Body,
       'projects',
       extension
     )
-    return res.json(response)
+    return res.json({status: 'uploaded'})
   } catch (error) {
     return res.json({ message: error.message });
   }

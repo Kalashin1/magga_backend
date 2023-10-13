@@ -6,6 +6,7 @@ import * as Key from "./key.json";
 import { AppDataSource } from "../data-source";
 import { User, UserRoleType } from "../entity/User";
 import { ObjectId } from "mongodb";
+// import * as PDFParser from "pdf2json";
 require("dotenv").config();
 
 export class StorageService {
@@ -159,6 +160,16 @@ export class StorageService {
       console.log(fileTrees);
     }
     return fileTrees;
+  }
+
+  async parsePDF(pdf:Buffer){
+    //@ts-ignore
+    // const pdfParser = new PDFParser();
+    // pdfParser.parseBuffer(pdf);
+    // pdfParser.on("pdfParser_dataError", errData => console.error(errData) );
+    // pdfParser.on("readable", meta => console.log("PDF Metadata", meta) );
+    // pdfParser.on("data", page => console.log(page ? "One page paged" : "All pages parsed", page));
+    // pdfParser.on("error", err => console.error("Parser Error", err));
   }
 
   async getUsersFolders(role: string) {
