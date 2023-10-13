@@ -295,6 +295,16 @@ export const getContractors = async (req: Request, res: Response) => {
   }
 }
 
+export const updateDocument = async (req: Request, res: Response) => {
+  const {status, name, _id } = req.body;
+  try {
+    const payload = await userService.updateDocument(_id, status, name);
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({ message: error.message })
+  }
+}
+
 export default {
   CreateUser,
   loginUser,

@@ -4,6 +4,8 @@ import {
   AuthUser,
   BankDetails,
   CreateUserParam,
+  Document,
+  DocumentStatus,
   ReferrerType,
   StandIn,
   userDocumentsArray,
@@ -103,7 +105,7 @@ export class UserService {
     if (role === "contractor" && user.role !== "admin") {
       throw Error("Invalid operation, you do not have the privillages");
     }
-    if (role === "executor" && (user.role !== "admin" || "contractor")) {
+    if (role === "executor" && (user.role !== "contractor")) {
       throw Error("Invalid operation, you do not have the privillages");
     }
 
@@ -194,14 +196,15 @@ export class UserService {
     numberRangesLocal,
     documents,
     logoUrl,
-    address
+    address,
+    socialSecurityNumber,
+    taxIdNumber
   }: Partial<Omit<AuthUser, "bankDetails">> & { bankDetails?: BankDetails }) {
     const user = await this.getUser({ _id });
     if (!user)
       throw new AuthError("user-profile-update", "no user with that id");
     user.first_name = first_name;
     user.last_name = last_name;
-    const existingEmail = await this.getUser({ email });
     console.log("bank details", bankDetails);
     
     if (email) user.email = email;
@@ -216,6 +219,9 @@ export class UserService {
     if (documents) user.documents = documents;
     if (logoUrl) user.logoUrl = logoUrl;
     if (address) user.address = address;
+    if (socialSecurityNumber) user.socialSecurityNumber = socialSecurityNumber
+    if (taxIdNumber) user.taxIdNumber = taxIdNumber;
+
     user.token = await this.generateToken({
       email,
       _id: user._id,
@@ -255,6 +261,23 @@ export class UserService {
         or: [{ email }, {first_name: name.substring(0, name.indexOf(' '))}]
       }
     })
+  }
+
+  async updateDocument(
+    _id: string, 
+    status: DocumentStatus,
+    name: typeof userDocumentsArray[number]
+  ){
+    const user = await this.getUser({ _id });
+    const documents = user.documents;
+    if (!documents) throw Error('this user has not uploaded any document');
+    const document = documents.find((doc) => doc.name === name);
+    if (!document) throw Error('No document with that Id');
+    document.status = status;
+    const filteredDocuments = documents.filter((doc) => doc.name !== name)
+    user.documents = [document, ...filteredDocuments]
+    const updatedUser = await AppDataSource.mongoManager.save(User, user);
+    return {user, document}
   }
 
   async assignStandIn({ _id, email, role }: StandIn, owner_id: string) {

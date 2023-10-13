@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
-import { LogoUrl, UserDocuments } from "../../types";
+import { Document, LogoUrl, userDocumentsArray } from "../../types";
 
 const storage = new StorageService();
 const userService = new UserService();
@@ -51,10 +51,21 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
   }
 };
 
-export const uploadDocument = async (req: Request, res: Response) => {
-  const { _id, document } = req.params;
+type DocumentUploadParamMap = {
+  document: typeof userDocumentsArray[number],
+  _id: string;
+}
 
-  const mimeTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg", "application/pdf"];
+export const uploadDocument = async (req: Request, res: Response) => {
+  const { _id, document } = req.params as DocumentUploadParamMap;
+
+  const mimeTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/svg",
+    "application/pdf",
+  ];
 
   const mimeType = mimeTypes.find((mT) => mT === req.file.mimetype);
 
@@ -77,9 +88,21 @@ export const uploadDocument = async (req: Request, res: Response) => {
       folder: document,
       file: Body,
     });
-    const userDocuments = user.documents ?? {} as UserDocuments;
+    const userDocuments = user.documents ?? ([] as Document[]);
+    const _document = {
+      name: document,
+      fileUrl: response.publicUrl,
+      uploadedAt: new Date().getTime().toString(),
+      status: "UPLOADED",
+    };
     userDocuments[`${document}`] = response.publicUrl;
-    await userService.updateProfile({ documents: userDocuments, _id });
+    const filteredDocuments = userDocuments.filter(
+      (doc) => doc.name !== document
+    );
+    await userService.updateProfile({
+      documents: [_document, ...filteredDocuments],
+      _id: user._id
+    });
     user.documents = userDocuments;
     return res.json({ ...response, user });
   } catch (error) {
@@ -129,43 +152,76 @@ export const uploadLogo = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllEmployeesFolder = async (req: Request, res: Response) => {
-  const {role} = req.params;
+export const uploadProject = async (req: Request, res: Response) => {
+  const {id} = req.params
+  const imageMimeTypes = [
+    "application/pdf", 
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'
+  ];
+
+  const mimeType = imageMimeTypes.find((mT) => mT === req.file.mimetype);
+
+  if (req.file && !mimeType) {
+    res.writeHead(400, { "Content-Type": "text/plain" });
+    return res.json({ message: "Only images allowed!" });
+  }
+
   try {
-    const users = await storage.getUsersFolders(role);
-    return res.json(users)
+    const {
+      extension,
+      uploadParams: { Body },
+    } = storage.boostrapFile(req.file);
+    // storage.parsePDF(Body);
+    const response = await storage.uploadProject(
+      id,
+      Body,
+      'projects',
+      extension
+    )
+    return res.json({status: 'uploaded'})
   } catch (error) {
     return res.json({ message: error.message });
   }
-}
+};
+
+export const getAllEmployeesFolder = async (req: Request, res: Response) => {
+  const { role } = req.params;
+  try {
+    const users = await storage.getUsersFolders(role);
+    return res.json(users);
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+};
+
 export const getFiles = async (req: Request, res: Response) => {
-  const {prefix} = req.body;
-  console.log(req.body)
+  const { prefix } = req.body;
+  console.log(req.body);
   try {
     const files = await storage.listAllFiles(process.env.BUCKET_NAME, prefix);
     return res.json(files);
   } catch (error) {
-    return res.json({message: error.message})
+    return res.json({ message: error.message });
   }
-}
+};
 
-
-export const getEmployeesFolder =async (req:Request, res: Response) => {
-  const {owner_id} = req.params;
+export const getEmployeesFolder = async (req: Request, res: Response) => {
+  const { owner_id } = req.params;
   try {
     const employeesFolder = await storage.getEmployeesFolder(owner_id);
     return res.json(employeesFolder);
   } catch (error) {
-    return res.json({message: error.message})
+    return res.json({ message: error.message });
   }
-}
+};
 
-export const getExecutorsFolder =async (req:Request, res: Response) => {
-  const {owner_id} = req.params;
+export const getExecutorsFolder = async (req: Request, res: Response) => {
+  const { owner_id } = req.params;
   try {
     const executorsFolder = await storage.getExecutorsFolders(owner_id);
     return res.json(executorsFolder);
   } catch (error) {
-    return res.json({message: error.message})
+    return res.json({ message: error.message });
   }
-}
+};

@@ -24,13 +24,16 @@ import {
   retrieveExecutors,
   deleteExecutor,
   assignOwner,
-  getContractors
+  getContractors,
+  updateDocument
 } from "../controllers";
 import { User } from "../entity/User";
 
 const UserRouter = Router();
 
-UserRouter.patch(USER_ROUTES.ASSIGN_EXECUTOR, assingExecutor)
+UserRouter.patch(USER_ROUTES.ASSIGN_EXECUTOR, assingExecutor);
+
+UserRouter.patch(USER_ROUTES.UPDATE_DOCUMENT, updateDocument);
 
 UserRouter.get(USER_ROUTES.RETRIEVE_EXECUTOR, retrieveExecutors);
 
