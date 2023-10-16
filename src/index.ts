@@ -1,11 +1,14 @@
-import * as express from 'express';
+import express from 'express';
 require('dotenv').config();
 import { AppDataSource } from './data-source';
 import UserRouter from './router/user';
-import TradeRoutes from './router/trades';
-import StorageRoutes from './router/storage';
-import * as cors from 'cors';
-import * as multer from 'multer';
+import TradeRouter from './router/trades';
+import StorageRouter from './router/storage';
+import NotificationRouter from './router/notifications'
+import ContractRouter from './router/contracts'; 
+import PositionRouter from './router/positions';
+import cors from 'cors';
+import multer from 'multer';
 
 const PORT = process.env.PORT;
 const app = express();
@@ -15,8 +18,11 @@ const upload = multer({ storage: multer.memoryStorage() })
 app.use(cors());
 app.use(express.json())
 app.use(UserRouter);
-app.use(TradeRoutes);
-app.use(StorageRoutes);
+app.use(TradeRouter);
+app.use(StorageRouter);
+app.use(NotificationRouter);
+app.use(ContractRouter);
+app.use(PositionRouter);
 
 app.get('/', (req:express.Request, res: express.Response) => {
   res.end('Hello World')

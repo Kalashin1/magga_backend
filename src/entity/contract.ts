@@ -1,23 +1,23 @@
 import { Entity, ObjectId, ObjectIdColumn, Column, CreateDateColumn } from "typeorm";
-import {Contract as ContractInterface, Position, ReferrerType } from '../types'
+import {Contract as ContractInterface, Position } from '../types'
 import { Trades } from "./trades";
 
 @Entity()
-export class Contract implements ContractInterface {
+export class Contract {
   @ObjectIdColumn()
   _id: ObjectId
 
   @Column()
-  contractor: ReferrerType;
+  contractor: string
 
   @Column()
-  executor: ReferrerType;
+  executor: string
 
   @CreateDateColumn()
   generatedAt: string;
   
   @Column()
-  trade: Trades;
+  trade:string;
 
   @Column()
   status: string;

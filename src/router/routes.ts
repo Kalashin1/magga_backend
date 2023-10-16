@@ -28,7 +28,8 @@ export enum USER_ROUTES {
 
 export enum TRADE_ROUTES {
   TRADE = '/trade',
-  GET_TRADE = '/trade/:id'
+  GET_TRADE = '/trade/:id',
+
 }
 
 export enum BUCKET_ROUTES {
@@ -42,4 +43,21 @@ export enum BUCKET_ROUTES {
   OWNER_EMPLOYEE = '/owner/employee/:owner_id',
   OWNER_EXECUTORS = '/owner/executor/:owner_id',
   UPLOAD_PROJECT = '/project/upload/:id'
+}
+
+export enum NOTIFICATION_ROUTES {
+  NOTIFICATION = '/notification/id/:id',
+  USER_NOTIFICATION = '/notification/user/:user_id',
+}
+
+export enum CONTRACT_ROUTES {
+  CONTRACT = '/contract',
+  ACCEPT_CONTRACT = '/contract/accept',
+  REJECT_CONTRACT = '/contract/reject',
+  TERMINATE_CONTRACT = '/contract/terminate'
+}
+
+export enum POSITION_ROUTES {
+  POSITION_BY_TRADE = '/position/trade/:trade_id',
+  POSITION_BY_ID = '/position/id/:id'
 }

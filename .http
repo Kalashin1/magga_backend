@@ -170,3 +170,6 @@ PATCH http://localhost:8080/add-trade/6509e68cbf9854a46adc40d0/651206c44cbbe7bda
 
 ### DELETE TRADE
 DELETE http://localhost:8080/remove-trades/6509e68cbf9854a46adc40d0/651206c44cbbe7bda66dc7c2
+
+### NOTIFICATION
+GET http://localhost:8080/notification/user/650d6002aa58b8332aac7f02

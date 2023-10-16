@@ -15,10 +15,11 @@ import * as jwt from "jsonwebtoken";
 import { AuthError } from "../errors/auth";
 import { ObjectId } from "mongodb";
 import { Trades } from "../entity/trades";
-import { StorageService } from "./storage";
+import { NotificationService } from "./notifications";
 require("dotenv").config();
 
-const storageService: StorageService = new StorageService();
+const notificationService = new NotificationService()
+
 export class UserService {
 
   async createUser({
@@ -56,16 +57,13 @@ export class UserService {
 
   async login({ email, phone, username, password }: Partial<CreateUserParam>) {
     const appSource = await AppDataSource.mongoManager;
-    console.log(email);
     let user: Partial<User>;
-    console.log('email', email)
     if (email) {
       user = await appSource.findOne(User, {
         where: {
           email: email.toLocaleLowerCase(),
         },
       });
-      console.log(user)
       if (!user) throw new AuthError("login-email", "incorrect email");
     } else if (phone) {
       user = await appSource.findOne(User, {
@@ -95,7 +93,11 @@ export class UserService {
       username: user.username,
     });
     await appSource.save(User, user);
-    console.log(user);
+    await notificationService.create(
+      'Recent login to your dashboard',
+      'Auth',
+      user._id.toString(),
+    )
     return user;
   }
 
@@ -119,6 +121,11 @@ export class UserService {
       role,
     });
     await AppDataSource.mongoManager.save(User, subUser);
+    await notificationService.create(
+      'You have successfully created a new sub user account',
+      'Sub Account Creation',
+      user._id.toString()
+    )
     return subUser;
   }
 
@@ -157,6 +164,11 @@ export class UserService {
       user.resetPasswordToken = token;
       await AppDataSource.mongoManager.save(User, user);
     }
+    await notificationService.create(
+      'You recently requested a password reset token',
+      'Auth',
+      user._id.toString()
+    )
     return token;
   }
 
@@ -169,7 +181,6 @@ export class UserService {
     Pick<User, "email" | "phone" | "password" | "resetPasswordToken">
   >) {
     const Users = await AppDataSource.getMongoRepository(User);
-    console.table({ resetPasswordToken, password, email, phone });
     const user = await Users.findOne({
       where: {
         resetPasswordToken,
@@ -179,6 +190,11 @@ export class UserService {
     if (!user) throw new AuthError("update-password", "no user with that code");
     user.password = await this.hashPassword(password);
     await Users.save(user);
+    await notificationService.create(
+      'Your password has been updated successfully',
+      'Auth',
+      user._id.toString()
+    )
     return user;
   }
 
@@ -228,6 +244,11 @@ export class UserService {
       role: user.role,
     });
     await AppDataSource.mongoManager.save(user);
+    await notificationService.create(
+      'Your profile has been updated successfully!',
+      'Profile-Update',
+      user._id.toString()
+    )
     return user;
   }
 
@@ -277,6 +298,11 @@ export class UserService {
     const filteredDocuments = documents.filter((doc) => doc.name !== name)
     user.documents = [document, ...filteredDocuments]
     const updatedUser = await AppDataSource.mongoManager.save(User, user);
+    await notificationService.create(
+      'Your document has been updated successfully!',
+      'Profile-Update',
+      user._id.toString()
+    )
     return {user, document}
   }
 
@@ -301,6 +327,16 @@ export class UserService {
       ...existingStandIns,
     ];
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'Stand in has been assigned successfully',
+      'Stand-In',
+      owner._id.toString()
+    )
+    await notificationService.create(
+      'You have been assigned as a stand-in',
+      'Stand-In',
+      _id
+    )
     return employee;
   }
 
@@ -319,6 +355,16 @@ export class UserService {
     );
     owner.standIn = updatedStandIns;
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'Stand in has been deleted successfully',
+      'Stand-In',
+      owner._id.toString()
+    )
+    await notificationService.create(
+      'You have been unassigned as a stand-in',
+      'Stand-In',
+      employee_id
+    )
     return owner;
   }
 
@@ -341,6 +387,11 @@ export class UserService {
     updatedBankDetails.push(foundBankDetails);
     owner.bankDetails = updatedBankDetails;
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'Bank Details updated successfully',
+      'Profile-Update',
+      owner._id.toString()
+    )
     return owner;
   }
 
@@ -357,6 +408,11 @@ export class UserService {
     owner.bankDetails = updateBankDetails;
     console.log(updateBankDetails);
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'Bank details deleted successfully!',
+      'Profile-Update',
+      owner_id,
+    )
     return owner.bankDetails;
   }
 
@@ -374,6 +430,11 @@ export class UserService {
     }
     owner.trades = [trade, ...existingTrades];
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'Trade assinged successfully!',
+      'Trade',
+      owner._id.toString()
+    )
     return owner;
   }
 
@@ -383,6 +444,11 @@ export class UserService {
     const filteredTrade = existingTrades.filter((exT) => exT._id.toString() !== tradeId);
     owner.trades = filteredTrade;
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'Trade has been deleted successfully',
+      'Trade',
+      owner_id
+    )
     return owner;
   }
 
@@ -416,6 +482,11 @@ export class UserService {
     employee.creator = employeeCreator;
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'You have created a new employee account successfully',
+      'Employee',
+      employee_id
+    )
     return { employee, owner };
   }
 
@@ -434,6 +505,11 @@ export class UserService {
     owner.employees = filteredEmployees;
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      `You have successfully deleted employee ${employee.first_name} ${employee.last_name}`,
+      'Employee',
+      employee_id
+    )
     return {employee, owner};
   }
 
@@ -467,6 +543,11 @@ export class UserService {
     executor.creator = executorCreator;
     await AppDataSource.mongoManager.save(User, executor);
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'You have created a new executor account',
+      'Executor',
+      owner._id.toString()
+    )
     return { executor, owner };
   }
 
@@ -485,6 +566,12 @@ export class UserService {
     owner.executors = filteredExecutors;
     await AppDataSource.mongoManager.save(User, executor);
     await AppDataSource.mongoManager.save(User, owner);
+    await AppDataSource.mongoManager.softDelete(User, executor)
+    await notificationService.create(
+      `You have succcesfully deleted executor ${executor._id} account`,
+      'Executor',
+      owner._id.toString()
+    )
     return {executor, owner};
   }
 
@@ -508,6 +595,11 @@ export class UserService {
     }
     await AppDataSource.mongoManager.save(User, subAccount);
     await AppDataSource.mongoManager.save(User, owner);
+    await notificationService.create(
+      'You have successfully completed your profile',
+      'Profile-Update',
+      subAccount._id.toString()
+    )
     return {subAccount, owner}
   }
 
@@ -551,3 +643,7 @@ export class UserService {
     return Math.floor(Math.random() * 9999999);
   }
 }
+
+const userService = new UserService();
+
+export default userService;

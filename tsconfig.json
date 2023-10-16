@@ -5,8 +5,8 @@
          "es6"
       ],
       "target": "ES6",
-      "module": "commonjs",
-      "moduleResolution": "node",
+      "module": "nodenext",
+      "moduleResolution": "nodenext",
       "outDir": "./build",
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
