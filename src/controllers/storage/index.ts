@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
 import { Document, LogoUrl, userDocumentsArray } from "../../types";
+import { NotificationService } from "../../services/notifications";
 
 const storage = new StorageService();
 const userService = new UserService();
+const notificationService = new NotificationService()
 
 export const showAllBuckets = async (req: Request, res: Response) => {
   try {
@@ -44,6 +46,11 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       });
       await userService.updateProfile({ avatar: response.publicUrl, _id });
       user.avatar = response.publicUrl;
+      await notificationService.create(
+        'Your profile picture has been updated succesfully!',
+        'Profile-Update',
+        user._id.toString()
+      )
       return res.json({ ...response, user });
     } catch (error) {
       return res.status(400).json(error);
@@ -104,6 +111,11 @@ export const uploadDocument = async (req: Request, res: Response) => {
       _id: user._id
     });
     user.documents = userDocuments;
+    await notificationService.create(
+      `Your document ${document} has been updated succesfully!`,
+      'Profile-Update',
+      user._id.toString()
+    )
     return res.json({ ...response, user });
   } catch (error) {
     return res.status(400).json({ error: error.message });
@@ -146,6 +158,11 @@ export const uploadLogo = async (req: Request, res: Response) => {
       logoUrl: existingLogoURL,
     });
     user.logoUrl = existingLogoURL as LogoUrl;
+    await notificationService.create(
+      'Your logo has been updated succesfully!',
+      'Profile-Update',
+      user._id.toString()
+    )
     return res.json(user);
   } catch (error) {
     return res.json({ message: error.message });

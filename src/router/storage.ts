@@ -12,7 +12,7 @@ import {
 } from "../controllers/storage";
 import { BUCKET_ROUTES } from "./routes";
 import { getTestingForm } from "../controllers/storage/getTestingForm";
-import * as multer from 'multer';
+import multer from 'multer';
 
 
 const upload = multer({ storage: multer.memoryStorage() })

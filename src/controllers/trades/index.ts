@@ -4,10 +4,20 @@ import {TradeService} from '../../services/trades';
 const tradeService = new TradeService()
 
 export const createTrade = async (req: Request, res: Response) => {
-  const {name, color} = req.body;
+  const {name, color, positions} = req.body;
   try {
-    const trade = await tradeService.createNewTradeService(name, color)
+    const trade = await tradeService.createNewTradeService(name, color, positions)
     return res.json(trade);
+  } catch (error) {
+    return res.status(400).json(error)
+  }
+}
+
+export const addTrades = async (req: Request, res: Response) => {
+  const {positions} = req.body;
+  try {
+    const positionsArray = await tradeService.addPositions(positions)
+    return res.json(positionsArray);
   } catch (error) {
     return res.status(400).json(error)
   }

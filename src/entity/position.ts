@@ -1,4 +1,4 @@
-import { Entity, Column, ObjectId, ObjectIdColumn, CreateDateColumn } from "typeorm";
+import { Entity, Column, ObjectId, ObjectIdColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
 import { Position as PositionInterface } from "../types";
 
 @Entity()
@@ -21,8 +21,14 @@ export class Position implements PositionInterface {
   price: number;
 
   @Column()
-  trade: ObjectId;
+  trade: string;
 
   @Column()
   external_id: string
+
+  @CreateDateColumn()
+  createdAt?: string;
+
+  @UpdateDateColumn()
+  updatedAt: string;
 }
