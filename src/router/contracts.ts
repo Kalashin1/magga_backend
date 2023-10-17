@@ -4,6 +4,7 @@ import {
   acceptContract,
   createContract,
   getContract,
+  getContractById,
   rejectContract,
   terminateContract,
 } from "../controllers/contract";
@@ -11,8 +12,9 @@ import {
 const router = Router();
 
 router.post(CONTRACT_ROUTES.CONTRACT, createContract);
-router.get(CONTRACT_ROUTES.CONTRACT, getContract);
+router.patch(CONTRACT_ROUTES.CONTRACT, getContract);
 router.post(CONTRACT_ROUTES.ACCEPT_CONTRACT, acceptContract);
+router.get(CONTRACT_ROUTES.CONTRACT_BY_ID, getContractById);
 router.post(CONTRACT_ROUTES.REJECT_CONTRACT, rejectContract);
 router.post(CONTRACT_ROUTES.TERMINATE_CONTRACT, terminateContract);
 

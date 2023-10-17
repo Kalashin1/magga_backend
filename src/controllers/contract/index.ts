@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { ContractService } from "../../services/contract";
+import tradeService from "../../services/trades";
+import userService from "../../services/user";
 
 const contractService = new ContractService();
 
@@ -14,7 +16,21 @@ export const createContract = async (req: Request, res: Response) => {
     });
     return res.json(contract);
   } catch (error) {
-    return res.json({ message: error.message });
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+
+export const getContractById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const contract = await contractService.getContractById(id);
+    const trade = await tradeService.retrieveTrade(contract.trade);
+    const executor = await userService.getUser({ _id: contract.executor });
+    const contractor = await userService.getUser({ _id: contract.contractor });
+    return res.json({ ...contract, trade, executor, contractor });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 };
 
@@ -28,7 +44,7 @@ export const getContract = async (req: Request, res: Response) => {
     });
     return res.json(contract);
   } catch (error) {
-    return res.json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 };
 

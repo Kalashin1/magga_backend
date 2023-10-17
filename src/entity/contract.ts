@@ -1,5 +1,5 @@
 import { Entity, ObjectId, ObjectIdColumn, Column, CreateDateColumn } from "typeorm";
-import {Contract as ContractInterface, Position } from '../types'
+import {CONTRACT_STATUS, Contract as ContractInterface, Position } from '../types'
 import { Trades } from "./trades";
 
 @Entity()
@@ -19,8 +19,10 @@ export class Contract {
   @Column()
   trade:string;
 
-  @Column()
-  status: string;
+  @Column({
+    default: CONTRACT_STATUS[0]
+  })
+  status: typeof CONTRACT_STATUS[number];
 
   @Column()
   terminatedAt: number;

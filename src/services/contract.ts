@@ -48,13 +48,12 @@ export class ContractService implements ContractFunctions {
       )
     );
     const trade = await tradeService.retrieveTrade(trade_id);
-    const contract = AppDataSource.mongoManager.create(Contract, {
-      executor: executor._id.toString(),
-      contractor: contractor._id.toString(),
-      positions,
-      status: CONTRACT_STATUS[0],
-      trade: trade._id.toString(),
-    });
+    const contract = AppDataSource.mongoManager.create(Contract, {});
+    contract.executor = executor_id;
+    contract.contractor = contractor_id;
+    contract.positions = positions;
+    contract.trade = trade._id.toString();
+    contract.status = CONTRACT_STATUS[0];
     await this.saveContract(contract);
     await notificationService.create(
       `You have successfully generated and sent contract to ${executor.first_name}`,
@@ -75,16 +74,33 @@ export class ContractService implements ContractFunctions {
         _id: new ObjectId(contract_id),
       },
     });
+   
   }
 
   async getContract({ contractor, executor, status }: GetContractParams) {
-    return await AppDataSource.mongoManager.findOne(Contract, {
+    console.log("contractor", contractor);
+    console.log("executor", executor);
+    const _contracts = await AppDataSource.mongoManager.find(Contract, {
       where: {
         contractor,
         executor,
-        status: status ?? CONTRACT_STATUS[1],
+        status: {
+          $not: CONTRACT_STATUS[3]
+        },
+        and: { status: { $not: CONTRACT_STATUS[2]}}
       },
     });
+    const contracts = await Promise.all(
+      _contracts.map(async (contract) => {
+        const trade = await tradeService.retrieveTrade(contract.trade);
+        const executor = await userService.getUser({ _id: contract.executor });
+        const contractor = await userService.getUser({
+          _id: contract.executor,
+        });
+        return { ...contract, trade, executor, contractor };
+      })
+    );
+    return contracts;
   }
 
   async accept({
@@ -105,7 +121,6 @@ export class ContractService implements ContractFunctions {
     const contractor = await userService.getUser({
       _id: contract.contractor,
     });
-    // TODO: Get executor and contractor and notify them of acceptance
     await notificationService.create(
       `${executor.first_name} has accepted the contract`,
       "Contract",
@@ -148,19 +163,19 @@ export class ContractService implements ContractFunctions {
     if (!executor) throw Error("executor not found");
     const contract = await this.getContractById(contract_id);
     const contractor = await userService.getUser({
-      _id: contract.contractor
-    })
+      _id: contract.contractor,
+    });
     // TODO: Get executor and contractor and notify them of acceptance
     await notificationService.create(
       `${executor.first_name} has rejected the contract`,
-      'Contract',
+      "Contract",
       contractor._id.toString()
-    )
+    );
     await notificationService.create(
       `You have rejected the contract sent by ${contractor.first_name}`,
-      'Contract',
+      "Contract",
       executor_id
-    )
+    );
     contract.status = CONTRACT_STATUS[2];
     await this.saveContract(contract);
     return contract;

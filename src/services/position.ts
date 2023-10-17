@@ -3,8 +3,11 @@ import { Position } from "../entity/position";
 import { AppDataSource } from "../data-source";
 import { ObjectId } from "mongodb";
 import tradeService from "./trades";
+import userService from "./user";
+import XLSX from "xlsx";
 
-export type CreatePositionParams = Omit<PositionType, 'trade'> & Partial<{ trade: string}> 
+export type CreatePositionParams = Omit<PositionType, "trade"> &
+  Partial<{ trade: string }>;
 
 export class PositionService {
   async createPosition({
@@ -12,16 +15,22 @@ export class PositionService {
     crowd,
     trade,
     price,
-    shortText
-  }:CreatePositionParams) {
+    shortText,
+    longText,
+    contractor: contractor_id,
+  }: CreatePositionParams) {
     const _trade = tradeService.retrieveTrade(trade);
     if (!_trade) throw Error("No trade with that Id");
+    const contractor = await userService.getUser({ _id: contractor_id });
+    if (!contractor) throw Error("Contractor with that id does not exist!");
     const position = AppDataSource.mongoManager.create(Position, {
       price,
       crowd,
       trade,
       shortText,
       external_id,
+      longText,
+      contractor: await contractor._id.toString(),
     });
     await AppDataSource.mongoManager.save(Position, position);
     return position;
@@ -30,7 +39,9 @@ export class PositionService {
   async getPositions(trade_id: string) {
     const positions = await AppDataSource.mongoManager.find(Position, {
       where: {
-        trade: new ObjectId(trade_id),
+        trade: {
+          $eq: trade_id
+        },
       },
     });
     return positions;
@@ -43,5 +54,43 @@ export class PositionService {
       },
     });
     return position;
+  }
+
+  async assignContractorId(contractor_id: string, positions: PositionType[]) {
+    const contractor = await userService.getUser({ _id: contractor_id });
+    return positions.map(
+      (position) => ({ ...position, contractor: contractor._id.toString()})
+    );
+  }
+
+  async parsePositionFile(
+    contractor: string,
+    file: Buffer
+  ): Promise<Partial<Position[]>> {
+    const workbook = XLSX.read(file);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet) as Partial<PositionType[]>;
+    const _positionParams = await this.assignContractorId(contractor, data);
+    const positions = await Promise.all(
+      _positionParams.map(
+        async (position) => await this.createPosition(position)
+      )
+    );
+    return positions
+  }
+
+  async deletePositions(
+    trade_id:  string,
+    contractor_id: string
+  ) {
+    const Positions = AppDataSource.getMongoRepository(Position);
+    return await Positions.deleteMany({
+      trade: {
+        $eq: trade_id
+      },
+      contractor: {
+        $eq: contractor_id
+      }
+    })
   }
 }

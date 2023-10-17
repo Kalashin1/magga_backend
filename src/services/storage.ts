@@ -248,3 +248,8 @@ export class StorageService {
     return folders;
   }
 }
+
+
+const storageService = new StorageService();
+
+export default storageService;

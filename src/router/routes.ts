@@ -54,10 +54,13 @@ export enum CONTRACT_ROUTES {
   CONTRACT = '/contract',
   ACCEPT_CONTRACT = '/contract/accept',
   REJECT_CONTRACT = '/contract/reject',
+  CONTRACT_BY_ID = '/contract/id/:id',
   TERMINATE_CONTRACT = '/contract/terminate'
 }
 
 export enum POSITION_ROUTES {
   POSITION_BY_TRADE = '/position/trade/:trade_id',
-  POSITION_BY_ID = '/position/id/:id'
+  POSITION_BY_ID = '/position/id/:id',
+  POSITION_BY_FILES = '/position/upload/:user_id',
+  DELETE_POSTION = '/position'
 }

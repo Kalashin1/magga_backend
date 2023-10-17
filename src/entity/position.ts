@@ -1,4 +1,11 @@
-import { Entity, Column, ObjectId, ObjectIdColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { 
+  Entity, 
+  Column, 
+  ObjectId, 
+  ObjectIdColumn, 
+  CreateDateColumn, 
+  UpdateDateColumn 
+} from "typeorm";
 import { Position as PositionInterface } from "../types";
 
 @Entity()
@@ -31,4 +38,10 @@ export class Position implements PositionInterface {
 
   @UpdateDateColumn()
   updatedAt: string;
+
+  @Column()
+  contractor?: string;
+
+  @Column()
+  longText: string;
 }
