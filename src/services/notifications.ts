@@ -59,6 +59,9 @@ export class NotificationService {
         isRead: {
           $eq: false
         }
+      },
+      order: {
+        createdAt: 'DESC'
       }
     })
   }

@@ -201,9 +201,11 @@ export interface Position {
   units: "pcs";
   price: number;
   trade: string;
+  longText: string;
   external_id: string;
   createdAt?: string;
-  updatedAt: string
+  updatedAt: string;
+  contractor?: string;
 }
 
 
