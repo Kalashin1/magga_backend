@@ -74,20 +74,18 @@ export class ContractService implements ContractFunctions {
         _id: new ObjectId(contract_id),
       },
     });
-   
   }
 
   async getContract({ contractor, executor, status }: GetContractParams) {
     console.log("contractor", contractor);
-    console.log("executor", executor);
+    console.log("status", status);
     const _contracts = await AppDataSource.mongoManager.find(Contract, {
       where: {
         contractor,
         executor,
         status: {
-          $not: CONTRACT_STATUS[3]
+          $eq: status,
         },
-        and: { status: { $not: CONTRACT_STATUS[2]}}
       },
     });
     const contracts = await Promise.all(
