@@ -194,19 +194,6 @@ export interface ContractFunctions {
   reject: (executorId: string, contractId) => Promise<Contract>;
 };
 
-export interface Position {
-  _id: ObjectId;
-  shortText: string;
-  crowd: string;
-  units: "pcs";
-  price: number;
-  trade: string;
-  longText: string;
-  external_id: string;
-  createdAt?: string;
-  updatedAt: string;
-  contractor?: string;
-}
 
 
 export interface INotification {
@@ -218,23 +205,57 @@ export interface INotification {
   createdAt: string;
   updatedAt: string;
 }
+export interface Position {
+  _id: ObjectId;
+  shortText: string;
+  crowd: string;
+  units: "pcs"|"psh"| "Stk";
+  price: number;
+  trade: string;
+  longText: string;
+  external_id: string;
+  createdAt?: string;
+  updatedAt: string;
+  contractor?: string;
+}
 
 export type ProjectPositions = {
   status: string;
   billed: boolean;
   comment: string;
+  section: string;
+  documentURL: string;
+  position: number;
 } & Position
 
 export interface IProject {
   _id: ObjectId;
   contractor: string;
-  executor: string;
+  executors: string[];
   status: String;
   positions: ProjectPositions[];
+  shortagePositions: ProjectPositions[];
+  extraPositions: ProjectPositions[];
   createdAt: string;
   dueDate: string;
   updatedAt: string;
   externalId: string;
+  building: Building;
+  rentalStatus: string;
+  construction_manager: string;
+  phone: string;
+  construction_started: string;
+  sheduleByTrade: TradeSchedule[];
+}
+
+type TradeSchedule = {
+  string: string;
+}
+
+export type Building = {
+  address: Address;
+  description: string;
+  notes: string;
 }
 
 export interface Product {

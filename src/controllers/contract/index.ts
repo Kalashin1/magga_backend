@@ -51,11 +51,14 @@ export const getContract = async (req: Request, res: Response) => {
 export const acceptContract = async (req: Request, res: Response) => {
   const { executor_id, contract_id } = req.body;
   try {
-    const response = await contractService.accept({
+    const contract = await contractService.accept({
       executor_id,
       contract_id,
     });
-    return res.json(response);
+    const trade = await tradeService.retrieveTrade(contract.trade);
+    const executor = await userService.getUser({ _id: contract.executor });
+    const contractor = await userService.getUser({ _id: contract.contractor });
+    return res.json({ ...contract, trade, executor, contractor });
   } catch (error) {
     return res.json({ message: error.message });
   }
@@ -64,8 +67,11 @@ export const acceptContract = async (req: Request, res: Response) => {
 export const rejectContract = async (req: Request, res: Response) => {
   const { executor_id, contract_id } = req.body;
   try {
-    const response = await contractService.reject(executor_id, contract_id);
-    return res.json(response);
+    const contract = await contractService.reject(executor_id, contract_id);
+    const trade = await tradeService.retrieveTrade(contract.trade);
+    const executor = await userService.getUser({ _id: contract.executor });
+    const contractor = await userService.getUser({ _id: contract.contractor });
+    return res.json({ ...contract, trade, executor, contractor });
   } catch (error) {
     return res.json({ message: error.message });
   }
@@ -75,8 +81,11 @@ export const rejectContract = async (req: Request, res: Response) => {
 export const terminateContract = async (req: Request, res: Response) => {
   const { contract_id } = req.body;
   try {
-    const response = await contractService.terminateContract(contract_id);
-    return res.json(response);
+    const contract = await contractService.terminateContract(contract_id);
+    const trade = await tradeService.retrieveTrade(contract.trade);
+    const executor = await userService.getUser({ _id: contract.executor });
+    const contractor = await userService.getUser({ _id: contract.contractor });
+    return res.json({ ...contract, trade, executor, contractor });
   } catch (error) {
     return res.json({ message: error.message });
   }

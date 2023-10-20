@@ -16,6 +16,7 @@ export class PositionService {
     trade,
     price,
     shortText,
+    units,
     longText,
     contractor: contractor_id,
   }: CreatePositionParams) {
@@ -30,6 +31,7 @@ export class PositionService {
       shortText,
       external_id,
       longText,
+      units,
       contractor: await contractor._id.toString(),
     });
     await AppDataSource.mongoManager.save(Position, position);
