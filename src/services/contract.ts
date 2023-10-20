@@ -165,7 +165,6 @@ export class ContractService implements ContractFunctions {
     const contractor = await userService.getUser({
       _id: contract.contractor,
     });
-    // TODO: Get executor and contractor and notify them of acceptance
     await notificationService.create(
       `${executor.first_name} has rejected the contract`,
       "Contract",

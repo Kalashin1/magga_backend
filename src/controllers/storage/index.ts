@@ -3,6 +3,7 @@ import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
 import { Document, LogoUrl, userDocumentsArray } from "../../types";
 import { NotificationService } from "../../services/notifications";
+import projectService from "../../services/projects";
 
 const storage = new StorageService();
 const userService = new UserService();
@@ -190,13 +191,14 @@ export const uploadProject = async (req: Request, res: Response) => {
       uploadParams: { Body },
     } = storage.boostrapFile(req.file);
     // storage.parsePDF(Body);
-    const response = await storage.uploadProject(
-      id,
-      Body,
-      'projects',
-      extension
-    )
-    return res.json({status: 'uploaded'})
+    // const response = await storage.uploadProject(
+    //   id,
+    //   Body,
+    //   'projects',
+    //   extension
+    // )
+    const response = await projectService.parsePDF(Body)
+    return res.json(response)
   } catch (error) {
     return res.json({ message: error.message });
   }

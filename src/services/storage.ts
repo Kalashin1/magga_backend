@@ -6,6 +6,7 @@ import * as Key from "./key.json";
 import { AppDataSource } from "../data-source";
 import { User, UserRoleType } from "../entity/User";
 import { ObjectId } from "mongodb";
+import projectService from "./projects";
 // import * as PDFParser from "pdf2json";
 require("dotenv").config();
 
@@ -70,11 +71,13 @@ export class StorageService {
     extension: string
   ) {
     try {
-      const response = await this.uploadFile(
-        process.env.BUCKET_NAME,
-        file,
-        `${folder}/${project_id}/${project_id}.${extension}`
-      );
+      // const response = await this.uploadFile(
+      //   process.env.BUCKET_NAME,
+      //   file,
+      //   `${folder}/${project_id}/${project_id}.${extension}`
+      // );
+      const response = await projectService.parsePDF(file as Buffer);
+      console.log(response)
       return response;
     } catch (error) {
       throw error;
@@ -160,16 +163,6 @@ export class StorageService {
       console.log(fileTrees);
     }
     return fileTrees;
-  }
-
-  async parsePDF(pdf:Buffer){
-    //@ts-ignore
-    // const pdfParser = new PDFParser();
-    // pdfParser.parseBuffer(pdf);
-    // pdfParser.on("pdfParser_dataError", errData => console.error(errData) );
-    // pdfParser.on("readable", meta => console.log("PDF Metadata", meta) );
-    // pdfParser.on("data", page => console.log(page ? "One page paged" : "All pages parsed", page));
-    // pdfParser.on("error", err => console.error("Parser Error", err));
   }
 
   async getUsersFolders(role: string) {

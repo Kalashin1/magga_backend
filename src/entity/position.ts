@@ -19,10 +19,8 @@ export class Position implements PositionInterface {
   @Column()
   crowd: string;
 
-  @Column({
-    default: "pcs"
-  })
-  units: "pcs";
+  @Column()
+  units: "pcs"|"psh"|"Stk";
 
   @Column()
   price: number;
