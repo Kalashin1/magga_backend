@@ -197,7 +197,7 @@ export const uploadProject = async (req: Request, res: Response) => {
     //   'projects',
     //   extension
     // )
-    const response = await projectService.parsePDF(Body)
+    const response = await projectService.parsePDF(Body, id)
     return res.json(response)
   } catch (error) {
     return res.json({ message: error.message });

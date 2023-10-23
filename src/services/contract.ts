@@ -116,6 +116,7 @@ export class ContractService implements ContractFunctions {
     if (!contract) throw Error("Contract not found");
     contract.executor = executor._id.toString();
     contract.status = CONTRACT_STATUS[1];
+    contract.acceptedAt = new Date().getTime()
     const contractor = await userService.getUser({
       _id: contract.contractor,
     });
@@ -152,6 +153,7 @@ export class ContractService implements ContractFunctions {
       executor._id.toString()
     );
     contract.status = CONTRACT_STATUS[3];
+    contract.terminatedAt = new Date().getTime();
     await this.saveContract(contract);
     return contract;
   }
@@ -174,6 +176,7 @@ export class ContractService implements ContractFunctions {
       executor_id
     );
     contract.status = CONTRACT_STATUS[2];
+    contract.rejectedAt = new Date().getTime();
     await this.saveContract(contract);
     return contract;
   }

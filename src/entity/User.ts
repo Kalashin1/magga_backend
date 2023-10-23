@@ -115,4 +115,7 @@ export class User implements AuthUser {
 
   @Column()
   taxIdNumber: string;
+
+  @Column()
+  projects: string[];
 }

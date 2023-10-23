@@ -64,3 +64,21 @@ export enum POSITION_ROUTES {
   POSITION_BY_FILES = '/position/upload/:user_id',
   DELETE_POSTION = '/position'
 }
+
+export enum PROJECT_ROUTES {
+  CREATE_PROJECT = '/project/create',
+  PROJECT_BY_ID = '/project/id/:id',
+  PROJECT_BY_EXTERNAL_ID = '/project/external/:id',
+  ALL_PROJECTS = '/projects',
+  EXECUTOR_PROJECTS = '/projects/executor/:id',
+  CONTRACTOR_PROJECTS = '/projects/contractor/:id',
+  PROJECT_STATUS = '/project/status/:status',
+  ASSIGN_EXECUTOR = '/project/executor/:id',
+  UPDATE_PROJECT = '/project/update/:id',
+  ADD_POSITION = '/project/position/:id',
+  ADD_EXTRA_POSITION = '/project/extra/:id',
+  ADD_SHORTAGE_POSITION = '/project/shortage/:id',
+  UPDATE_PROJECT_POSITION = '/project/update-position/:id',
+  UPDATE_EXTRA_POSITION = '/project/update-extra/:id',
+  UPDATE_SHORTAGE_POSITION = '/project/update-shortage/:id',
+}

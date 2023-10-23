@@ -6,6 +6,8 @@ import { Position } from "./entity/position";
 import { Contract } from "./entity/contract";
 import { Project } from "./entity/project";
 import { Notification } from "./entity/notification";
+import { Shops } from "./entity/shop";
+import { Product } from "./entity/product";
 require("dotenv").config();
 
 export const AppDataSource = new DataSource({
@@ -14,5 +16,5 @@ export const AppDataSource = new DataSource({
   useUnifiedTopology: true,
   useNewUrlParser: true,
   synchronize: false,
-  entities: [User, Trades, Position, Contract, Project, Notification],
+  entities: [User, Trades, Position, Contract, Project, Notification, Shops, Product],
 });

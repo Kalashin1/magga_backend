@@ -96,3 +96,6 @@ export class PositionService {
     })
   }
 }
+
+const positionService = new PositionService();
+export default positionService;

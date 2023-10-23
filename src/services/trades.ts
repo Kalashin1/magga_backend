@@ -4,10 +4,9 @@ import { TradeColorEnum, Trades } from "../entity/trades";
 import { User } from "../entity/User";
 import { NotificationService } from "./notifications";
 import { Position } from "../types";
-import { CreatePositionParams, PositionService } from "./position";
+import positionService, { CreatePositionParams } from "./position";
 
 
-const positionService = new PositionService();
 export class TradeService {
   async createNewTradeService(
     name: string,

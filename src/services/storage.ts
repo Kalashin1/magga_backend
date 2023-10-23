@@ -71,13 +71,11 @@ export class StorageService {
     extension: string
   ) {
     try {
-      // const response = await this.uploadFile(
-      //   process.env.BUCKET_NAME,
-      //   file,
-      //   `${folder}/${project_id}/${project_id}.${extension}`
-      // );
-      const response = await projectService.parsePDF(file as Buffer);
-      console.log(response)
+      const response = await this.uploadFile(
+        process.env.BUCKET_NAME,
+        file,
+        `${folder}/${project_id}/${project_id}.${extension}`
+      );
       return response;
     } catch (error) {
       throw error;
