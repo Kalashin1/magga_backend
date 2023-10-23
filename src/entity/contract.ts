@@ -32,4 +32,7 @@ export class Contract {
 
   @Column()
   positions: Position[];
+
+  @Column()
+  rejectedAt: number;
 }

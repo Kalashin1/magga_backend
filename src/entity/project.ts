@@ -1,8 +1,19 @@
 import { Entity, Column, ObjectId, ObjectIdColumn, UpdateDateColumn, CreateDateColumn } from "typeorm";
-import { Address, Building, IProject, ProjectPositions } from "../types";
+import { Address, Building, IProject, ProjectPositions, PROJECT_STATUS } from "../types";
+import { User } from "./User";
 
 @Entity()
 export class Project implements IProject {
+  @Column()
+  client: string;
+  
+  @Column()
+  commissioned_by: Pick<User, "phone" | "email"> & { name: string; };
+  @Column()
+  billingDetails: string;
+
+  @Column()
+  careTaker: Pick<User, "email" | "phone"> & { name: string; };
 
   @Column()
   executors: string[];
@@ -20,13 +31,10 @@ export class Project implements IProject {
   rentalStatus: string;
 
   @Column()
-  construction_manager: string;
+  construction_manager: Pick<User, 'email'| 'phone'> & {name: string}
 
   @Column()
-  phone: string;
-
-  @Column()
-  construction_started: string;
+  construction_started: number;
 
   @Column()
   sheduleByTrade: { string: string; }[];
@@ -37,8 +45,12 @@ export class Project implements IProject {
   @Column()
   executor: string[];
 
-  @Column()
-  status: String;
+  @Column({
+    type: "enum",
+    enum: PROJECT_STATUS,
+    default: PROJECT_STATUS[0],
+  })
+  status: typeof PROJECT_STATUS[number];
 
   @Column()
   positions: ProjectPositions[];
@@ -50,11 +62,20 @@ export class Project implements IProject {
   _id: ObjectId
 
   @Column()
-  externalId: string
+  external_id: string
 
   @CreateDateColumn()
   createdAt: string
 
   @UpdateDateColumn()
   updatedAt: string
+
+  @Column()
+  paused_at: number;
+
+  @Column()
+  completed_at: number;
+
+  @Column()
+  canceled_at: number;
 }

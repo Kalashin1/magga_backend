@@ -7,6 +7,7 @@ import StorageRouter from './router/storage';
 import NotificationRouter from './router/notifications'
 import ContractRouter from './router/contracts'; 
 import PositionRouter from './router/positions';
+import ProjectRouter from './router/projects';
 import cors from 'cors';
 import multer from 'multer';
 
@@ -23,6 +24,7 @@ app.use(StorageRouter);
 app.use(NotificationRouter);
 app.use(ContractRouter);
 app.use(PositionRouter);
+app.use(ProjectRouter);
 
 app.get('/', (req:express.Request, res: express.Response) => {
   res.end('Hello World')

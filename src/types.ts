@@ -1,6 +1,7 @@
 import { ObjectId } from "typeorm";
 import { User, UserRoleType } from "./entity/User";
 import { TradeColorEnum } from "./entity/trades";
+import { SHOP_STATUS } from "./entity/shop";
 
 export interface AuthUser {
   _id: ObjectId | string;
@@ -14,6 +15,7 @@ export interface AuthUser {
   createdAt: string;
   updatedAt: string;
   role: UserRoleType;
+  projects: string[];
   position: string;
   avatar: string;
   employees: ReferrerType[];
@@ -184,6 +186,7 @@ export interface Contract {
   status: (typeof CONTRACT_STATUS)[number];
   terminatedAt: number;
   acceptedAt: number;
+  rejectedAt: number;
   positions: Array<Position>;
 }
 
@@ -222,30 +225,51 @@ export interface Position {
 export type ProjectPositions = {
   status: string;
   billed: boolean;
-  comment: string;
-  section: string;
-  documentURL: string;
+  comment?: string;
+  section?: string;
+  documentURL?: string;
   position: number;
-} & Position
+} & Partial<Position>
+
+export const PROJECT_STATUS = ["CREATED", "ASSIGNED", "PAUSED", "COMPLETED", "NOT-FEASIBLE", "CANCELED"]
 
 export interface IProject {
   _id: ObjectId;
   contractor: string;
   executors: string[];
-  status: String;
+  status: typeof PROJECT_STATUS[number];
   positions: ProjectPositions[];
   shortagePositions: ProjectPositions[];
   extraPositions: ProjectPositions[];
   createdAt: string;
   dueDate: string;
   updatedAt: string;
-  externalId: string;
+  external_id: string;
   building: Building;
+  client: string;
   rentalStatus: string;
-  construction_manager: string;
-  phone: string;
-  construction_started: string;
+  construction_manager: Pick<User, 'email'| 'phone'> & {name: string};
+  commissioned_by: Pick<User, 'email'| 'phone'> & {name: string};
+  careTaker: Pick<User, 'email'| 'phone'> & {name: string};
+  construction_started: number;
+  paused_at: number;
+  billingDetails: string;
+  completed_at: number;
+  canceled_at: number;
   sheduleByTrade: TradeSchedule[];
+}
+
+export type createProjectParam = {
+  contractor: string; 
+  positions: ProjectPositions[]; 
+  dueDate: string; 
+  external_id: string; 
+  client: string;
+  building: Building;
+  commissioned_by: Pick<User, 'email'| 'phone'> & {name: string};
+  billingDetails: string;
+  rentalStatus: string;
+  careTaker: Pick<User, 'email'| 'phone'> & {name: string};
 }
 
 type TradeSchedule = {
@@ -253,7 +277,8 @@ type TradeSchedule = {
 }
 
 export type Building = {
-  address: Address;
+  address: string;
+  location: string;
   description: string;
   notes: string;
 }
@@ -269,6 +294,19 @@ export interface Product {
   category: string;
   subCategory: string;
 }
+
+export interface Shop {
+  name: string
+  _id: ObjectId;
+  createdAt: string;
+  updatedAt: string;
+  products: string[];
+  email: string;
+  password: string;
+  phone: string;
+  status: typeof SHOP_STATUS[number];
+}
+
 export const TASK_STATUS = ['ASSIGNED', 'IN-PROGRESS', 'COMPLETED', 'OVER-DUE'] as const
 
 export interface Task {
@@ -284,12 +322,21 @@ export const INVOICE_STATUS = ['REQUESTED', 'ACCEPTED', 'DECLINED'] as const;
 
 export interface Invoice {
   _id: ObjectId;
+  external_id: string;
+  draft: string;
+};
+
+export interface Draft {
   project: string;
   user_id: string;
+  reciepient: string;
   status: typeof INVOICE_STATUS[number];
+  _id: ObjectId;
   createdAt: string;
+  amount: number;
+  positions: string[];
   updatedAt: string;
-};
+}
 
 export interface Message {
   _id: ObjectId;
