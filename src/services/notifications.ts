@@ -21,7 +21,8 @@ export class NotificationService {
     const notification = await this.getNotificationById(notification_id);
     notification.isRead = true;
     await this.saveNotification(notification);
-    return notification;
+    const payload = await this.getUserNotifications(notification.user_id);
+    return payload;
   }
 
   async markAllAsRead(user_id: string) {

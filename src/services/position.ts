@@ -72,12 +72,7 @@ export class PositionService {
     const workbook = XLSX.read(file);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(sheet) as Partial<PositionType[]>;
-    const _positionParams = await this.assignContractorId(contractor, data);
-    const positions = await Promise.all(
-      _positionParams.map(
-        async (position) => await this.createPosition(position)
-      )
-    );
+    const positions = await this.assignContractorId(contractor, data); 
     return positions
   }
 

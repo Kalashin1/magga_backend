@@ -10,7 +10,7 @@ const router = Router();
 
 router.get(POSITION_ROUTES.POSITION_BY_TRADE, getPostionByTrade);
 router.get(POSITION_ROUTES.POSITION_BY_ID, getPosition);
-router.post(POSITION_ROUTES.POSITION_BY_FILES, upload.single('position'), uploadPosition);
+router.post(POSITION_ROUTES.POSITION_BY_FILES, upload.array('position'), uploadPosition);
 router.delete(POSITION_ROUTES.DELETE_POSTION, deletePositions);
 
 export default router;
