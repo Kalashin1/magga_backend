@@ -6,12 +6,12 @@ import userService from "../../services/user";
 const contractService = new ContractService();
 
 export const createContract = async (req: Request, res: Response) => {
-  const { executor_id, contractor_id, position_ids, trade_id } = req.body;
+  const { executor_id, contractor_id, positions, trade_id } = req.body;
   try {
     const contract = await contractService.createContract({
       executor_id,
       contractor_id,
-      position_ids,
+      positions,
       trade_id,
     });
     return res.json(contract);

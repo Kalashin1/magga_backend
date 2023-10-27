@@ -2,7 +2,7 @@ import { AppDataSource } from "../data-source";
 import { Contract } from "../entity/contract";
 import { PositionService } from "./position";
 import { UserService } from "./user";
-import { CONTRACT_STATUS, ContractFunctions } from "../types";
+import { CONTRACT_STATUS, ContractFunctions, Position } from "../types";
 import { TradeService } from "./trades";
 import { ObjectId } from "mongodb";
 import { NotificationService } from "./notifications";
@@ -15,7 +15,7 @@ const notificationService = new NotificationService();
 export type CreateContractParam = {
   executor_id: string;
   contractor_id: string;
-  position_ids: string[];
+  positions: Position[];
   trade_id: string;
 };
 
@@ -37,16 +37,12 @@ export class ContractService implements ContractFunctions {
   async createContract({
     contractor_id,
     executor_id,
-    position_ids,
+    positions,
     trade_id,
   }: CreateContractParam) {
     const executor = await userService.getUser({ _id: executor_id });
     const contractor = await userService.getUser({ _id: contractor_id });
-    const positions = await Promise.all(
-      position_ids.map((position_id) =>
-        positionService.getPositionById(position_id)
-      )
-    );
+
     const trade = await tradeService.retrieveTrade(trade_id);
     const contract = AppDataSource.mongoManager.create(Contract, {});
     contract.executor = executor_id;
