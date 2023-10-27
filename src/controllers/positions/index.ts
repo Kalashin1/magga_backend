@@ -31,20 +31,29 @@ export const uploadPosition = async (req: Request, res: Response) => {
     "application/vnd.ms-excel",
   ];
 
-  const mimeType = imageMimeTypes.find((mT) => mT === req.file.mimetype);
+  const files = req.files as any[];
 
-  if (req.file && !mimeType) {
-    res.writeHead(400, { "Content-Type": "text/plain" });
-    return res.json({ message: "Only images allowed!" });
-  }
+  console.log("files", files);
 
+  files.forEach((file) => {
+    const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
+
+    if (file && !mimeType) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      return res.json({ message: "Only images allowed!" });
+    }
+  });
   try {
-    const {
-      uploadParams: { Body },
-    } = storageService.boostrapFile(req.file);
-    // storage.parsePDF(Body);
-    const payload = await positionService.parsePositionFile(user_id, Body);
-    return res.json(payload)
+
+    const payload = await Promise.all(
+      files.map(async (file) => {
+        const {
+          uploadParams: { Body },
+        } = storageService.boostrapFile(file);
+        return await positionService.parsePositionFile(user_id, Body);
+      })
+    );
+    return res.json(payload);
   } catch (error) {
     return res.json({ message: error.message });
   }
