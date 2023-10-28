@@ -257,6 +257,7 @@ export interface IProject {
   completed_at: number;
   canceled_at: number;
   sheduleByTrade: TradeSchedule[];
+  contract: string;
 }
 
 export type createProjectParam = {

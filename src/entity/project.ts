@@ -4,6 +4,10 @@ import { User } from "./User";
 
 @Entity()
 export class Project implements IProject {
+  
+  @Column()
+  contract: string;
+
   @Column()
   client: string;
   
