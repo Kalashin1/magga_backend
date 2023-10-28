@@ -16,6 +16,7 @@ import { PositionService } from "./position";
 import { NotificationService } from "./notifications";
 import { ObjectId } from "mongodb";
 import { User } from "../entity/User";
+import contractService from "./contract";
 
 let options = {
   pagerender: pdfTextParser.render_page,

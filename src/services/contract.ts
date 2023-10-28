@@ -181,3 +181,6 @@ export class ContractService implements ContractFunctions {
     return await AppDataSource.mongoManager.save(Contract, contract);
   }
 }
+
+const contractService = new ContractService();
+export default contractService;
