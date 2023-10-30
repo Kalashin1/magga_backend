@@ -46,20 +46,31 @@ export class ContractService implements ContractFunctions {
     const trade = await tradeService.retrieveTrade(trade_id);
     const contract = AppDataSource.mongoManager.create(Contract, {});
     contract.executor = executor_id;
+    const existingPositions = await positionService.getPositionsByContractor(contractor_id, trade_id);
+    if (existingPositions[0]) {
+      console.log('existing position')
+      contract.positions = positions
+    } else {
+      const newPositions = await Promise.all(positions.map((position) => positionService.createPosition(position) ))
+      console.log('new positions');
+      contract.positions = newPositions
+    }
     contract.contractor = contractor_id;
-    contract.positions = positions;
     contract.trade = trade._id.toString();
     contract.status = CONTRACT_STATUS[0];
     await this.saveContract(contract);
+
     await notificationService.create(
       `You have successfully generated and sent contract to ${executor.first_name}`,
       "Contract",
-      contractor_id
+      contractor_id,
+      contract._id.toString()
     );
     await notificationService.create(
       `You have been sent this contract by ${contractor.first_name}`,
       "Contract",
-      executor_id
+      executor_id,
+      contract._id.toString()
     );
     return contract;
   }

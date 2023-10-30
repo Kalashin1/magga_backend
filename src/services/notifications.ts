@@ -4,7 +4,7 @@ import userService from "./user";
 import { ObjectId } from "mongodb";
 
 export class NotificationService {
-  async create(shortText: string, type: string, user_id: string) {
+  async create(shortText: string, type: string, user_id: string, objectId?: string, fileUrl?: string ) {
     const user = await userService.getUser({ _id: user_id });
     if (!user) throw Error("user with that Id not found");
     const notification = await AppDataSource.mongoManager.create(Notification, {
@@ -12,6 +12,8 @@ export class NotificationService {
       type,
       user_id,
       isRead: false,
+      fileUrl,
+      objectId
     });
     this.saveNotification(notification);
     return notification;

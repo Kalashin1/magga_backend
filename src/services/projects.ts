@@ -17,6 +17,7 @@ import { NotificationService } from "./notifications";
 import { ObjectId } from "mongodb";
 import { User } from "../entity/User";
 import contractService from "./contract";
+import tradeService from "./trades";
 
 let options = {
   pagerender: pdfTextParser.render_page,
@@ -31,49 +32,70 @@ export class ProjectService {
     const { text } = await translate(parsedFile.text, {
       to: "en",
     });
-    const client = pdfTextParser.getClientLines(text).join(".\n");;
+    const client = pdfTextParser.getClientLines(text).join(".\n");
     const billingDetails = pdfTextParser.getBillingDetails(text).join(".\n");
     const missions = pdfTextParser.getMission(text);
     const orderNotes = pdfTextParser.getOrderNotes(text);
     const mainPositions = pdfTextParser.getOrderItems(text);
     const individualPositions = pdfTextParser.getIndividualItems(text);
 
-    // console.log("clientLines", clientLines);
-    // console.log("billingDetails", billingDetails);
-    // console.log("missions", missions);
-    // console.log("orderNotes", orderNotes);
-    // console.log("mainPositions", mainPositions);
     const _mainPositions = mainPositions.map((position) =>
       pdfTextParser.parseLineToPosition(position)
     );
-    const positions: ProjectPositions[] = _mainPositions.map(
-      (position, index) => ({
+
+    const positions: ProjectPositions[] = await Promise.all(
+      _mainPositions.map(async (position, index) => ({
         status: "CREATED",
         billed: false,
         crowd: position.crowd,
         external_id: position.id,
         shortText: position.shortText,
         position: index + 1,
-      })
+        longText: (
+          await positionService.getPositionByExternalId(position.id)
+        ).longText,
+        trade: (
+          await positionService.getPositionByExternalId(position.id)
+        ).trade,
+      }))
     );
     const _singlePositions = individualPositions.map((position) =>
       pdfTextParser.parseLineToPosition(position)
     );
-    const singlePositions = _singlePositions.map((position, index) => ({
-      status: "CREATED",
+    const singlePositions = await Promise.all(
+      _singlePositions.map(async (position, index) => ({
+        status: "CREATED",
+        billed: false,
+        crowd: position.crowd,
+        external_id: position.id,
+        shortText: position.shortText,
+        longText: (
+          await positionService.getPositionByExternalId(position.id)
+        ).longText,
+        position: index + 1,
+        trade: (
+          await positionService.getPositionByExternalId(position.id)
+        ).trade,
+      }))
+    );
+    const trades = await tradeService.retrieveAllTrades();
+    const tradePositions = {};
+    trades.forEach((trade) => {
+      const filteredPosition = positions.filter(
+        (pos) => pos.trade === trade._id.toString()
+      );
+
+      tradePositions[`${trade.name}`] = {
+        positions: filteredPosition,
+        billed: false,
+      };
+    });
+    tradePositions[`others`] = {
+      positions: singlePositions,
       billed: false,
-      crowd: position.crowd,
-      external_id: position.id,
-      shortText: position.shortText,
-      position: index + 1,
-    }));
+    };
     const details = pdfTextParser.parseApartmentInfo(missions.join(".\n"));
     const notes = pdfTextParser.parseOrderNotes(orderNotes);
-    
-    // console.log("notes", notes);
-    console.log("details", details);
-    // console.log("positions", _mainPositions);
-    // console.log("individial positions", singlePositions);
 
     parsedFile.text = text;
     return {
@@ -83,13 +105,18 @@ export class ProjectService {
         address: details.address,
         location: details.location,
         description: details.details,
-        notes: notes
+        notes: notes,
       },
-      dueDate: details['end of execution'],
-      rentalStatus: details['rental status'],
-      positions: [...positions, ...singlePositions],
-      careTaker: pdfTextParser.parseCareTaker(details["caretaker"],  details.tel),
-      commissioned_by: pdfTextParser.parseCommisioner(details['commissioned by']),
+      dueDate: details["end of execution"],
+      rentalStatus: details["rental status"],
+      positions: tradePositions,
+      careTaker: pdfTextParser.parseCareTaker(
+        details["caretaker"],
+        details.tel
+      ),
+      commissioned_by: pdfTextParser.parseCommisioner(
+        details["commissioned by"]
+      ),
       contractor: id,
       status: PROJECT_STATUS[0],
       client,
@@ -97,25 +124,27 @@ export class ProjectService {
   }
 
   async createProject(params: Project) {
-    const existingProject = await this.getProjectByExternalId(params.external_id);
+    const existingProject = await this.getProjectByExternalId(
+      params.external_id
+    );
     if (existingProject) {
-      throw Error('Project With that Id already exists')
+      throw Error("Project With that Id already exists");
     }
     const contractor = await userService.getUser({ _id: params.contractor });
     if (!contractor) throw Error("No contractor with that Id");
     const newProject = await AppDataSource.mongoManager.create(Project, params);
-    const project =  await this.saveProject(newProject);
+    const project = await this.saveProject(newProject);
     await notificationService.create(
       "New contract created successfully " + project._id.toString(),
       "PROJECT",
-      contractor._id.toString()
+      contractor._id.toString(),
+      project._id.toString()
     );
     const projects = contractor.projects ?? [];
     projects.push(project._id.toString());
     contractor.projects = projects;
     await AppDataSource.mongoManager.save(User, contractor);
-    console.log('project created!')
-    return project
+    return project;
   }
 
   getProjectById(id: string) {
@@ -177,9 +206,19 @@ export class ProjectService {
       project.canceled_at = new Date().getTime();
     }
     const message = `Status of project ${project.external_id} has been updated. The project status is now ${PROJECT_STATUS[status]}`;
-    await notificationService.create(message, "PROJECT", project.contractor);
+    await notificationService.create(
+      message,
+      "PROJECT",
+      project.contractor,
+      project._id.toString()
+    );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(message, "PROJECT", exe);
+      await notificationService.create(
+        message,
+        "PROJECT",
+        exe,
+        project._id.toString()
+      );
     });
     return await this.saveProject(project);
   }
@@ -194,35 +233,51 @@ export class ProjectService {
     return await this.saveProject(project);
   }
 
-  async addPositions(project_id: string, positions: ProjectPositions[]) {
+  async addPositions(
+    project_id: string,
+    positions: ProjectPositions[],
+    trade_id: string
+  ) {
     const project = await this.getProjectById(project_id);
-    const extraPositions = project.extraPositions ?? [];
-
+    const extraPositions = project.positions;
+    const trade = await tradeService.retrieveTrade(trade_id);
     for (let position of positions) {
-      for (let extraPosition of extraPositions) {
+      for (let extraPosition of extraPositions[trade.name].positions) {
         if (position._id === extraPosition._id)
           throw Error(`Position ${position.external_id} already exists`);
       }
     }
-    extraPositions.push(...positions);
-    project.extraPositions = extraPositions;
+    extraPositions[trade.name].positions.push(...positions);
+    project.positions = extraPositions;
     const message = `${positions.length} Extra positions has been added to project ${project.external_id}`;
-    await notificationService.create(message, "PROJECT", project.contractor);
+    await notificationService.create(
+      message,
+      "PROJECT",
+      project.contractor,
+      project._id.toString()
+    );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(message, "PROJECT", exe);
+      await notificationService.create(
+        message,
+        "PROJECT",
+        exe,
+        project._id.toString()
+      );
     });
     return await this.saveProject(project);
   }
 
   async addShortageOrders(
     project_id: string,
-    shortageOrders: ProjectPositions[]
+    shortageOrders: ProjectPositions[],
+    trade_id: string
   ) {
     const project = await this.getProjectById(project_id);
-    const existingShortageOrders = project.shortagePositions ?? [];
-
+    const existingShortageOrders = project.shortagePositions;
+    const trade = await tradeService.retrieveTrade(trade_id);
     for (let shortageOrder of shortageOrders) {
-      for (let existingShortageOrder of existingShortageOrders) {
+      for (let existingShortageOrder of existingShortageOrders[trade.name]
+        .positions) {
         if (shortageOrder._id === existingShortageOrder._id)
           throw Error(
             `Position ${shortageOrder.external_id} has already been added to shortages`
@@ -230,22 +285,37 @@ export class ProjectService {
       }
     }
 
-    existingShortageOrders.push(...shortageOrders);
+    existingShortageOrders[trade.name].positions.push(...shortageOrders);
     project.shortagePositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project shortages ${project.external_id}`;
-    await notificationService.create(message, "PROJECT", project.contractor);
+    await notificationService.create(
+      message,
+      "PROJECT",
+      project.contractor,
+      project._id.toString()
+    );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(message, "PROJECT", exe);
+      await notificationService.create(
+        message,
+        "PROJECT",
+        exe,
+        project._id.toString()
+      );
     });
     return await this.saveProject(project);
   }
 
-  async addExtraOrders(project_id: string, shortageOrders: ProjectPositions[]) {
+  async addExtraOrders(
+    project_id: string,
+    shortageOrders: ProjectPositions[],
+    trade_id: string
+  ) {
     const project = await this.getProjectById(project_id);
-    const existingShortageOrders = project.extraPositions ?? [];
-
+    const existingShortageOrders = project.extraPositions;
+    const trade = await tradeService.retrieveTrade(trade_id);
     for (let shortageOrder of shortageOrders) {
-      for (let existingShortageOrder of existingShortageOrders) {
+      for (let existingShortageOrder of existingShortageOrders[trade.name]
+        .positions) {
         if (shortageOrder._id === existingShortageOrder._id)
           throw Error(
             `Position ${shortageOrder.external_id} has already been added to shortages`
@@ -253,12 +323,22 @@ export class ProjectService {
       }
     }
 
-    existingShortageOrders.push(...shortageOrders);
+    existingShortageOrders[trade.name].positions.push(...shortageOrders);
     project.extraPositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project position ${project.external_id}`;
-    await notificationService.create(message, "PROJECT", project.contractor);
+    await notificationService.create(
+      message,
+      "PROJECT",
+      project.contractor,
+      project._id.toString()
+    );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(message, "PROJECT", exe);
+      await notificationService.create(
+        message,
+        "PROJECT",
+        exe,
+        project._id.toString()
+      );
     });
     return await this.saveProject(project);
   }
@@ -268,7 +348,7 @@ export class ProjectService {
   }
 
   async getContractorProjects(contractor_id: string) {
-    console.log('contractor_id', contractor_id)
+    console.log("contractor_id", contractor_id);
     return AppDataSource.mongoManager.find(Project, {
       where: {
         contractor: {
@@ -278,39 +358,57 @@ export class ProjectService {
     });
   }
 
-  async updateProjectPosition(project_id: string, position: ProjectPositions) {
+  async updateProjectPosition(
+    project_id: string,
+    position: ProjectPositions,
+    trade_id: string
+  ) {
     const project = await this.getProjectById(project_id);
-    const existingPosition = project.positions.find(
+    const trade = await tradeService.retrieveTrade(trade_id);
+    const existingPosition = project.positions[trade.name].positions.find(
       (pos) => pos._id === position._id
     );
-    const filteredPositions = project.positions.filter(
+    const filteredPositions = project.positions[trade.name].positions.filter(
       (pos) => pos._id !== existingPosition._id
     );
-    project.positions = [...filteredPositions, position];
+    project.positions[trade.name].positions = [...filteredPositions, position];
     return await this.saveProject(project);
   }
 
-  async updateExtraPosition(project_id: string, position: ProjectPositions) {
+  async updateExtraPosition(
+    project_id: string,
+    position: ProjectPositions,
+    trade_id: string
+  ) {
     const project = await this.getProjectById(project_id);
-    const existingPosition = project.extraPositions.find(
+    const trade = await tradeService.retrieveTrade(trade_id);
+    const existingPosition = project.extraPositions[trade.name].positions.find(
       (pos) => pos._id === existingPosition._id
     );
-    const filteredPositions = project.positions.filter(
+    const filteredPositions = project.positions[trade.name].positions.filter(
       (pos) => pos._id !== position._id
     );
-    project.positions = [...filteredPositions, position];
+    project.positions[trade.name].positions = [...filteredPositions, position];
     return await this.saveProject(project);
   }
 
-  async updateShortageOrder(project_id: string, position: ProjectPositions) {
+  async updateShortageOrder(
+    project_id: string,
+    position: ProjectPositions,
+    trade_id: string
+  ) {
     const project = await this.getProjectById(project_id);
-    const existingPosition = project.shortagePositions.find(
-      (pos) => pos._id === existingPosition._id
-    );
-    const filteredPositions = project.positions.filter(
+    const trade = await tradeService.retrieveTrade(trade_id);
+    const existingPosition = project.shortagePositions[
+      trade.name
+    ].positions.find((pos) => pos._id === existingPosition._id);
+    const filteredPositions = project.positions[trade.name].positions.filter(
       (pos) => pos._id !== position._id
     );
-    project.shortagePositions = [...filteredPositions, position];
+    project.shortagePositions[trade.name].positions = [
+      ...filteredPositions,
+      position,
+    ];
     return await this.saveProject(project);
   }
 
