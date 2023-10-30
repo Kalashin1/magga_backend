@@ -38,6 +38,29 @@ export class PositionService {
     return position;
   }
 
+  async getPositionsByContractor(contractor_id: string, trade_id: string) {
+    return await AppDataSource.mongoManager.find(Position, {
+      where: {
+        contractor: {
+          $eq: contractor_id
+        },
+        trade: {
+          $eq: trade_id
+        }
+      }
+    })
+  }
+
+  async getPositionByExternalId(external_id: string) {
+    return await AppDataSource.mongoManager.findOne(Position, {
+      where: {
+        external_id: {
+          $eq: external_id
+        }
+      }
+    })
+  }
+
   async getPositions(trade_id: string) {
     const positions = await AppDataSource.mongoManager.find(Position, {
       where: {

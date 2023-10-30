@@ -23,10 +23,22 @@ export class Project implements IProject {
   executors: string[];
 
   @Column()
-  shortagePositions: ProjectPositions[];
+  shortagePositions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };;
 
   @Column()
-  extraPositions: ProjectPositions[];
+  extraPositions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };;
 
   @Column()
   building: Building
@@ -57,7 +69,13 @@ export class Project implements IProject {
   status: typeof PROJECT_STATUS[number];
 
   @Column()
-  positions: ProjectPositions[];
+  positions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };;
 
   @Column()
   dueDate: string;

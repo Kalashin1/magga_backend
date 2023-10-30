@@ -25,4 +25,10 @@ export class Notification implements INotification {
 
   @UpdateDateColumn()
   updatedAt: string;
+
+  @Column()
+  fileUrl?: string;
+
+  @Column()
+  objectId?: string;
 }

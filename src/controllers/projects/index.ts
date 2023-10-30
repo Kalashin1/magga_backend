@@ -7,12 +7,12 @@ export const createProject = async (req: Request, res: Response) => {
   const projectParam = req.body;
   try {
     const project = await projectService.createProject(projectParam);
-    return res.json(project)
+    return res.json(project);
   } catch (error) {
-    console.log(error)
-    return res.status(400).json({ message: error.message })
+    console.log(error);
+    return res.status(400).json({ message: error.message });
   }
-}
+};
 
 export const getProjectById = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -100,10 +100,10 @@ export const updateProject = async (req: Request, res: Response) => {
 
 export const addPositions = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { positions } = req.body;
+  const { positions, trade_id } = req.body;
 
   try {
-    const payload = await projectService.addPositions(id, positions);
+    const payload = await projectService.addPositions(id, positions, trade_id);
     return res.json(payload);
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -112,12 +112,13 @@ export const addPositions = async (req: Request, res: Response) => {
 
 export const addShortageOrders = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { shortageOrders } = req.body;
+  const { shortageOrders, trade_id } = req.body;
 
   try {
     const payload = await projectService.addShortageOrders(
       id,
-      shortageOrders
+      shortageOrders,
+      trade_id
     );
     return res.json(payload);
   } catch (error) {
@@ -127,12 +128,13 @@ export const addShortageOrders = async (req: Request, res: Response) => {
 
 export const addExtraOrders = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { positions } = req.body;
+  const { positions, trade_id } = req.body;
 
   try {
     const payload = await projectService.addExtraOrders(
       id,
-      positions
+      positions,
+      trade_id
     );
     return res.json(payload);
   } catch (error) {
@@ -140,36 +142,47 @@ export const addExtraOrders = async (req: Request, res: Response) => {
   }
 };
 
-
 export const updateProjectPosition = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const {position} = req.body;
+  const { id } = req.params;
+  const { position, trade_id } = req.body;
   try {
-    const payload = await projectService.updateProjectPosition(id, position);
+    const payload = await projectService.updateProjectPosition(
+      id,
+      position,
+      trade_id
+    );
     return res.json(payload);
   } catch (error) {
-    return res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message });
   }
-}
+};
 
 export const updateExtraPositions = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const {position} = req.body;
+  const { id } = req.params;
+  const { position, trade_id } = req.body;
   try {
-    const payload = await projectService.updateExtraPosition(id, position);
+    const payload = await projectService.updateExtraPosition(
+      id,
+      position,
+      trade_id
+    );
     return res.json(payload);
   } catch (error) {
-    return res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message });
   }
-}
+};
 
 export const updateShortageOrder = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const {position} = req.body;
+  const { id } = req.params;
+  const { position, trade_id } = req.body;
   try {
-    const payload = await projectService.updateShortageOrder(id, position);
+    const payload = await projectService.updateShortageOrder(
+      id,
+      position,
+      trade_id
+    );
     return res.json(payload);
   } catch (error) {
-    return res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message });
   }
-}
+};

@@ -127,7 +127,7 @@ export type UserDocuments = {
 };
 
 export type Document = {
-  name: typeof userDocumentsArray[number];
+  name: (typeof userDocumentsArray)[number];
   fileUrl: string;
   uploadedAt: string;
   status: string;
@@ -175,7 +175,12 @@ export type LogoUrl = {
 // Floor -
 // Electric -
 
-export const CONTRACT_STATUS = ["GENERATED", "ACCEPTED", "REJECTED", "TERMINATED"];
+export const CONTRACT_STATUS = [
+  "GENERATED",
+  "ACCEPTED",
+  "REJECTED",
+  "TERMINATED",
+];
 
 export interface Contract {
   contractor: string;
@@ -193,16 +198,19 @@ export interface Contract {
 export interface ContractFunctions {
   terminateContract: (contract_id: string) => Promise<Contract>;
   send: (executor_id: string, contract_id: string) => Promise<Contract>;
-  accept: (Params: {executor_id: string, contract_id: string }) => Promise<Contract>;
+  accept: (Params: {
+    executor_id: string;
+    contract_id: string;
+  }) => Promise<Contract>;
   reject: (executorId: string, contractId) => Promise<Contract>;
-};
-
-
+}
 
 export interface INotification {
   _id: ObjectId;
   user_id: string;
   shortText: string;
+  objectId?: string;
+  fileUrl?: string;
   isRead: boolean;
   type: string;
   createdAt: string;
@@ -212,7 +220,7 @@ export interface Position {
   _id: ObjectId;
   shortText: string;
   crowd: string;
-  units: "pcs"|"psh"| "Stk";
+  units: "pcs" | "psh" | "Stk";
   price: number;
   trade: string;
   longText: string;
@@ -229,18 +237,43 @@ export type ProjectPositions = {
   section?: string;
   documentURL?: string;
   position: number;
-} & Partial<Position>
+} & Partial<Position>;
 
-export const PROJECT_STATUS = ["CREATED", "ASSIGNED", "PAUSED", "COMPLETED", "NOT-FEASIBLE", "CANCELED"]
+export const PROJECT_STATUS = [
+  "CREATED",
+  "ASSIGNED",
+  "PAUSED",
+  "COMPLETED",
+  "NOT-FEASIBLE",
+  "CANCELED",
+];
 
 export interface IProject {
   _id: ObjectId;
   contractor: string;
   executors: string[];
-  status: typeof PROJECT_STATUS[number];
-  positions: ProjectPositions[];
-  shortagePositions: ProjectPositions[];
-  extraPositions: ProjectPositions[];
+  status: (typeof PROJECT_STATUS)[number];
+  positions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };
+  shortagePositions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };
+  extraPositions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };
   createdAt: string;
   dueDate: string;
   updatedAt: string;
@@ -248,9 +281,9 @@ export interface IProject {
   building: Building;
   client: string;
   rentalStatus: string;
-  construction_manager: Pick<User, 'email'| 'phone'> & {name: string};
-  commissioned_by: Pick<User, 'email'| 'phone'> & {name: string};
-  careTaker: Pick<User, 'email'| 'phone'> & {name: string};
+  construction_manager: Pick<User, "email" | "phone"> & { name: string };
+  commissioned_by: Pick<User, "email" | "phone"> & { name: string };
+  careTaker: Pick<User, "email" | "phone"> & { name: string };
   construction_started: number;
   paused_at: number;
   billingDetails: string;
@@ -261,28 +294,34 @@ export interface IProject {
 }
 
 export type createProjectParam = {
-  contractor: string; 
-  positions: ProjectPositions[]; 
-  dueDate: string; 
-  external_id: string; 
+  contractor: string;
+  positions: {
+    [key: string]: {
+      positions: ProjectPositions[];
+      billed: false;
+      executor: string;
+    };
+  };
+  dueDate: string;
+  external_id: string;
   client: string;
   building: Building;
-  commissioned_by: Pick<User, 'email'| 'phone'> & {name: string};
+  commissioned_by: Pick<User, "email" | "phone"> & { name: string };
   billingDetails: string;
   rentalStatus: string;
-  careTaker: Pick<User, 'email'| 'phone'> & {name: string};
-}
+  careTaker: Pick<User, "email" | "phone"> & { name: string };
+};
 
 type TradeSchedule = {
   string: string;
-}
+};
 
 export type Building = {
   address: string;
   location: string;
   description: string;
   notes: string;
-}
+};
 
 export interface Product {
   _id: ObjectId;
@@ -297,7 +336,7 @@ export interface Product {
 }
 
 export interface Shop {
-  name: string
+  name: string;
   _id: ObjectId;
   createdAt: string;
   updatedAt: string;
@@ -305,33 +344,38 @@ export interface Shop {
   email: string;
   password: string;
   phone: string;
-  status: typeof SHOP_STATUS[number];
+  status: (typeof SHOP_STATUS)[number];
 }
 
-export const TASK_STATUS = ['ASSIGNED', 'IN-PROGRESS', 'COMPLETED', 'OVER-DUE'] as const
+export const TASK_STATUS = [
+  "ASSIGNED",
+  "IN-PROGRESS",
+  "COMPLETED",
+  "OVER-DUE",
+] as const;
 
 export interface Task {
   _id: ObjectId;
   user_id: string;
   type: string;
-  status: typeof TASK_STATUS[number];
+  status: (typeof TASK_STATUS)[number];
   createdAt: string;
-  dueDate: string
+  dueDate: string;
 }
 
-export const INVOICE_STATUS = ['REQUESTED', 'ACCEPTED', 'DECLINED'] as const;
+export const INVOICE_STATUS = ["REQUESTED", "ACCEPTED", "DECLINED"] as const;
 
 export interface Invoice {
   _id: ObjectId;
   external_id: string;
   draft: string;
-};
+}
 
 export interface Draft {
   project: string;
   user_id: string;
   reciepient: string;
-  status: typeof INVOICE_STATUS[number];
+  status: (typeof INVOICE_STATUS)[number];
   _id: ObjectId;
   createdAt: string;
   amount: number;
