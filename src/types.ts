@@ -248,32 +248,24 @@ export const PROJECT_STATUS = [
   "CANCELED",
 ];
 
+export type ProjectPositionSuper = {
+  [key: string]: {
+    positions: ProjectPositions[];
+    billed: false;
+    executor: string;
+    name: string;
+    contract?: string
+    id: string;
+  };
+};
 export interface IProject {
   _id: ObjectId;
   contractor: string;
   executors: string[];
   status: (typeof PROJECT_STATUS)[number];
-  positions: {
-    [key: string]: {
-      positions: ProjectPositions[];
-      billed: false;
-      executor: string;
-    };
-  };
-  shortagePositions: {
-    [key: string]: {
-      positions: ProjectPositions[];
-      billed: false;
-      executor: string;
-    };
-  };
-  extraPositions: {
-    [key: string]: {
-      positions: ProjectPositions[];
-      billed: false;
-      executor: string;
-    };
-  };
+  positions: ProjectPositionSuper;
+  shortagePositions: ProjectPositionSuper;
+  extraPositions: ProjectPositionSuper;
   createdAt: string;
   dueDate: string;
   updatedAt: string;

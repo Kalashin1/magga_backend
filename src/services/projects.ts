@@ -10,6 +10,7 @@ import {
   createProjectParam,
   IProject,
   Position,
+  CONTRACT_STATUS,
 } from "../types";
 import userService from "./user";
 import { PositionService } from "./position";
@@ -32,6 +33,7 @@ export class ProjectService {
     const { text } = await translate(parsedFile.text, {
       to: "en",
     });
+    console.log("text", text);
     const client = pdfTextParser.getClientLines(text).join(".\n");
     const billingDetails = pdfTextParser.getBillingDetails(text).join(".\n");
     const missions = pdfTextParser.getMission(text);
@@ -53,10 +55,10 @@ export class ProjectService {
         position: index + 1,
         longText: (
           await positionService.getPositionByExternalId(position.id)
-        ).longText,
+        )?.longText,
         trade: (
           await positionService.getPositionByExternalId(position.id)
-        ).trade,
+        )?.trade,
       }))
     );
     const _singlePositions = individualPositions.map((position) =>
@@ -71,29 +73,34 @@ export class ProjectService {
         shortText: position.shortText,
         longText: (
           await positionService.getPositionByExternalId(position.id)
-        ).longText,
+        )?.longText,
         position: index + 1,
         trade: (
           await positionService.getPositionByExternalId(position.id)
-        ).trade,
+        )?.trade,
       }))
     );
     const trades = await tradeService.retrieveAllTrades();
     const tradePositions = {};
-    trades.forEach((trade) => {
+    for (const trade of trades) {
       const filteredPosition = positions.filter(
         (pos) => pos.trade === trade._id.toString()
       );
-
+      if (trade.name === "other") {
+        tradePositions[`others`] = {
+          positions: singlePositions,
+          billed: false,
+          id: trade._id.toString(),
+          name: "others",
+        };
+      }
       tradePositions[`${trade.name}`] = {
         positions: filteredPosition,
         billed: false,
+        id: trade._id.toString(),
+        name: trade.name,
       };
-    });
-    tradePositions[`others`] = {
-      positions: singlePositions,
-      billed: false,
-    };
+    }
     const details = pdfTextParser.parseApartmentInfo(missions.join(".\n"));
     const notes = pdfTextParser.parseOrderNotes(orderNotes);
 
@@ -167,24 +174,65 @@ export class ProjectService {
     });
   }
 
-  async assingExecutor(executor_id: string[], project_id: string) {
-    const executors = await Promise.all(
-      executor_id.map(async (id) => await userService.getUser({ _id: id }))
-    );
-    if (executors.length !== executor_id.length)
-      throw Error("error fetching executors");
-    const project = await this.getProjectById(project_id);
-    project.executors = executor_id;
-    await executors.forEach(async (exe) => {
-      exe.projects.push(project._id.toString());
-      await notificationService.create(
-        "Project has been assigned to you",
-        "PROJECT",
-        (await exe)._id.toString()
-      );
-      await AppDataSource.mongoManager.save(User, exe);
+  async assingExecutor(
+    executor_id: string,
+    project_id: string,
+    trades: string[],
+    contractor_id: string
+  ) {
+    const executor = await userService.getUser({ _id: executor_id });
+    const contractor = await userService.getUser({ _id: contractor_id });
+    const contracts = await contractService.getContract({
+      contractor: contractor_id,
+      executor: executor_id,
+      status: CONTRACT_STATUS[1],
     });
-    return await this.saveProject(project);
+
+    if (!executor) throw Error("error fetching executor");
+    if (!contractor) throw Error("error fetching contractor");
+
+    const project = await this.getProjectById(project_id);
+    for (const trade of trades) {
+      if (project.positions[trade].executor)
+        throw Error("Position already assinged!");
+      project.positions[trade].executor = executor_id;
+      project.positions[trade].positions.forEach(async (position) => {
+        const contract = contracts.find(
+          (contract) => contract.trade._id.toString() === position.trade
+        );
+        if (contract) {
+          const foundPosition = contract.positions.find(
+            (_position) => _position.external_id === position.external_id
+          );
+          console.log("found position", foundPosition);
+          position.price = foundPosition.price
+        }
+      });
+      console.log(project.positions[trade].positions);
+    }
+    const existingExecutors = project.executors ?? [];
+    if (existingExecutors.find((exe) => exe === executor_id)) {
+      console.log("already existing");
+    } else {
+      existingExecutors.push(executor_id);
+    }
+    const executorProjects = executor.projects ?? [];
+    if (executorProjects.find((project) => project === project_id)) {
+      console.log("already existing");
+    } else {
+      executorProjects.push(project._id.toString());
+    }
+    await notificationService.create(
+      "Project has been assigned to you",
+      "PROJECT",
+      executor._id.toString()
+    );
+    await AppDataSource.mongoManager.save(User, {
+      ...executor,
+      projects: executorProjects,
+    });
+
+    return await this.saveProject({ ...project, executors: existingExecutors });
   }
 
   async changeProjectStatus(project_id: string, status: number) {

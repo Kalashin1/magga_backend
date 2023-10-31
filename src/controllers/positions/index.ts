@@ -33,8 +33,6 @@ export const uploadPosition = async (req: Request, res: Response) => {
 
   const files = req.files as any[];
 
-  console.log("files", files);
-
   files.forEach((file) => {
     const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
 
