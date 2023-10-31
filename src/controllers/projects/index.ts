@@ -76,12 +76,18 @@ export const changeProjectStatus = async (req: Request, res: Response) => {
 
 export const assignExecutor = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { executor_ids } = req.body;
+  const { executor_id, trades, contractor_id } = req.body;
 
   try {
-    const payload = await projectService.assingExecutor(executor_ids, id);
+    const payload = await projectService.assingExecutor(
+      executor_id,
+      id,
+      trades,
+      contractor_id
+    );
     return res.json(payload);
   } catch (error) {
+    console.log(error)
     return res.status(400).json({ message: error.message });
   }
 };

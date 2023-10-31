@@ -164,10 +164,10 @@ export class PDFTextParser {
 
   parseLineToPosition(string) {
     const patterns = [
-      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)\s+(\d+\.\d\d)\s?(\w+)?/,
-      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)\s+(\d+\.\d\d)\s+(.+)?/,
-      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)(\d+\.\d\d)/,
-      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)$/,
+      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)\s+(\d+\.\d\d)\s?(\w+)?\s?(\w+\s?\w+?)?/,
+      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)\s+(\d+\.\d\d)\s+(.+)?\s?(\w+\s?\w+?)?/,
+      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)(\d+\.\d\d)\s?(\w+\s?\w+?)?/,
+      /(\d+\.\d+\.\d+\.\d+)\s+(.+?)$\s?(\w+\s?\w+?)?/,
     ];
     for (const pattern of patterns) {
       const match = new RegExp(pattern).exec(string);
@@ -179,6 +179,7 @@ export class PDFTextParser {
             match[3] && String(match[3]).length >= 6
               ? match[3].slice(2)
               : match[3],
+          section: match[4] ? match[4]: match[3]
         };
       }
     }

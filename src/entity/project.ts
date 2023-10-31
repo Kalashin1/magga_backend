@@ -1,60 +1,61 @@
-import { Entity, Column, ObjectId, ObjectIdColumn, UpdateDateColumn, CreateDateColumn } from "typeorm";
-import { Address, Building, IProject, ProjectPositions, PROJECT_STATUS } from "../types";
+import {
+  Entity,
+  Column,
+  ObjectId,
+  ObjectIdColumn,
+  UpdateDateColumn,
+  CreateDateColumn,
+} from "typeorm";
+import {
+  Address,
+  Building,
+  IProject,
+  ProjectPositions,
+  PROJECT_STATUS,
+  ProjectPositionSuper,
+} from "../types";
 import { User } from "./User";
 
 @Entity()
 export class Project implements IProject {
-  
   @Column()
   contract: string;
 
   @Column()
   client: string;
-  
+
   @Column()
-  commissioned_by: Pick<User, "phone" | "email"> & { name: string; };
+  commissioned_by: Pick<User, "phone" | "email"> & { name: string };
   @Column()
   billingDetails: string;
 
   @Column()
-  careTaker: Pick<User, "email" | "phone"> & { name: string; };
+  careTaker: Pick<User, "email" | "phone"> & { name: string };
 
   @Column()
   executors: string[];
 
   @Column()
-  shortagePositions: {
-    [key: string]: {
-      positions: ProjectPositions[];
-      billed: false;
-      executor: string;
-    };
-  };;
+  shortagePositions: ProjectPositionSuper;
 
   @Column()
-  extraPositions: {
-    [key: string]: {
-      positions: ProjectPositions[];
-      billed: false;
-      executor: string;
-    };
-  };;
+  extraPositions: ProjectPositionSuper;
 
   @Column()
-  building: Building
+  building: Building;
 
   @Column()
   rentalStatus: string;
 
   @Column()
-  construction_manager: Pick<User, 'email'| 'phone'> & {name: string}
+  construction_manager: Pick<User, "email" | "phone"> & { name: string };
 
   @Column()
   construction_started: number;
 
   @Column()
-  sheduleByTrade: { string: string; }[];
-  
+  sheduleByTrade: { string: string }[];
+
   @Column()
   contractor: string;
 
@@ -66,31 +67,25 @@ export class Project implements IProject {
     enum: PROJECT_STATUS,
     default: PROJECT_STATUS[0],
   })
-  status: typeof PROJECT_STATUS[number];
+  status: (typeof PROJECT_STATUS)[number];
 
   @Column()
-  positions: {
-    [key: string]: {
-      positions: ProjectPositions[];
-      billed: false;
-      executor: string;
-    };
-  };;
+  positions: ProjectPositionSuper;
 
   @Column()
   dueDate: string;
 
   @ObjectIdColumn()
-  _id: ObjectId
+  _id: ObjectId;
 
   @Column()
-  external_id: string
+  external_id: string;
 
   @CreateDateColumn()
-  createdAt: string
+  createdAt: string;
 
   @UpdateDateColumn()
-  updatedAt: string
+  updatedAt: string;
 
   @Column()
   paused_at: number;
