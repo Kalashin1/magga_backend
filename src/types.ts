@@ -251,7 +251,7 @@ export const PROJECT_STATUS = [
 export type ProjectPositionSuper = {
   [key: string]: {
     positions: ProjectPositions[];
-    billed: false;
+    billed: boolean;
     executor: string;
     accepted: boolean;
     name: string;

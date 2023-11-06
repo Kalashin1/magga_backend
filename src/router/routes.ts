@@ -83,7 +83,8 @@ export enum PROJECT_ROUTES {
   UPDATE_EXTRA_POSITION = '/project/update-extra/:id',
   UPDATE_SHORTAGE_POSITION = '/project/update-shortage/:id',
   ACCEPT_PROJECT = '/project/accept',
-  REJECT_PROJECT = '/project/reject'
+  REJECT_PROJECT = '/project/reject',
+  UPDATE_MULTIPLE_POSITIONS_BY_TRADE = '/project/postitions/:id'
 }
 
 export enum DRAFT_ROUTES {
