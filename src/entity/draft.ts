@@ -1,8 +1,9 @@
-import { Entity, Column, CreateDateColumn, UpdateDateColumn  } from "typeorm/browser";
+import { Entity, Column, CreateDateColumn, UpdateDateColumn  } from "typeorm";
 import {Draft as DraftInterface} from '../types';
-import { ObjectId } from "typeorm/browser";
-import { ObjectIdColumn } from "typeorm/browser";
+import { ObjectId } from "typeorm";
+import { ObjectIdColumn } from "typeorm";
 
+@Entity()
 export class Draft implements DraftInterface {
   @Column()
   amount: number;

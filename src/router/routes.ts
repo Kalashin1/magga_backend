@@ -42,7 +42,8 @@ export enum BUCKET_ROUTES {
   GET_FILE = '/files/',
   OWNER_EMPLOYEE = '/owner/employee/:owner_id',
   OWNER_EXECUTORS = '/owner/executor/:owner_id',
-  UPLOAD_PROJECT = '/project/upload/:id'
+  UPLOAD_PROJECT = '/project/upload/:id',
+  UPLOAD_POSITION_DOCUMENT = '/project/position/:id/:trade/:position'
 }
 
 export enum NOTIFICATION_ROUTES {
@@ -81,4 +82,21 @@ export enum PROJECT_ROUTES {
   UPDATE_PROJECT_POSITION = '/project/update-position/:id',
   UPDATE_EXTRA_POSITION = '/project/update-extra/:id',
   UPDATE_SHORTAGE_POSITION = '/project/update-shortage/:id',
+  ACCEPT_PROJECT = '/project/accept',
+  REJECT_PROJECT = '/project/reject'
+}
+
+export enum DRAFT_ROUTES {
+  CREATE = '/draft/create',
+  DRAFT = '/draft/:id',
+  USER_DRAFT = '/draft/user/:user_id',
+  UPDATE_DRAFT = '/draft/update/:draft_id'
+}
+
+export enum INVOICE_ROUTES {
+  CREATE = '/invoice/create',
+  GET_USER_INVOICE = '/invoice/owner/:owner_id/:status',
+  GET_RECIEVER_INVOICE = '/invoice/reciever/:user_id/:status',
+  GET_INVOICE_BY_ID = '/invoice/id/:id',
+  GET_INVOICE_BY_EXTERNAL_ID = '/invoice/external_id/:external_id'
 }

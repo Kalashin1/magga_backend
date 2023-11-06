@@ -69,3 +69,7 @@ export class NotificationService {
     })
   }
 }
+
+const notificationService = new NotificationService();
+
+export default notificationService;

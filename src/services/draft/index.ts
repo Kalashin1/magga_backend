@@ -10,22 +10,25 @@ const notificationService = new NotificationService()
 
 export class DraftSerVice {
   async create(draft: Draft) {
-    const project = await projectService.getProjectById(draft._id.toString());
+    const project = await projectService.getProjectById(draft.project);
     if (!project) throw Error("Project not found!");
     const user = await userService.getUser({ _id: draft.user_id });
     if (!user) throw Error("User was not found");
     const reciepient = await userService.getUser({ _id: draft.reciepient });
     if (!reciepient) throw Error("Receipient was not found");
     const newDraft = AppDataSource.mongoManager.create(Draft, draft);
+    const savedDraft = await this.save(newDraft);
     await notificationService.create(
-      'Draft has been created successfully! '+draft._id,
+      'Draft has been created successfully! '+savedDraft._id.toString(),
       'DRAFT',
-      user._id.toString()
+      user._id.toString(),
+      savedDraft._id.toString()
     )
     await notificationService.create(
-      'Draft has been sent to you '+draft._id,
+      'Draft has been sent to you '+savedDraft._id.toString(),
       'DRAFT',
-      reciepient._id.toString()
+      reciepient._id.toString(),
+      savedDraft._id.toString()
     )
     return await this.save(newDraft);
   }
@@ -81,3 +84,8 @@ export class DraftSerVice {
     return AppDataSource.mongoManager.save(Draft, draft);
   }
 }
+
+
+const draftService = new DraftSerVice();
+
+export default draftService;

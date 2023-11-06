@@ -92,6 +92,7 @@ export class ProjectService {
           billed: false,
           id: trade._id.toString(),
           name: "others",
+          accepted: false,
         };
       }
       tradePositions[`${trade.name}`] = {
@@ -99,6 +100,7 @@ export class ProjectService {
         billed: false,
         id: trade._id.toString(),
         name: trade.name,
+        accepted: false,
       };
     }
     const details = pdfTextParser.parseApartmentInfo(missions.join(".\n"));
@@ -138,7 +140,8 @@ export class ProjectService {
       throw Error("Project With that Id already exists");
     }
     const contractor = await userService.getUser({ _id: params.contractor });
-    if (!contractor) throw Error("No contractor with that Id");
+    if (!contractor || contractor.role !== "contractor")
+      throw Error("No contractor with that Id");
     const newProject = await AppDataSource.mongoManager.create(Project, params);
     const project = await this.saveProject(newProject);
     await notificationService.create(
@@ -152,6 +155,75 @@ export class ProjectService {
     contractor.projects = projects;
     await AppDataSource.mongoManager.save(User, contractor);
     return project;
+  }
+
+  async acceptProject(project_id: string, executor_id: string, trades: string[]) {
+    const project = await projectService.getProjectById(project_id);
+    if (!project) throw Error("No project with that ID!");
+    const executor = await userService.getUser({ _id: executor_id });
+    if (!executor) throw Error("No executor with that ID!");
+    const contracts = await contractService.getContract({
+      contractor: project.contractor,
+      executor: executor_id,
+      status: CONTRACT_STATUS[1]
+    })
+    trades.map((trade) => {
+      if (project.positions[trade] && project.positions[trade].executor === executor_id ) {
+        project.positions[trade].accepted = true;
+        project.positions[trade].positions.forEach(async (position) => {
+          const contract = contracts.find(
+            (contract) => contract.trade._id.toString() === position.trade
+          );
+          if (contract) {
+            const foundPosition = contract.positions.find(
+              (_position) => _position.external_id === position.external_id
+            );
+            console.log("found position", foundPosition);
+            position.price = foundPosition.price;
+          }
+        });
+      }
+    })
+    await notificationService.create(
+      `Executor ${executor.first_name} has accepted the following positions; ${trades.join(', ')}`,
+      'PROJECT',
+      project.contractor,
+      project._id.toString()
+    )
+    await notificationService.create(
+      `You have accepted the following positions`,
+      'PROJECT',
+      executor_id,
+      project_id
+    )
+    return await this.saveProject(project);
+  }
+
+  async rejectProject(project_id: string, executor_id: string, trades: string[]) {
+    const project = await projectService.getProjectById(project_id);
+    if (!project) throw Error("No project with that ID!");
+    const executor = await userService.getUser({ _id: executor_id });
+    if (!executor) throw Error("No executor with that ID!");
+    trades.map((trade) => {
+      if (project.positions[trade] && project.positions[trade].executor === executor_id ) {
+        project.positions[trade].accepted = false;
+        project.executor = null;
+        project.positions[trade].executor = null;
+      }
+    })
+    await notificationService.create(
+      `Executor ${executor.first_name} has rejected the following positions; ${trades.join(', ')}`,
+      'PROJECT',
+      project.contractor,
+      project._id.toString()
+    )
+    await notificationService.create(
+      `You have rejected the following positions`,
+      'PROJECT',
+      executor_id,
+      project_id
+    )
+    return await this.saveProject(project);
   }
 
   getProjectById(id: string) {
@@ -196,18 +268,7 @@ export class ProjectService {
       if (project.positions[trade].executor)
         throw Error("Position already assinged!");
       project.positions[trade].executor = executor_id;
-      project.positions[trade].positions.forEach(async (position) => {
-        const contract = contracts.find(
-          (contract) => contract.trade._id.toString() === position.trade
-        );
-        if (contract) {
-          const foundPosition = contract.positions.find(
-            (_position) => _position.external_id === position.external_id
-          );
-          console.log("found position", foundPosition);
-          position.price = foundPosition.price
-        }
-      });
+      
       console.log(project.positions[trade].positions);
     }
     const existingExecutors = project.executors ?? [];
@@ -232,7 +293,11 @@ export class ProjectService {
       projects: executorProjects,
     });
 
-    return await this.saveProject({ ...project, executors: existingExecutors });
+    return await this.saveProject({
+      ...project,
+      executors: existingExecutors,
+      status: PROJECT_STATUS[1],
+    });
   }
 
   async changeProjectStatus(project_id: string, status: number) {
@@ -396,7 +461,6 @@ export class ProjectService {
   }
 
   async getContractorProjects(contractor_id: string) {
-    console.log("contractor_id", contractor_id);
     return AppDataSource.mongoManager.find(Project, {
       where: {
         contractor: {
@@ -414,10 +478,10 @@ export class ProjectService {
     const project = await this.getProjectById(project_id);
     const trade = await tradeService.retrieveTrade(trade_id);
     const existingPosition = project.positions[trade.name].positions.find(
-      (pos) => pos._id === position._id
+      (pos) => pos.external_id === position.external_id
     );
     const filteredPositions = project.positions[trade.name].positions.filter(
-      (pos) => pos._id !== existingPosition._id
+      (pos) => pos.external_id !== existingPosition.external_id
     );
     project.positions[trade.name].positions = [...filteredPositions, position];
     return await this.saveProject(project);

@@ -253,6 +253,7 @@ export type ProjectPositionSuper = {
     positions: ProjectPositions[];
     billed: false;
     executor: string;
+    accepted: boolean;
     name: string;
     contract?: string
     id: string;
@@ -357,10 +358,15 @@ export interface Task {
 
 export const INVOICE_STATUS = ["REQUESTED", "ACCEPTED", "DECLINED"] as const;
 
-export interface Invoice {
+export interface InvoiceInterface {
   _id: ObjectId;
   external_id: string;
   draft: string;
+  createdAt?: string;
+  updatedAt?: string;
+  status: typeof INVOICE_STATUS[number]
+  owner: string;
+  receiver: string;
 }
 
 export interface Draft {

@@ -7,7 +7,7 @@ import projectService from "../../services/projects";
 
 const storage = new StorageService();
 const userService = new UserService();
-const notificationService = new NotificationService()
+const notificationService = new NotificationService();
 
 export const showAllBuckets = async (req: Request, res: Response) => {
   try {
@@ -48,10 +48,10 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       await userService.updateProfile({ avatar: response.publicUrl, _id });
       user.avatar = response.publicUrl;
       await notificationService.create(
-        'Your profile picture has been updated succesfully!',
-        'Profile-Update',
+        "Your profile picture has been updated succesfully!",
+        "Profile-Update",
         user._id.toString()
-      )
+      );
       return res.json({ ...response, user });
     } catch (error) {
       return res.status(400).json(error);
@@ -60,9 +60,9 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
 };
 
 type DocumentUploadParamMap = {
-  document: typeof userDocumentsArray[number],
+  document: (typeof userDocumentsArray)[number];
   _id: string;
-}
+};
 
 export const uploadDocument = async (req: Request, res: Response) => {
   const { _id, document } = req.params as DocumentUploadParamMap;
@@ -109,14 +109,14 @@ export const uploadDocument = async (req: Request, res: Response) => {
     );
     await userService.updateProfile({
       documents: [_document, ...filteredDocuments],
-      _id: user._id
+      _id: user._id,
     });
     user.documents = userDocuments;
     await notificationService.create(
       `Your document ${document} has been updated succesfully!`,
-      'Profile-Update',
+      "Profile-Update",
       user._id.toString()
-    )
+    );
     return res.json({ ...response, user });
   } catch (error) {
     return res.status(400).json({ error: error.message });
@@ -160,10 +160,10 @@ export const uploadLogo = async (req: Request, res: Response) => {
     });
     user.logoUrl = existingLogoURL as LogoUrl;
     await notificationService.create(
-      'Your logo has been updated succesfully!',
-      'Profile-Update',
+      "Your logo has been updated succesfully!",
+      "Profile-Update",
       user._id.toString()
-    )
+    );
     return res.json(user);
   } catch (error) {
     return res.json({ message: error.message });
@@ -171,11 +171,11 @@ export const uploadLogo = async (req: Request, res: Response) => {
 };
 
 export const uploadProject = async (req: Request, res: Response) => {
-  const {id} = req.params
+  const { id } = req.params;
   const imageMimeTypes = [
-    "application/pdf", 
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel'
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
   ];
 
   const mimeType = imageMimeTypes.find((mT) => mT === req.file.mimetype);
@@ -197,8 +197,32 @@ export const uploadProject = async (req: Request, res: Response) => {
     //   'projects',
     //   extension
     // )
-    const response = await projectService.parsePDF(Body, id)
-    return res.json(response)
+    const response = await projectService.parsePDF(Body, id);
+    return res.json(response);
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+};
+
+export const uploadProjectPositionFile = async (
+  req: Request,
+  res: Response
+) => {
+  const { id, trade, position } = req.params;
+
+  try {
+    const {
+      extension,
+      key,
+      uploadParams: { Body },
+    } = storage.boostrapFile(req.file);
+
+    const response = await storage.uploadFile(
+      process.env.BUCKET_NAME,
+      Body,
+      `/project/${id}/${trade}/${position}/${key}.${extension}`
+    );
+    return res.json(response);
   } catch (error) {
     return res.json({ message: error.message });
   }

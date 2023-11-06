@@ -8,6 +8,8 @@ import NotificationRouter from './router/notifications'
 import ContractRouter from './router/contracts'; 
 import PositionRouter from './router/positions';
 import ProjectRouter from './router/projects';
+import DraftRouter from './router/drafts';
+import InvoiceRouter from './router/invoice';
 import cors from 'cors';
 import multer from 'multer';
 
@@ -25,6 +27,8 @@ app.use(NotificationRouter);
 app.use(ContractRouter);
 app.use(PositionRouter);
 app.use(ProjectRouter);
+app.use(DraftRouter);
+app.use(InvoiceRouter)
 
 app.get('/', (req:express.Request, res: express.Response) => {
   res.end('Hello World')
