@@ -9,14 +9,14 @@ const DRAFT_STATUS = ["ACCEPTED" , "REQUESTED", "DECLINED"] as const;
 const notificationService = new NotificationService()
 
 export class DraftSerVice {
-  async create(draft: Draft) {
+  async create(draft: Partial<Draft>) {
     const project = await projectService.getProjectById(draft.project);
     if (!project) throw Error("Project not found!");
     const user = await userService.getUser({ _id: draft.user_id });
     if (!user) throw Error("User was not found");
     const reciepient = await userService.getUser({ _id: draft.reciepient });
     if (!reciepient) throw Error("Receipient was not found");
-    const newDraft = AppDataSource.mongoManager.create(Draft, draft);
+    const newDraft = AppDataSource.mongoManager.create(Draft, draft) as Draft;
     const savedDraft = await this.save(newDraft);
     await notificationService.create(
       'Draft has been created successfully! '+savedDraft._id.toString(),

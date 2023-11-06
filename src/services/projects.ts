@@ -19,6 +19,7 @@ import { ObjectId } from "mongodb";
 import { User } from "../entity/User";
 import contractService from "./contract";
 import tradeService from "./trades";
+import draftService from "./draft";
 
 let options = {
   pagerender: pdfTextParser.render_page,
@@ -157,7 +158,11 @@ export class ProjectService {
     return project;
   }
 
-  async acceptProject(project_id: string, executor_id: string, trades: string[]) {
+  async acceptProject(
+    project_id: string,
+    executor_id: string,
+    trades: string[]
+  ) {
     const project = await projectService.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
     const executor = await userService.getUser({ _id: executor_id });
@@ -165,10 +170,13 @@ export class ProjectService {
     const contracts = await contractService.getContract({
       contractor: project.contractor,
       executor: executor_id,
-      status: CONTRACT_STATUS[1]
-    })
+      status: CONTRACT_STATUS[1],
+    });
     trades.map((trade) => {
-      if (project.positions[trade] && project.positions[trade].executor === executor_id ) {
+      if (
+        project.positions[trade] &&
+        project.positions[trade].executor === executor_id
+      ) {
         project.positions[trade].accepted = true;
         project.positions[trade].positions.forEach(async (position) => {
           const contract = contracts.find(
@@ -180,50 +188,103 @@ export class ProjectService {
             );
             console.log("found position", foundPosition);
             position.price = foundPosition.price;
+            position.units = foundPosition.units;
           }
         });
       }
-    })
+    });
     await notificationService.create(
-      `Executor ${executor.first_name} has accepted the following positions; ${trades.join(', ')}`,
-      'PROJECT',
+      `Executor ${
+        executor.first_name
+      } has accepted the following positions; ${trades.join(", ")}`,
+      "PROJECT",
       project.contractor,
       project._id.toString()
-    )
+    );
     await notificationService.create(
       `You have accepted the following positions`,
-      'PROJECT',
+      "PROJECT",
       executor_id,
       project_id
-    )
+    );
     return await this.saveProject(project);
   }
 
-  async rejectProject(project_id: string, executor_id: string, trades: string[]) {
+  async rejectProject(
+    project_id: string,
+    executor_id: string,
+    trades: string[]
+  ) {
     const project = await projectService.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
     const executor = await userService.getUser({ _id: executor_id });
     if (!executor) throw Error("No executor with that ID!");
     trades.map((trade) => {
-      if (project.positions[trade] && project.positions[trade].executor === executor_id ) {
+      if (
+        project.positions[trade] &&
+        project.positions[trade].executor === executor_id
+      ) {
         project.positions[trade].accepted = false;
         project.executor = null;
         project.positions[trade].executor = null;
       }
-    })
+    });
     await notificationService.create(
-      `Executor ${executor.first_name} has rejected the following positions; ${trades.join(', ')}`,
+      `Executor ${
+        executor.first_name
+      } has rejected the following positions; ${trades.join(", ")}`,
+      "PROJECT",
+      project.contractor,
+      project._id.toString()
+    );
+    await notificationService.create(
+      `You have rejected the following positions`,
+      "PROJECT",
+      executor_id,
+      project_id
+    );
+    return await this.saveProject(project);
+  }
+
+  async updateMultiplePositionByTrade(
+    project_id: string,
+    trade: string,
+    status: "BILLED" | "COMPLETED" | "NOT FEASIBLE"
+  ) {
+    const project = await this.getProjectById(project_id);
+    if (!project) throw Error("project not found!");
+    const postions = project.positions[trade];
+    if (!postions) throw Error("positions not found");
+    postions.positions.forEach((position) => {
+      position.status = status;
+    });
+    if (status === "BILLED" && postions.executor && postions.accepted) {
+      postions.billed = true;
+      const amount = postions.positions
+        .map((position) => Number(position.price * parseFloat(position.crowd)))
+        .reduce((prev, current) => prev + current);
+      await draftService.create({
+        amount: amount,
+        positions: postions.positions.map((position) => position.external_id),
+        project: project._id.toString(),
+        user_id: postions.executor,
+        reciepient: project.contractor,
+      });
+    }
+    await notificationService.create(
+      `You have ${status} the positions under ${trade}`,
+      'PROJECT',
+      postions.executor,
+      project._id.toString()
+    )
+    await notificationService.create(
+      `The positions under ${trade} has been ${status}`,
       'PROJECT',
       project.contractor,
       project._id.toString()
     )
-    await notificationService.create(
-      `You have rejected the following positions`,
-      'PROJECT',
-      executor_id,
-      project_id
-    )
-    return await this.saveProject(project);
+    project.positions[trade] = postions;
+    return await this.saveProject(project)
   }
 
   getProjectById(id: string) {
@@ -254,11 +315,6 @@ export class ProjectService {
   ) {
     const executor = await userService.getUser({ _id: executor_id });
     const contractor = await userService.getUser({ _id: contractor_id });
-    const contracts = await contractService.getContract({
-      contractor: contractor_id,
-      executor: executor_id,
-      status: CONTRACT_STATUS[1],
-    });
 
     if (!executor) throw Error("error fetching executor");
     if (!contractor) throw Error("error fetching contractor");
@@ -268,7 +324,7 @@ export class ProjectService {
       if (project.positions[trade].executor)
         throw Error("Position already assinged!");
       project.positions[trade].executor = executor_id;
-      
+
       console.log(project.positions[trade].positions);
     }
     const existingExecutors = project.executors ?? [];
