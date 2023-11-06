@@ -84,3 +84,8 @@ export class DraftSerVice {
     return AppDataSource.mongoManager.save(Draft, draft);
   }
 }
+
+
+const draftService = new DraftSerVice();
+
+export default draftService;
