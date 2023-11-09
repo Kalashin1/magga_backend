@@ -138,7 +138,7 @@ export class ProjectService {
       params.external_id
     );
     if (existingProject) {
-      throw Error("Project With that Id already exists");
+      throw Error("Project With that Id already exists, contact your contractor");
     }
     const contractor = await userService.getUser({ _id: params.contractor });
     if (!contractor || contractor.role !== "contractor")

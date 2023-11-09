@@ -4,6 +4,7 @@ import { Draft } from "../../entity/draft";
 import projectService from "../projects";
 import userService from "../user";
 import { NotificationService } from "../notifications";
+import { INVOICE_STATUS } from "../../types";
 
 const DRAFT_STATUS = ["ACCEPTED" , "REQUESTED", "DECLINED"] as const;
 const notificationService = new NotificationService()
@@ -65,7 +66,7 @@ export class DraftSerVice {
 
   async updateDraftStatus(draft_id: string, status: number) {
     const draft = await this.getDraftById(draft_id);
-    draft.status = DRAFT_STATUS[status];
+    draft.status = INVOICE_STATUS[status];
     const message = `Status of the draft has been changed draft is now ${DRAFT_STATUS[status]} ${draft_id}`
     await notificationService.create(
       message,
