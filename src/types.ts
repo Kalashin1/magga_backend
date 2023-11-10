@@ -356,7 +356,7 @@ export interface Task {
   dueDate: string;
 }
 
-export const INVOICE_STATUS = ["REQUESTED", "ACCEPTED", "DECLINED"] as const;
+export const INVOICE_STATUS = ["REQUESTED", "ACCEPTED", "DECLINED", "BILLED"] as const;
 
 export interface InvoiceInterface {
   _id: ObjectId;

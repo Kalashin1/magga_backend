@@ -22,10 +22,10 @@ export class Draft implements DraftInterface {
 
   @Column({
     type: "enum",
-    enum: ["ACCEPTED" , "REQUESTED", "DECLINED"],
+    enum: ["ACCEPTED" , "REQUESTED", "DECLINED", "BILLED"],
     default: "REQUESTED",
   })
-  status: "ACCEPTED" | "REQUESTED" | "DECLINED";
+  status: "ACCEPTED" | "REQUESTED" | "DECLINED" |"BILLED";
 
   @CreateDateColumn()
   createdAt: string;
