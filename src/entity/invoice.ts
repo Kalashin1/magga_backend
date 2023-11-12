@@ -27,4 +27,7 @@ export class Invoice implements InvoiceInterface {
 
   @Column()
   receiver: string;
+
+  @Column()
+  type: "PROJECT" | "SHOP";
 }

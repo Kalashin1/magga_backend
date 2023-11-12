@@ -395,6 +395,10 @@ export class UserService {
     return owner;
   }
 
+  save(user: User){
+    return AppDataSource.mongoManager.save(User, user);
+  }
+
   async deleteBankDetails(owner_id: string, existingBankDetails: BankDetails) {
     const owner = await this.getUser({ _id: owner_id });
     const bankDetails = owner.bankDetails;

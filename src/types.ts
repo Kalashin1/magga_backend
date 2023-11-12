@@ -242,6 +242,7 @@ export type ProjectPositions = {
 export const PROJECT_STATUS = [
   "CREATED",
   "ASSIGNED",
+  "ACCEPTED",
   "PAUSED",
   "COMPLETED",
   "NOT-FEASIBLE",
@@ -367,6 +368,7 @@ export interface InvoiceInterface {
   status: typeof INVOICE_STATUS[number]
   owner: string;
   receiver: string;
+  type: "PROJECT"| "SHOP"
 }
 
 export interface Draft {
