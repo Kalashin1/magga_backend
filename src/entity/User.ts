@@ -19,7 +19,7 @@ import {
   Address,
   Document,
 } from "../types";
-export type UserRoleType = "admin" | "contractor" | "executor" | "employee";
+export type UserRoleType = "admin" | "contractor" | "executor" | "employee" | "shop";
 
 @Entity()
 export class User implements AuthUser {
@@ -54,7 +54,7 @@ export class User implements AuthUser {
   
   @Column({
     type: "enum",
-    enum: ["admin", "contractor", "executor", "employee"],
+    enum: ["admin", "contractor", "executor", "employee", "shop"],
     default: "employee",
   })
   role: UserRoleType;

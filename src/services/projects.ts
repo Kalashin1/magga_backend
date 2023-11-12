@@ -138,7 +138,9 @@ export class ProjectService {
       params.external_id
     );
     if (existingProject) {
-      throw Error("Project With that Id already exists, contact your contractor");
+      throw Error(
+        "Project With that Id already exists, contact your contractor"
+      );
     }
     const contractor = await userService.getUser({ _id: params.contractor });
     if (!contractor || contractor.role !== "contractor")
@@ -172,7 +174,8 @@ export class ProjectService {
       executor: executor_id,
       status: CONTRACT_STATUS[1],
     });
-    trades.map((trade) => {
+    const unAcceptedTrades: string[] = [] 
+    trades.forEach((trade) => {
       if (
         project.positions[trade] &&
         project.positions[trade].executor === executor_id
@@ -192,7 +195,13 @@ export class ProjectService {
           }
         });
       }
+      if (!project.positions[trade].accepted || project.positions[trade].executor == null) {
+        unAcceptedTrades.push(trade);
+      }
     });
+    if (unAcceptedTrades.length < 1) {
+      project.status = PROJECT_STATUS[2]
+    }
     await notificationService.create(
       `Executor ${
         executor.first_name
@@ -215,20 +224,31 @@ export class ProjectService {
     executor_id: string,
     trades: string[]
   ) {
+    console.log("executor_id", executor_id)
     const project = await projectService.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
     const executor = await userService.getUser({ _id: executor_id });
     if (!executor) throw Error("No executor with that ID!");
-    trades.map((trade) => {
+    console.log("trades", trades);
+    for (const trade of trades) {
       if (
         project.positions[trade] &&
         project.positions[trade].executor === executor_id
       ) {
+        console.log('assigned')
         project.positions[trade].accepted = false;
         project.executor = null;
         project.positions[trade].executor = null;
+        project.positions[trade].positions.forEach((position) => {
+          position.price = 0;
+        });
       }
-    });
+    }
+    project.status = PROJECT_STATUS[0];
+    const updatedProjectExecutors = project.executors.filter((exe) => exe !== executor_id);
+    project.executors = updatedProjectExecutors;
+    const updatedExecutorProjects = executor.projects.filter((project) => project !== project_id);
+    executor.projects = updatedExecutorProjects;
     await notificationService.create(
       `Executor ${
         executor.first_name
@@ -243,6 +263,8 @@ export class ProjectService {
       executor_id,
       project_id
     );
+    console.log(project.positions);
+    await userService.save(executor);
     return await this.saveProject(project);
   }
 
@@ -273,18 +295,18 @@ export class ProjectService {
     }
     await notificationService.create(
       `You have ${status} the positions under ${trade}`,
-      'PROJECT',
+      "PROJECT",
       postions.executor,
       project._id.toString()
-    )
+    );
     await notificationService.create(
       `The positions under ${trade} has been ${status}`,
-      'PROJECT',
+      "PROJECT",
       project.contractor,
       project._id.toString()
-    )
+    );
     project.positions[trade] = postions;
-    return await this.saveProject(project)
+    return await this.saveProject(project);
   }
 
   getProjectById(id: string) {
@@ -315,11 +337,15 @@ export class ProjectService {
   ) {
     const executor = await userService.getUser({ _id: executor_id });
     const contractor = await userService.getUser({ _id: contractor_id });
-
     if (!executor) throw Error("error fetching executor");
     if (!contractor) throw Error("error fetching contractor");
 
     const project = await this.getProjectById(project_id);
+    const contracts = await contractService.getContract({
+      contractor: project.contractor,
+      executor: executor_id,
+      status: CONTRACT_STATUS[1],
+    });
     for (const trade of trades) {
       if (project.positions[trade].executor)
         throw Error("Position already assinged!");
@@ -339,6 +365,26 @@ export class ProjectService {
     } else {
       executorProjects.push(project._id.toString());
     }
+    trades.forEach((trade) => {
+      if (
+        project.positions[trade] &&
+        project.positions[trade].executor === executor_id
+      ) {
+        project.positions[trade].positions.forEach(async (position) => {
+          const contract = contracts.find(
+            (contract) => contract.trade._id.toString() === position.trade
+          );
+          if (contract) {
+            const foundPosition = contract.positions.find(
+              (_position) => _position.external_id === position.external_id
+            );
+            console.log("found position", foundPosition);
+            position.price = foundPosition.price;
+            position.units = foundPosition.units;
+          }
+        });
+      }
+    });
     await notificationService.create(
       "Project has been assigned to you",
       "PROJECT",

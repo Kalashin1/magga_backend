@@ -6,13 +6,11 @@ import notificationService from "../notifications";
 import userService from "../user";
 
 export class InvoiceService {
-  async create({ draft, external_id, owner, receiver }: Invoice) {
+  async create({ draft, external_id, owner, receiver, type = "PROJECT" }: Invoice) {
     console.log("draft", draft);
     const invoiceOwner = await userService.getUser({ _id: owner });
     const invoiceReciever = await userService.getUser({ _id: receiver });
     const existingDraft = await draftService.getDraftById(draft);
-    existingDraft.status = "BILLED"
-    await draftService.save(existingDraft);
     if (!invoiceOwner) throw Error("owner of invoice not found");
     if (!invoiceReciever) throw Error("receiver of invoice was not found");
     if (!existingDraft) throw Error("Existing draft not found!");
@@ -21,7 +19,9 @@ export class InvoiceService {
       draft,
       external_id,
       owner,
+      receiver,
       status: "ACCEPTED",
+      type,
     });
     const savedInvoice = await this.save(invoice);
 
@@ -37,6 +37,8 @@ export class InvoiceService {
       receiver,
       savedInvoice._id.toString()
     );
+    await draftService.save({...existingDraft, status: "BILLED"});
+    console.log('status saved')
     return savedInvoice;
   }
 
@@ -94,7 +96,7 @@ export class InvoiceService {
     });
   }
 
-  getInvoiceByExternalId(external_id: string){
+  getInvoiceByExternalId(external_id: string) {
     return AppDataSource.mongoManager.findOne(Invoice, {
       where: {
         external_id: {
