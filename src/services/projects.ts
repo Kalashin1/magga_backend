@@ -11,6 +11,7 @@ import {
   IProject,
   Position,
   CONTRACT_STATUS,
+  Message,
 } from "../types";
 import userService from "./user";
 import { PositionService } from "./position";
@@ -174,7 +175,7 @@ export class ProjectService {
       executor: executor_id,
       status: CONTRACT_STATUS[1],
     });
-    const unAcceptedTrades: string[] = [] 
+    const unAcceptedTrades: string[] = [];
     trades.forEach((trade) => {
       if (
         project.positions[trade] &&
@@ -195,12 +196,15 @@ export class ProjectService {
           }
         });
       }
-      if (!project.positions[trade].accepted || project.positions[trade].executor == null) {
+      if (
+        !project.positions[trade].accepted ||
+        project.positions[trade].executor == null
+      ) {
         unAcceptedTrades.push(trade);
       }
     });
     if (unAcceptedTrades.length < 1) {
-      project.status = PROJECT_STATUS[2]
+      project.status = PROJECT_STATUS[2];
     }
     await notificationService.create(
       `Executor ${
@@ -224,7 +228,7 @@ export class ProjectService {
     executor_id: string,
     trades: string[]
   ) {
-    console.log("executor_id", executor_id)
+    console.log("executor_id", executor_id);
     const project = await projectService.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
     const executor = await userService.getUser({ _id: executor_id });
@@ -235,7 +239,7 @@ export class ProjectService {
         project.positions[trade] &&
         project.positions[trade].executor === executor_id
       ) {
-        console.log('assigned')
+        console.log("assigned");
         project.positions[trade].accepted = false;
         project.executor = null;
         project.positions[trade].executor = null;
@@ -245,9 +249,13 @@ export class ProjectService {
       }
     }
     project.status = PROJECT_STATUS[0];
-    const updatedProjectExecutors = project.executors.filter((exe) => exe !== executor_id);
+    const updatedProjectExecutors = project.executors.filter(
+      (exe) => exe !== executor_id
+    );
     project.executors = updatedProjectExecutors;
-    const updatedExecutorProjects = executor.projects.filter((project) => project !== project_id);
+    const updatedExecutorProjects = executor.projects.filter(
+      (project) => project !== project_id
+    );
     executor.projects = updatedExecutorProjects;
     await notificationService.create(
       `Executor ${
@@ -279,6 +287,9 @@ export class ProjectService {
     if (!postions) throw Error("positions not found");
     postions.positions.forEach((position) => {
       position.status = status;
+      if (status === "BILLED") {
+        position.billed = true;
+      }
     });
     if (status === "BILLED" && postions.executor && postions.accepted) {
       postions.billed = true;
@@ -523,22 +534,36 @@ export class ProjectService {
   async addExtraOrders(
     project_id: string,
     shortageOrders: ProjectPositions[],
-    trade_id: string
+    trade_id: string,
   ) {
     const project = await this.getProjectById(project_id);
-    const existingShortageOrders = project.extraPositions;
+    const existingShortageOrders = project.extraPositions ?? {};
     const trade = await tradeService.retrieveTrade(trade_id);
     for (let shortageOrder of shortageOrders) {
-      for (let existingShortageOrder of existingShortageOrders[trade.name]
-        .positions) {
-        if (shortageOrder._id === existingShortageOrder._id)
-          throw Error(
-            `Position ${shortageOrder.external_id} has already been added to shortages`
-          );
+      if (existingShortageOrders) {
+        for (let existingShortageOrder of existingShortageOrders[trade.name]
+          .positions) {
+          if (shortageOrder._id === existingShortageOrder._id)
+            throw Error(
+              `Position ${shortageOrder.external_id} has already been added to shortages`
+            );
+        }
       }
     }
-
-    existingShortageOrders[trade.name].positions.push(...shortageOrders);
+    console.log(existingShortageOrders)
+    if(existingShortageOrders[trade?.name]){
+      existingShortageOrders[trade?.name].positions.push(...shortageOrders); 
+    } else {
+      existingShortageOrders[trade?.name] = {
+        billed: false,
+        accepted: false,
+        name: trade.name,
+        contract: project?.positions[trade.name]?.contract,
+        positions: [...shortageOrders],
+        id: trade._id.toString(),
+      }
+    }
+    
     project.extraPositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project position ${project.external_id}`;
     await notificationService.create(
@@ -586,6 +611,7 @@ export class ProjectService {
       (pos) => pos.external_id !== existingPosition.external_id
     );
     project.positions[trade.name].positions = [...filteredPositions, position];
+    console.log("position", position);
     return await this.saveProject(project);
   }
 
@@ -604,6 +630,22 @@ export class ProjectService {
     );
     project.positions[trade.name].positions = [...filteredPositions, position];
     return await this.saveProject(project);
+  }
+
+  async addMessageToPosition(
+    project_id: string,
+    external_id: string,
+    trade_id: string,
+    message: Partial<Message>
+  ) {
+    const project = await this.getProjectById(project_id);
+    if (!project) throw Error("project not found");
+    const trade = await tradeService.retrieveTrade(trade_id);
+    if (!trade) throw Error("Trade not found!");
+    const postion = project.positions[trade.name].positions.find(
+      (position) => position.external_id === external_id
+    );
+    if (!postion) throw Error("position");
   }
 
   async updateShortageOrder(

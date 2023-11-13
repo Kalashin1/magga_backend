@@ -233,7 +233,6 @@ export interface Position {
 export type ProjectPositions = {
   status: string;
   billed: boolean;
-  comment?: string;
   section?: string;
   documentURL?: string;
   position: number;
@@ -253,7 +252,7 @@ export type ProjectPositionSuper = {
   [key: string]: {
     positions: ProjectPositions[];
     billed: boolean;
-    executor: string;
+    executor?: string;
     accepted: boolean;
     name: string;
     contract?: string
@@ -391,4 +390,11 @@ export interface Message {
   reciever_id: string;
   project_id: string;
   createdAt: string;
+  position_id?: string;
+  trade_id?: string;
+  parentMessage?: string;
+  status: typeof MESSAGE_STATUS[number]
 }
+
+
+export const MESSAGE_STATUS = ['SENT', 'DELIVERED', 'READ', 'DELETED'] as const

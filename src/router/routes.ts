@@ -101,3 +101,8 @@ export enum INVOICE_ROUTES {
   GET_INVOICE_BY_ID = '/invoice/id/:id',
   GET_INVOICE_BY_EXTERNAL_ID = '/invoice/external_id/:external_id'
 }
+
+export enum MESSAGE_ROUTES {
+  CREATE = '/message/create',
+  MESSAGE_BY_PROJECT_ID = '/message/project/:project_id'
+}
