@@ -10,6 +10,7 @@ import { Shops } from "./entity/shop";
 import { Product } from "./entity/product";
 import { Draft } from "./entity/draft";
 import { Invoice } from "./entity/invoice";
+import { Message } from "./entity/message";
 require("dotenv").config();
 
 export const AppDataSource = new DataSource({
@@ -29,5 +30,6 @@ export const AppDataSource = new DataSource({
     Product,
     Draft,
     Invoice,
+    Message,
   ],
 });
