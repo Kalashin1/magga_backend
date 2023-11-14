@@ -106,3 +106,16 @@ export enum MESSAGE_ROUTES {
   CREATE = '/message/create',
   MESSAGE_BY_PROJECT_ID = '/message/project/:project_id'
 }
+
+export enum TODO_ROUTES {
+  CREATE = '/todo/create',
+  USER_TODO = '/todo/user/:user_id/:status',
+  ASSIGNED_TODO = '/todo/assigned/:user_id/:status',
+  TODO = '/todo/id/:id',
+}
+
+export enum PRODUCT_ROUTES {
+  CREATE = '/product/create',
+  PRODUCT = '/product/id/:id',
+  SHOP_PRODUCTS = '/product/shop/:shop'
+}

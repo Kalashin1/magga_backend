@@ -271,7 +271,6 @@ export class ProjectService {
       executor_id,
       project_id
     );
-    console.log(project.positions);
     await userService.save(executor);
     return await this.saveProject(project);
   }
@@ -538,9 +537,10 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.extraPositions ?? {};
+    const projectPositions = project.positions;
     const trade = await tradeService.retrieveTrade(trade_id);
     for (let shortageOrder of shortageOrders) {
-      if (existingShortageOrders) {
+      if (existingShortageOrders[trade.name]) {
         for (let existingShortageOrder of existingShortageOrders[trade.name]
           .positions) {
           if (shortageOrder._id === existingShortageOrder._id)
@@ -550,17 +550,17 @@ export class ProjectService {
         }
       }
     }
-    console.log(existingShortageOrders)
     if(existingShortageOrders[trade?.name]){
       existingShortageOrders[trade?.name].positions.push(...shortageOrders); 
     } else {
       existingShortageOrders[trade?.name] = {
         billed: false,
-        accepted: false,
+        accepted: projectPositions[trade?.name].executor ? true : false,
         name: trade.name,
         contract: project?.positions[trade.name]?.contract,
         positions: [...shortageOrders],
         id: trade._id.toString(),
+        executor: projectPositions[trade?.name].executor
       }
     }
     
@@ -623,12 +623,13 @@ export class ProjectService {
     const project = await this.getProjectById(project_id);
     const trade = await tradeService.retrieveTrade(trade_id);
     const existingPosition = project.extraPositions[trade.name].positions.find(
-      (pos) => pos._id === existingPosition._id
+      (pos) => pos.external_id === position.external_id
     );
-    const filteredPositions = project.positions[trade.name].positions.filter(
+    if (!existingPosition) throw Error('position does not exist')
+    const filteredPositions = project.extraPositions[trade.name].positions.filter(
       (pos) => pos._id !== position._id
     );
-    project.positions[trade.name].positions = [...filteredPositions, position];
+    project.extraPositions[trade.name].positions = [...filteredPositions, position];
     return await this.saveProject(project);
   }
 

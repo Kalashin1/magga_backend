@@ -10,7 +10,9 @@ import PositionRouter from './router/positions';
 import ProjectRouter from './router/projects';
 import DraftRouter from './router/drafts';
 import InvoiceRouter from './router/invoice';
-import MessageRouter from './router/message'
+import MessageRouter from './router/message';
+import TodoRouter from './router/todos';
+import ProductRouter from './router/products';
 import cors from 'cors';
 import multer from 'multer';
 
@@ -31,6 +33,8 @@ app.use(ProjectRouter);
 app.use(DraftRouter);
 app.use(InvoiceRouter);
 app.use(MessageRouter);
+app.use(TodoRouter);
+app.use(ProductRouter);
 
 app.get('/', (req:express.Request, res: express.Response) => {
   res.end('Hello World')

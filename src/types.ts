@@ -320,6 +320,7 @@ export interface Product {
   _id: ObjectId;
   name: string;
   image: string;
+  external_id: string;
   shop: string;
   price: string;
   createdAt: string;
@@ -347,13 +348,17 @@ export const TASK_STATUS = [
   "OVER-DUE",
 ] as const;
 
-export interface Task {
+export interface Todo {
   _id: ObjectId;
   user_id: string;
   type: string;
+  description?: string;
   status: (typeof TASK_STATUS)[number];
-  createdAt: string;
-  dueDate: string;
+  object_id: string;
+  createdAt?: string;
+  updatedAt?: string;
+  assignedTo: string;
+  dueDate?: string;
 }
 
 export const INVOICE_STATUS = ["REQUESTED", "ACCEPTED", "DECLINED", "BILLED"] as const;
@@ -387,7 +392,7 @@ export interface Message {
   content: string;
   assetUrl: string;
   owner_id: string;
-  reciever_id: string;
+  reciever_id: string[];
   project_id: string;
   createdAt: string;
   position_id?: string;
