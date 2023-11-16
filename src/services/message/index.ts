@@ -7,23 +7,24 @@ import userService from "../user";
 export class MessageService {
   async create(payload: Message) {
     const owner = await userService.getUser({ _id: payload.owner_id });
-    const receiver = await userService.getUser({ _id: payload.reciever_id });
-    const project = await projectService.getProjectById(payload.reciever_id);
+    const receivers = await Promise.all(payload.reciever_id.map((_id) => userService.getUser({ _id })))
+    const project = await projectService.getProjectById(payload.project_id);
     if (!owner) throw Error("Message owner not found");
 
-    if (!receiver) throw Error("Reciever owner not found");
+    if (!receivers.length) throw Error("Message recievers not found");
 
     if (!project) throw Error("Project owner not found");
 
     const message = await AppDataSource.mongoManager.create(Message, payload);
     const savedMessage = await this.save(message);
-
-    await notificationService.create(
-      `New message from ${owner.first_name}`,
-      "MESSAGE",
-      receiver._id.toString(),
-      savedMessage._id.toString()
-    );
+    receivers.forEach(async (receiver) => (
+      await notificationService.create(
+        `New message from ${owner.first_name}`,
+        "MESSAGE",
+        receiver._id.toString(),
+        savedMessage._id.toString()
+      )
+    ))
     
     await notificationService.create(
       `Message sent to ${owner.first_name}`,

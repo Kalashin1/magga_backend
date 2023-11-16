@@ -22,7 +22,7 @@ export class Message implements IMessage {
   owner_id: string;
 
   @Column()
-  reciever_id: string;
+  reciever_id: string[];
 
   @Column()
   project_id: string;

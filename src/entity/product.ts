@@ -31,4 +31,6 @@ export class Product implements ProductInterface {
   @Column()
   subCategory: string;
 
+  @Column()
+  external_id: string;
 }
