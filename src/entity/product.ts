@@ -4,14 +4,14 @@ import { Product as ProductInterface } from "../types";
 @Entity()
 export class Product implements ProductInterface {
 
+  @Column()
+  imageUrls: string[];
+
   @ObjectIdColumn()
   _id: ObjectId;
 
   @Column()
   name: string;
-
-  @Column()
-  image: string;
 
   @Column()
   shop: string;
@@ -33,4 +33,7 @@ export class Product implements ProductInterface {
 
   @Column()
   external_id: string;
+
+  @Column()
+  description: string;
 }

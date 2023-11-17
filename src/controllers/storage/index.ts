@@ -3,6 +3,7 @@ import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
 import { Document, LogoUrl, userDocumentsArray } from "../../types";
 import { NotificationService } from "../../services/notifications";
+import ProductService from "../../services/products";
 import projectService from "../../services/projects";
 
 const storage = new StorageService();
@@ -56,6 +57,61 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
     } catch (error) {
       return res.status(400).json(error);
     }
+  }
+};
+
+export const uploadProductImages = async (req: Request, res: Response) => {
+  const { shop_id, product_id } = req.params;
+  const imageMimeTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg"];
+
+  const files = req.files as any[];
+  console.log(req.files);
+
+  files.forEach((file) => {
+    const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
+
+    if (file && !mimeType) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      return res.json({ message: "Only images allowed!" });
+    }
+  });
+
+  try {
+    const shop = await userService.getUser({ _id: shop_id });
+    if (!shop)
+      return res
+        .status(404)
+        .json({ message: `Shop with ${shop_id} not found` });
+    const product = await ProductService.getProductById(product_id);
+    if (!product)
+      return res
+        .status(404)
+        .json({ message: `Product with ${product_id} not found` });
+    const existingImage = product.imageUrls ?? [];
+    for (const file of files) {
+      const {
+        uploadParams: { Body },
+        extension,
+        key,
+      } = storage.boostrapFile(file);
+      const response = await storage.uploadFile(
+        process.env.BUCKET_NAME,
+        Body,
+        `/shop/${shop_id}-${shop.first_name}/products/${product.name}-${product_id}/${extension}.${key}`
+      );
+      console.log(response);
+      existingImage.push(response.publicUrl);
+      console.log('ended')
+    }
+    console.log("existingImage", existingImage)
+    const response = await ProductService.update(product_id, {
+      ...product,
+      imageUrls: existingImage,
+    });
+    console.log(response)
+    return res.json(response);
+  } catch (error) {
+    return res.json({ message: error.message });
   }
 };
 
@@ -190,13 +246,7 @@ export const uploadProject = async (req: Request, res: Response) => {
       extension,
       uploadParams: { Body },
     } = storage.boostrapFile(req.file);
-    // storage.parsePDF(Body);
-    // const response = await storage.uploadProject(
-    //   id,
-    //   Body,
-    //   'projects',
-    //   extension
-    // )
+    await storage.uploadProject(id, Body, "projects", extension);
     const response = await projectService.parsePDF(Body, id);
     return res.json(response);
   } catch (error) {

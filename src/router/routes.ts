@@ -43,7 +43,8 @@ export enum BUCKET_ROUTES {
   OWNER_EMPLOYEE = '/owner/employee/:owner_id',
   OWNER_EXECUTORS = '/owner/executor/:owner_id',
   UPLOAD_PROJECT = '/project/upload/:id',
-  UPLOAD_POSITION_DOCUMENT = '/project/position/:id/:trade/:position'
+  UPLOAD_POSITION_DOCUMENT = '/project/position/:id/:trade/:position',
+  UPLOAD_PRODUCT_IMAGE = '/product/image/:shop_id/:product_id',
 }
 
 export enum NOTIFICATION_ROUTES {
