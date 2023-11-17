@@ -48,16 +48,14 @@ class ProductService {
     return AppDataSource.mongoManager.save(Product, product);
   }
 
-  update(id: string, product: Product) {
-    return AppDataSource.mongoManager.updateOne(
-      Product,
-      {
-        _id: {
-          $eq: new ObjectId(id),
-        },
-      },
-      product
-    );
+  async update(id: string,{price, name, description, imageUrls}: Partial<Product>) {
+   const product = await this.getProductById(id);
+    if (!product) throw Error('Product not found');
+    if (price) product.price = price;
+    if (name) product.name = name;
+    if (description) product.description = description;
+    if (imageUrls) product.imageUrls = imageUrls;
+    return this.save(product);
   }
 }
 

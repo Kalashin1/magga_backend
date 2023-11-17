@@ -65,6 +65,7 @@ export const uploadProductImages = async (req: Request, res: Response) => {
   const imageMimeTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg"];
 
   const files = req.files as any[];
+  console.log(req.files);
 
   files.forEach((file) => {
     const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
@@ -87,7 +88,7 @@ export const uploadProductImages = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: `Product with ${product_id} not found` });
     const existingImage = product.imageUrls ?? [];
-    files.forEach(async (file) => {
+    for (const file of files) {
       const {
         uploadParams: { Body },
         extension,
@@ -98,12 +99,16 @@ export const uploadProductImages = async (req: Request, res: Response) => {
         Body,
         `/shop/${shop_id}-${shop.first_name}/products/${product.name}-${product_id}/${extension}.${key}`
       );
+      console.log(response);
       existingImage.push(response.publicUrl);
-    });
+      console.log('ended')
+    }
+    console.log("existingImage", existingImage)
     const response = await ProductService.update(product_id, {
       ...product,
       imageUrls: existingImage,
     });
+    console.log(response)
     return res.json(response);
   } catch (error) {
     return res.json({ message: error.message });
