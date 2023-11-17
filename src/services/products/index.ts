@@ -7,12 +7,14 @@ import notificationService from "../notifications";
 class ProductService {
   async create(param: Product) {
     const shop = await userService.getUser({ _id: param.shop });
-    if (!shop) throw Error('No shop with that ID!');
+    if (!shop) throw Error("No shop with that ID!");
 
-    const product = await this.save(AppDataSource.mongoManager.create(Product, param))
+    const product = await this.save(
+      AppDataSource.mongoManager.create(Product, param)
+    );
     await notificationService.create(
-      'New Product Added',
-      'PRODUCT',
+      "New Product Added",
+      "PRODUCT",
       shop._id.toString(),
       product._id.toString()
     );
@@ -23,27 +25,39 @@ class ProductService {
     return AppDataSource.mongoManager.find(Product, {
       where: {
         shop: {
-          $eq: shop_id
-        }
+          $eq: shop_id,
+        },
       },
       order: {
-        category: 'ASC'
-      }
-    })
+        category: "ASC",
+      },
+    });
   }
 
   getProductById(id: string) {
     return AppDataSource.mongoManager.findOne(Product, {
       where: {
         _id: {
-          $eq: new ObjectId(id)
-        }
-      }
-    })
+          $eq: new ObjectId(id),
+        },
+      },
+    });
   }
 
   save(product: Product) {
-    return AppDataSource.mongoManager.save(Product, product)
+    return AppDataSource.mongoManager.save(Product, product);
+  }
+
+  update(id: string, product: Product) {
+    return AppDataSource.mongoManager.updateOne(
+      Product,
+      {
+        _id: {
+          $eq: new ObjectId(id),
+        },
+      },
+      product
+    );
   }
 }
 

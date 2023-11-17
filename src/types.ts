@@ -319,10 +319,11 @@ export type Building = {
 export interface Product {
   _id: ObjectId;
   name: string;
-  image: string;
+  imageUrls: string[];
   external_id: string;
   shop: string;
   price: string;
+  description: string;
   createdAt: string;
   updatedAt: string;
   category: string;
