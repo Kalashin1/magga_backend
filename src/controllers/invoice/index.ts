@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { InvoiceService } from "../../services/invoice";
 import userService from "../../services/user";
 import draftService from "../../services/draft";
-import projectService from "../../services/projects";
+import projectService from "../../services/project";
 
 export const createInvoice = async (req: Request, res: Response) => {
   const { payload } = req.body;

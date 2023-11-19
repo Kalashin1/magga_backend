@@ -1,8 +1,8 @@
-import { Project } from "../entity/project";
-import { AppDataSource } from "../data-source";
+import { Project } from "../../entity/project";
+import { AppDataSource } from "../../data-source";
 import PdfParse from "pdf-parse";
 import { translate } from "@vitalets/google-translate-api";
-import pdfTextParser from "./pdf-text-parser";
+import pdfTextParser from "../pdf-text-parser";
 import {
   Building,
   PROJECT_STATUS,
@@ -12,15 +12,16 @@ import {
   Position,
   CONTRACT_STATUS,
   Message,
-} from "../types";
-import userService from "./user";
-import { PositionService } from "./position";
-import { NotificationService } from "./notifications";
+  ExtraProjectPositionSuper,
+} from "../../types";
+import userService from "../user";
+import { PositionService } from "../position";
+import { NotificationService } from "../notifications";
 import { ObjectId } from "mongodb";
-import { User } from "../entity/User";
-import contractService from "./contract";
-import tradeService from "./trades";
-import draftService from "./draft";
+import { User } from "../../entity/User";
+import contractService from "../contract";
+import tradeService from "../trades";
+import draftService from "../draft";
 
 let options = {
   pagerender: pdfTextParser.render_page,
@@ -534,36 +535,35 @@ export class ProjectService {
     project_id: string,
     shortageOrders: ProjectPositions[],
     trade_id: string,
+    creator_id: string
   ) {
     const project = await this.getProjectById(project_id);
-    const existingShortageOrders = project.extraPositions ?? {};
+    const existingShortageOrders = project.extraPositions ?? [];
     const projectPositions = project.positions;
     const trade = await tradeService.retrieveTrade(trade_id);
-    for (let shortageOrder of shortageOrders) {
-      if (existingShortageOrders[trade.name]) {
-        for (let existingShortageOrder of existingShortageOrders[trade.name]
-          .positions) {
-          if (shortageOrder._id === existingShortageOrder._id)
-            throw Error(
-              `Position ${shortageOrder.external_id} has already been added to shortages`
-            );
-        }
-      }
-    }
-    if(existingShortageOrders[trade?.name]){
-      existingShortageOrders[trade?.name].positions.push(...shortageOrders); 
-    } else {
-      existingShortageOrders[trade?.name] = {
-        billed: false,
-        accepted: projectPositions[trade?.name].executor ? true : false,
-        name: trade.name,
-        contract: project?.positions[trade.name]?.contract,
-        positions: [...shortageOrders],
-        id: trade._id.toString(),
-        executor: projectPositions[trade?.name].executor
-      }
-    }
     
+    const creator = await userService.getUser({ _id: creator_id });
+    if (!creator) throw Error('No user with that id')
+    const extraPosition: ExtraProjectPositionSuper = {
+      createdAt: new Date().getTime(),
+      id: new ObjectId().toString(),
+      createdBy: {
+        _id: creator_id,
+        role: creator.role
+      },
+      positions: {
+        [trade?.name]: {
+          billed: false,
+          accepted: projectPositions[trade?.name].executor ? true : false,
+          name: trade.name,
+          contract: project?.positions[trade.name]?.contract,
+          positions: [...shortageOrders],
+          id: trade._id.toString(),
+          executor: projectPositions[trade?.name].executor,
+        },
+      },
+    };
+    existingShortageOrders.push(extraPosition)
     project.extraPositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project position ${project.external_id}`;
     await notificationService.create(
@@ -618,18 +618,25 @@ export class ProjectService {
   async updateExtraPosition(
     project_id: string,
     position: ProjectPositions,
-    trade_id: string
+    trade_id: string,
+    extraOrderId: string
   ) {
     const project = await this.getProjectById(project_id);
     const trade = await tradeService.retrieveTrade(trade_id);
-    const existingPosition = project.extraPositions[trade.name].positions.find(
+    const existingExtraOrder = project.extraPositions.find((extraP) => extraP.id === extraOrderId);
+    if (!existingExtraOrder) throw Error('Addendum not found')
+    const existingPosition = existingExtraOrder.positions[trade.name].positions.find(
       (pos) => pos.external_id === position.external_id
     );
-    if (!existingPosition) throw Error('position does not exist')
-    const filteredPositions = project.extraPositions[trade.name].positions.filter(
-      (pos) => pos._id !== position._id
-    );
-    project.extraPositions[trade.name].positions = [...filteredPositions, position];
+    if (!existingPosition) throw Error("position does not exist");
+    const filteredPositions = existingExtraOrder.positions[
+      trade.name
+    ].positions.filter((pos) => pos._id !== position._id);
+    existingExtraOrder.positions[trade.name].positions = [
+      ...filteredPositions,
+      position,
+    ];
+    project.extraPositions = [...project.extraPositions.filter((extraP) => extraP.id !== extraOrderId), existingExtraOrder]
     return await this.saveProject(project);
   }
 

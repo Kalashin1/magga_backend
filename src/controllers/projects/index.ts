@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ProjectService } from "../../services/projects";
+import { ProjectService } from "../../services/project";
 
 const projectService = new ProjectService();
 
@@ -170,13 +170,14 @@ export const addShortageOrders = async (req: Request, res: Response) => {
 
 export const addExtraOrders = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { positions, trade_id } = req.body;
+  const { positions, trade_id, creator } = req.body;
 
   try {
     const payload = await projectService.addExtraOrders(
       id,
       positions,
-      trade_id
+      trade_id,
+      creator
     );
     return res.json(payload);
   } catch (error) {
@@ -202,12 +203,13 @@ export const updateProjectPosition = async (req: Request, res: Response) => {
 
 export const updateExtraPositions = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { position, trade_id } = req.body;
+  const { position, trade_id, extraOrderId } = req.body;
   try {
     const payload = await projectService.updateExtraPosition(
       id,
       position,
-      trade_id
+      trade_id,
+      extraOrderId
     );
     return res.json(payload);
   } catch (error) {

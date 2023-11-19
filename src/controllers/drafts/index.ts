@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { DraftSerVice } from "../../services/draft";
-import { ProjectService } from "../../services/projects";
+import { ProjectService } from "../../services/project";
 import { UserService } from "../../services/user";
 import { ProjectPositions } from "../../types";
 

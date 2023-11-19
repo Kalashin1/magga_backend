@@ -57,6 +57,11 @@ class ProductService {
     if (imageUrls) product.imageUrls = imageUrls;
     return this.save(product);
   }
+
+  async deleteProduct(id: string){
+    const product = await this.getProductById(id);
+    return await AppDataSource.getMongoRepository(Product).deleteOne({...product})
+  }
 }
 
 export default new ProductService();
