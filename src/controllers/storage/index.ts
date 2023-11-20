@@ -4,7 +4,7 @@ import { UserService } from "../../services/user";
 import { Document, LogoUrl, userDocumentsArray } from "../../types";
 import { NotificationService } from "../../services/notifications";
 import ProductService from "../../services/products";
-import projectService from "../../services/projects";
+import projectService from "../../services/project";
 
 const storage = new StorageService();
 const userService = new UserService();
@@ -105,7 +105,6 @@ export const uploadProductImages = async (req: Request, res: Response) => {
     }
     console.log("existingImage", existingImage)
     const response = await ProductService.update(product_id, {
-      ...product,
       imageUrls: existingImage,
     });
     console.log(response)

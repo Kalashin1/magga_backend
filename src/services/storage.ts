@@ -6,7 +6,7 @@ import * as Key from "./key.json";
 import { AppDataSource } from "../data-source";
 import { User, UserRoleType } from "../entity/User";
 import { ObjectId } from "mongodb";
-import projectService from "./projects";
+import projectService from "./project";
 // import * as PDFParser from "pdf2json";
 require("dotenv").config();
 

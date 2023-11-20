@@ -13,6 +13,7 @@ import {
   ProjectPositions,
   PROJECT_STATUS,
   ProjectPositionSuper,
+  ExtraProjectPositionSuper,
 } from "../types";
 import { User } from "./User";
 
@@ -39,7 +40,7 @@ export class Project implements IProject {
   shortagePositions: ProjectPositionSuper;
 
   @Column()
-  extraPositions: ProjectPositionSuper;
+  extraPositions: ExtraProjectPositionSuper[];
 
   @Column()
   building: Building;

@@ -259,6 +259,22 @@ export type ProjectPositionSuper = {
     id: string;
   };
 };
+
+export type ExtraProjectPositionSuper = {
+  createdAt: number;
+  createdBy: {
+    _id: string;
+    role: UserRoleType;
+  };
+  acceptedBy?: {
+    _id: string;
+    role: UserRoleType;
+  }
+  id: string;
+  acceptedAt?: number
+  positions: ProjectPositionSuper
+}
+
 export interface IProject {
   _id: ObjectId;
   contractor: string;
@@ -266,7 +282,7 @@ export interface IProject {
   status: (typeof PROJECT_STATUS)[number];
   positions: ProjectPositionSuper;
   shortagePositions: ProjectPositionSuper;
-  extraPositions: ProjectPositionSuper;
+  extraPositions: ExtraProjectPositionSuper[];
   createdAt: string;
   dueDate: string;
   updatedAt: string;

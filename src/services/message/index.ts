@@ -1,7 +1,7 @@
 import { AppDataSource } from "../../data-source";
 import { Message } from "../../entity/message";
 import notificationService from "../notifications";
-import projectService from "../projects";
+import projectService from "../project";
 import userService from "../user";
 
 export class MessageService {

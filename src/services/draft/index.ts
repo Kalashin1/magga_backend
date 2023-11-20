@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { AppDataSource } from "../../data-source";
 import { Draft } from "../../entity/draft";
-import projectService from "../projects";
+import projectService from "../project";
 import userService from "../user";
 import { NotificationService } from "../notifications";
 import { INVOICE_STATUS } from "../../types";
