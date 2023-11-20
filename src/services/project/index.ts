@@ -431,6 +431,7 @@ export class ProjectService {
     if (PROJECT_STATUS[status] === PROJECT_STATUS[5]) {
       project.canceled_at = new Date().getTime();
     }
+
     const message = `Status of project ${project.external_id} has been updated. The project status is now ${PROJECT_STATUS[status]}`;
     await notificationService.create(
       message,
@@ -492,7 +493,7 @@ export class ProjectService {
     });
     return await this.saveProject(project);
   }
-
+k2
   async addShortageOrders(
     project_id: string,
     shortageOrders: ProjectPositions[],
@@ -683,6 +684,19 @@ export class ProjectService {
       existingProjects.map((project) => this.getProjectById(project))
     );
     return projects;
+  }
+
+  async updateMultiplePositionsStatus(project_id: string, position_ids: string[], status: string) {
+    const project = await this.getProjectById(project_id);
+    if (!project) throw Error('Project not found');
+    for (const key in project.positions) {
+      for (const position of project.positions[key].positions){
+        if (position_ids.find((pos_id) => pos_id === position.external_id)){
+          position.status = status
+        }
+      }
+    }
+    return await this.saveProject(project);
   }
 
   saveProject(project: Project) {
