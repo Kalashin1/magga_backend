@@ -261,3 +261,21 @@ export const updateMultiplePositionsStatus = async (
     return res.status(400).json({ message: error.message });
   }
 };
+
+
+export const interactWithProjectAddendum = async (
+  req: Request,
+  res: Response
+) => {
+  const {user_id, addendum_id, project_id, action } = req.body;
+  console.log(req.body);
+  try {
+    const payload = await projectService.interactWithExtraOrder(user_id, project_id, addendum_id, action);
+    return res.json(payload);
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+

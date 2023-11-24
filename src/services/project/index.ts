@@ -493,7 +493,7 @@ export class ProjectService {
     });
     return await this.saveProject(project);
   }
-k2
+  k2;
   async addShortageOrders(
     project_id: string,
     shortageOrders: ProjectPositions[],
@@ -532,6 +532,66 @@ k2
     return await this.saveProject(project);
   }
 
+  async interactWithExtraOrder(
+    user_id: string,
+    project_id: string,
+    addendum_id: string,
+    action: "ACCEPT" | "REJECT"
+  ) {
+    const user = await userService.getUser({ _id: user_id });
+    if (!user) throw Error("user not found");
+    const project = await projectService.getProjectById(project_id);
+
+    if (!project) throw Error("Project not found");
+
+    const addendum = project.extraPositions.find(
+      (position) => position.id === addendum_id
+    );
+
+    if (!addendum) throw Error("Addendum not found");
+
+    if (addendum.acceptedAt) {
+      throw Error("You have already interacted with this addendum");
+    }
+
+    if (addendum.createdBy._id === user?._id.toString()) {
+      throw Error("You created this addendum, you cannot interact with it");
+    }
+
+    if (action === "ACCEPT") {
+      addendum.acceptedAt = new Date().getTime();
+      addendum.acceptedBy = {
+        _id: user?._id.toString(),
+        role: user?.role,
+      };
+      const filteredProjects = project.extraPositions.filter(
+        (extraPosition) => extraPosition.id !== addendum_id
+      );
+      project.extraPositions = [...filteredProjects, addendum];
+    }
+
+    if (action === "REJECT") {
+      const filteredProjects = project.extraPositions.filter(
+        (extraPosition) => extraPosition.id !== addendum_id
+      );
+      project.extraPositions = filteredProjects;
+    }
+    console.log(addendum)
+    await notificationService.create(
+      `Addendum has been ${action}ED by ${user.first_name}`,
+      "PROJECT",
+      addendum.createdBy?._id,
+      project._id.toString()
+    );
+    await notificationService.create(
+      `You have ${action}ED this project.`,
+      "PROJECT",
+      user._id.toString(),
+      project._id.toString()
+    );
+    return this.saveProject(project);
+  }
+
   async addExtraOrders(
     project_id: string,
     shortageOrders: ProjectPositions[],
@@ -542,15 +602,15 @@ k2
     const existingShortageOrders = project.extraPositions ?? [];
     const projectPositions = project.positions;
     const trade = await tradeService.retrieveTrade(trade_id);
-    
+
     const creator = await userService.getUser({ _id: creator_id });
-    if (!creator) throw Error('No user with that id')
+    if (!creator) throw Error("No user with that id");
     const extraPosition: ExtraProjectPositionSuper = {
       createdAt: new Date().getTime(),
       id: new ObjectId().toString(),
       createdBy: {
         _id: creator_id,
-        role: creator.role
+        role: creator.role,
       },
       positions: {
         [trade?.name]: {
@@ -564,7 +624,7 @@ k2
         },
       },
     };
-    existingShortageOrders.push(extraPosition)
+    existingShortageOrders.push(extraPosition);
     project.extraPositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project position ${project.external_id}`;
     await notificationService.create(
@@ -624,11 +684,13 @@ k2
   ) {
     const project = await this.getProjectById(project_id);
     const trade = await tradeService.retrieveTrade(trade_id);
-    const existingExtraOrder = project.extraPositions.find((extraP) => extraP.id === extraOrderId);
-    if (!existingExtraOrder) throw Error('Addendum not found')
-    const existingPosition = existingExtraOrder.positions[trade.name].positions.find(
-      (pos) => pos.external_id === position.external_id
+    const existingExtraOrder = project.extraPositions.find(
+      (extraP) => extraP.id === extraOrderId
     );
+    if (!existingExtraOrder) throw Error("Addendum not found");
+    const existingPosition = existingExtraOrder.positions[
+      trade.name
+    ].positions.find((pos) => pos.external_id === position.external_id);
     if (!existingPosition) throw Error("position does not exist");
     const filteredPositions = existingExtraOrder.positions[
       trade.name
@@ -637,7 +699,10 @@ k2
       ...filteredPositions,
       position,
     ];
-    project.extraPositions = [...project.extraPositions.filter((extraP) => extraP.id !== extraOrderId), existingExtraOrder]
+    project.extraPositions = [
+      ...project.extraPositions.filter((extraP) => extraP.id !== extraOrderId),
+      existingExtraOrder,
+    ];
     return await this.saveProject(project);
   }
 
@@ -686,13 +751,17 @@ k2
     return projects;
   }
 
-  async updateMultiplePositionsStatus(project_id: string, position_ids: string[], status: string) {
+  async updateMultiplePositionsStatus(
+    project_id: string,
+    position_ids: string[],
+    status: string
+  ) {
     const project = await this.getProjectById(project_id);
-    if (!project) throw Error('Project not found');
+    if (!project) throw Error("Project not found");
     for (const key in project.positions) {
-      for (const position of project.positions[key].positions){
-        if (position_ids.find((pos_id) => pos_id === position.external_id)){
-          position.status = status
+      for (const position of project.positions[key].positions) {
+        if (position_ids.find((pos_id) => pos_id === position.external_id)) {
+          position.status = status;
         }
       }
     }
