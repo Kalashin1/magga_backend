@@ -1,5 +1,6 @@
 import { Product } from "../../entity/product";
 import ProductService from '../../services/products';
+import StorageService from '../../services/storage';
 import { Request, Response } from "express";
 import tradeService from "../../services/trades";
 import positionService from "../../services/position";
@@ -62,3 +63,32 @@ export const deleteProduct = async (req: Request, res: Response) =>  {
     return res.status(400).json({ message: error.message })
   }
 }
+
+export const uploadMultipleProducts = async (req: Request, res: Response) => {
+  const { shop } = req.params;
+  const imageMimeTypes = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+  ];
+
+  const files = req.files as any[];
+
+  files.forEach((file) => {
+    const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
+
+    if (file && !mimeType) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      return res.json({ message: "Only images allowed!" });
+    }
+  });
+  try {
+
+    const {
+      uploadParams: { Body },
+    } = StorageService.boostrapFile(files[0]);
+    const payload = await ProductService.uploadMultipleProducts(shop, Body);
+    return res.json(payload);
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+};

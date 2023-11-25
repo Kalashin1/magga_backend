@@ -19,6 +19,8 @@ import {
   acceptProject,
   rejectProject,
   updateProjectPositionsByTrade,
+  updateMultiplePositionsStatus,
+  interactWithProjectAddendum,
 } from "../../controllers/projects";
 
 const router = Router();
@@ -40,6 +42,8 @@ router.patch(PROJECT_ROUTES.UPDATE_EXTRA_POSITION, updateExtraPositions);
 router.patch(PROJECT_ROUTES.UPDATE_SHORTAGE_POSITION, updateShortageOrder);
 router.patch(PROJECT_ROUTES.ACCEPT_PROJECT, acceptProject);
 router.patch(PROJECT_ROUTES.REJECT_PROJECT, rejectProject);
-router.patch(PROJECT_ROUTES.UPDATE_MULTIPLE_POSITIONS_BY_TRADE, updateProjectPositionsByTrade)
+router.patch(PROJECT_ROUTES.UPDATE_MULTIPLE_POSITIONS_BY_TRADE, updateProjectPositionsByTrade);
+router.post(PROJECT_ROUTES.UPDATE_MULTIPLE_POSITIONS_STATUS, updateMultiplePositionsStatus);
+router.post(PROJECT_ROUTES.INTERACT_WITH_ADDENDUM, interactWithProjectAddendum);
 
 export default router;

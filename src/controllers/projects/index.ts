@@ -54,32 +54,38 @@ export const getExecutorProjects = async (req: Request, res: Response) => {
 };
 
 export const acceptProject = async (req: Request, res: Response) => {
-  const {project_id, executor_id, trades} = req.body;
+  const { project_id, executor_id, trades } = req.body;
   try {
-    const payload = await projectService.acceptProject(project_id, executor_id, trades)
+    const payload = await projectService.acceptProject(
+      project_id,
+      executor_id,
+      trades
+    );
     return res.json(payload);
-  }
-  catch(error) {
+  } catch (error) {
     return res.status(400).json({ message: error.message });
   }
-}
+};
 
 export const rejectProject = async (req: Request, res: Response) => {
-  const {project_id, executor_id, trades} = req.body;
+  const { project_id, executor_id, trades } = req.body;
   try {
-    const payload = await projectService.rejectProject(project_id, executor_id, trades)
+    const payload = await projectService.rejectProject(
+      project_id,
+      executor_id,
+      trades
+    );
     return res.json(payload);
-  }
-  catch(error) {
+  } catch (error) {
     return res.status(400).json({ message: error.message });
   }
-}
+};
 
 export const getContractProjects = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const projects = await projectService.getContractorProjects(id);
-    console.log(projects)
+    console.log(projects);
     return res.json(projects);
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -110,7 +116,7 @@ export const assignExecutor = async (req: Request, res: Response) => {
     );
     return res.json(payload);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(400).json({ message: error.message });
   }
 };
@@ -127,18 +133,24 @@ export const updateProject = async (req: Request, res: Response) => {
   }
 };
 
-export const updateProjectPositionsByTrade = async (req: Request, res: Response) => {
+export const updateProjectPositionsByTrade = async (
+  req: Request,
+  res: Response
+) => {
   const { id } = req.params;
-  const {trade, status} = req.body;
+  const { trade, status } = req.body;
 
   try {
-    const payload = await projectService.updateMultiplePositionByTrade(id, trade, status);
+    const payload = await projectService.updateMultiplePositionByTrade(
+      id,
+      trade,
+      status
+    );
     return res.json(payload);
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
 };
-
 
 export const addPositions = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -213,7 +225,7 @@ export const updateExtraPositions = async (req: Request, res: Response) => {
     );
     return res.json(payload);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(400).json({ message: error.message });
   }
 };
@@ -232,3 +244,38 @@ export const updateShortageOrder = async (req: Request, res: Response) => {
     return res.status(400).json({ message: error.message });
   }
 };
+
+export const updateMultiplePositionsStatus = async (
+  req: Request,
+  res: Response
+) => {
+  const { project_id, position_ids, status } = req.body;
+  try {
+    const payload = await projectService.updateMultiplePositionsStatus(
+      project_id,
+      position_ids,
+      status
+    );
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+
+export const interactWithProjectAddendum = async (
+  req: Request,
+  res: Response
+) => {
+  const {user_id, addendum_id, project_id, action } = req.body;
+  console.log(req.body);
+  try {
+    const payload = await projectService.interactWithExtraOrder(user_id, project_id, addendum_id, action);
+    return res.json(payload);
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+

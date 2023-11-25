@@ -3,7 +3,7 @@ import { AppDataSource } from "../../data-source";
 import { ObjectId } from "mongodb";
 import userService from "../user";
 import notificationService from "../notifications";
-
+import XLSX from 'xlsx';
 class ProductService {
   async create(param: Product) {
     const shop = await userService.getUser({ _id: param.shop });
@@ -61,6 +61,18 @@ class ProductService {
   async deleteProduct(id: string){
     const product = await this.getProductById(id);
     return await AppDataSource.getMongoRepository(Product).deleteOne({...product})
+  }
+
+  async uploadMultipleProducts(shop_id: string, file: Buffer){
+    const workbook = XLSX.read(file);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet) as Partial<Product[]>;
+    const shop = await userService.getUser({ _id: shop_id })
+    data.forEach((product) => {
+      product.shop = shop_id
+    });
+    const createdProducts = await Promise.all(data.map((product) => this.create(product)));
+    return createdProducts;
   }
 }
 

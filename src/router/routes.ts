@@ -85,7 +85,9 @@ export enum PROJECT_ROUTES {
   UPDATE_SHORTAGE_POSITION = '/project/update-shortage/:id',
   ACCEPT_PROJECT = '/project/accept',
   REJECT_PROJECT = '/project/reject',
-  UPDATE_MULTIPLE_POSITIONS_BY_TRADE = '/project/postitions/:id'
+  UPDATE_MULTIPLE_POSITIONS_BY_TRADE = '/project/postitions/:id',
+  UPDATE_MULTIPLE_POSITIONS_STATUS = '/project/multiple/status',
+  INTERACT_WITH_ADDENDUM = '/project/addendum/'
 }
 
 export enum DRAFT_ROUTES {
@@ -118,5 +120,5 @@ export enum TODO_ROUTES {
 export enum PRODUCT_ROUTES {
   CREATE = '/product/create',
   PRODUCT = '/product/id/:id',
-  SHOP_PRODUCTS = '/product/shop/:shop'
+  SHOP_PRODUCTS = '/product/shop/:shop',
 }
