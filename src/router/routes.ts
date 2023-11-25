@@ -120,5 +120,5 @@ export enum TODO_ROUTES {
 export enum PRODUCT_ROUTES {
   CREATE = '/product/create',
   PRODUCT = '/product/id/:id',
-  SHOP_PRODUCTS = '/product/shop/:shop'
+  SHOP_PRODUCTS = '/product/shop/:shop',
 }
