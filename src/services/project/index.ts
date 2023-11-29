@@ -493,7 +493,6 @@ export class ProjectService {
     });
     return await this.saveProject(project);
   }
-  k2;
   async addShortageOrders(
     project_id: string,
     shortageOrders: ProjectPositions[],
@@ -548,6 +547,8 @@ export class ProjectService {
       (position) => position.id === addendum_id
     );
 
+    console.log("addendum", addendum)
+
     if (!addendum) throw Error("Addendum not found");
 
     if (addendum.acceptedAt) {
@@ -557,6 +558,9 @@ export class ProjectService {
     if (addendum.createdBy._id === user?._id.toString()) {
       throw Error("You created this addendum, you cannot interact with it");
     }
+
+    if (addendum.acceptedBy._id !== user?._id.toString())
+      throw Error("You cannot interact with this addendum");
 
     if (action === "ACCEPT") {
       addendum.acceptedAt = new Date().getTime();
@@ -576,7 +580,7 @@ export class ProjectService {
       );
       project.extraPositions = filteredProjects;
     }
-    console.log(addendum)
+    console.log(addendum);
     await notificationService.create(
       `Addendum has been ${action}ED by ${user.first_name}`,
       "PROJECT",
@@ -596,7 +600,8 @@ export class ProjectService {
     project_id: string,
     shortageOrders: ProjectPositions[],
     trade_id: string,
-    creator_id: string
+    creator_id: string,
+    acceptor_id: string
   ) {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.extraPositions ?? [];
@@ -604,7 +609,9 @@ export class ProjectService {
     const trade = await tradeService.retrieveTrade(trade_id);
 
     const creator = await userService.getUser({ _id: creator_id });
+    const acceptor = await userService.getUser({ _id: acceptor_id });
     if (!creator) throw Error("No user with that id");
+    if (!acceptor) throw Error("No user with that Id, acceptor");
     const extraPosition: ExtraProjectPositionSuper = {
       createdAt: new Date().getTime(),
       id: new ObjectId().toString(),
@@ -612,15 +619,19 @@ export class ProjectService {
         _id: creator_id,
         role: creator.role,
       },
+      acceptedBy: {
+        _id: acceptor_id,
+        role: acceptor.role,
+      },
       positions: {
         [trade?.name]: {
           billed: false,
-          accepted: projectPositions[trade?.name].executor ? true : false,
+          accepted:false,
           name: trade.name,
           contract: project?.positions[trade.name]?.contract,
           positions: [...shortageOrders],
           id: trade._id.toString(),
-          executor: projectPositions[trade?.name].executor,
+          executor: acceptor.role === "executor" ? acceptor_id : creator_id,
         },
       },
     };
