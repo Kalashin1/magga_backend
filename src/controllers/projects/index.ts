@@ -182,7 +182,7 @@ export const addShortageOrders = async (req: Request, res: Response) => {
 
 export const addExtraOrders = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { positions, trade_id, creator, acceptor } = req.body;
+  const { positions, trade_id, creator, acceptor, comment } = req.body;
 
   try {
     const payload = await projectService.addExtraOrders(
@@ -190,7 +190,8 @@ export const addExtraOrders = async (req: Request, res: Response) => {
       positions,
       trade_id,
       creator,
-      acceptor
+      acceptor,
+      comment
     );
     return res.json(payload);
   } catch (error) {

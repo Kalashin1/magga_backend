@@ -194,6 +194,7 @@ export class ProjectService {
             console.log("found position", foundPosition);
             position.price = foundPosition.price;
             position.units = foundPosition.units;
+            position.status = 'ACCEPTED'
           }
         });
       }
@@ -246,6 +247,7 @@ export class ProjectService {
         project.positions[trade].executor = null;
         project.positions[trade].positions.forEach((position) => {
           position.price = 0;
+          position.status = 'CREATED'
         });
       }
     }
@@ -363,6 +365,7 @@ export class ProjectService {
       project.positions[trade].executor = executor_id;
 
       console.log(project.positions[trade].positions);
+     
     }
     const existingExecutors = project.executors ?? [];
     if (existingExecutors.find((exe) => exe === executor_id)) {
@@ -392,6 +395,7 @@ export class ProjectService {
             console.log("found position", foundPosition);
             position.price = foundPosition.price;
             position.units = foundPosition.units;
+            position.status = 'ASSIGNED'
           }
         });
       }
@@ -571,6 +575,11 @@ export class ProjectService {
       const filteredProjects = project.extraPositions.filter(
         (extraPosition) => extraPosition.id !== addendum_id
       );
+      for(const key in addendum.positions) {
+        for (const position of addendum.positions[key].positions) {
+          position.status = 'ACCEPTED'
+        }
+      }
       project.extraPositions = [...filteredProjects, addendum];
     }
 
@@ -601,7 +610,8 @@ export class ProjectService {
     shortageOrders: ProjectPositions[],
     trade_id: string,
     creator_id: string,
-    acceptor_id: string
+    acceptor_id: string,
+    comment: string
   ) {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.extraPositions ?? [];
@@ -623,6 +633,7 @@ export class ProjectService {
         _id: acceptor_id,
         role: acceptor.role,
       },
+      comment,
       positions: {
         [trade?.name]: {
           billed: false,

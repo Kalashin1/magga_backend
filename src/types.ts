@@ -271,7 +271,8 @@ export type ExtraProjectPositionSuper = {
     role: UserRoleType;
   }
   id: string;
-  acceptedAt?: number
+  acceptedAt?: number;
+  comment: string;
   positions: ProjectPositionSuper
 }
 
