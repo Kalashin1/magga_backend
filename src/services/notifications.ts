@@ -4,7 +4,14 @@ import userService from "./user";
 import { ObjectId } from "mongodb";
 
 export class NotificationService {
-  async create(shortText: string, type: string, user_id: string, objectId?: string, fileUrl?: string ) {
+  async create(
+    shortText: string,
+    type: string,
+    user_id: string,
+    objectId?: string,
+    fileUrl?: string,
+    subjectId?: string
+  ) {
     const user = await userService.getUser({ _id: user_id });
     if (!user) throw Error("user with that Id not found");
     const notification = await AppDataSource.mongoManager.create(Notification, {
@@ -13,7 +20,8 @@ export class NotificationService {
       user_id,
       isRead: false,
       fileUrl,
-      objectId
+      objectId,
+      subjectId,
     });
     this.saveNotification(notification);
     return notification;
@@ -57,16 +65,16 @@ export class NotificationService {
     return AppDataSource.mongoManager.find(Notification, {
       where: {
         user_id: {
-          $eq: user_id
+          $eq: user_id,
         },
         isRead: {
-          $eq: false
-        }
+          $eq: false,
+        },
       },
       order: {
-        createdAt: 'DESC'
-      }
-    })
+        createdAt: "DESC",
+      },
+    });
   }
 }
 

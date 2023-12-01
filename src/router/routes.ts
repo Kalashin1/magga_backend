@@ -45,6 +45,7 @@ export enum BUCKET_ROUTES {
   UPLOAD_PROJECT = '/project/upload/:id',
   UPLOAD_POSITION_DOCUMENT = '/project/position/:id/:trade/:position',
   UPLOAD_PRODUCT_IMAGE = '/product/image/:shop_id/:product_id',
+  UPLOAD_ADDENDUM_IMAGE = 'upload/project/addendum/:project_id/:order_id',
 }
 
 export enum NOTIFICATION_ROUTES {
@@ -87,7 +88,8 @@ export enum PROJECT_ROUTES {
   REJECT_PROJECT = '/project/reject',
   UPDATE_MULTIPLE_POSITIONS_BY_TRADE = '/project/postitions/:id',
   UPDATE_MULTIPLE_POSITIONS_STATUS = '/project/multiple/status',
-  INTERACT_WITH_ADDENDUM = '/project/addendum/'
+  INTERACT_WITH_ADDENDUM = '/project/addendum/',
+  
 }
 
 export enum DRAFT_ROUTES {

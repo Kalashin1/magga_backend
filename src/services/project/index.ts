@@ -194,7 +194,7 @@ export class ProjectService {
             console.log("found position", foundPosition);
             position.price = foundPosition.price;
             position.units = foundPosition.units;
-            position.status = 'ACCEPTED'
+            position.status = "ACCEPTED";
           }
         });
       }
@@ -247,7 +247,7 @@ export class ProjectService {
         project.positions[trade].executor = null;
         project.positions[trade].positions.forEach((position) => {
           position.price = 0;
-          position.status = 'CREATED'
+          position.status = "CREATED";
         });
       }
     }
@@ -365,7 +365,6 @@ export class ProjectService {
       project.positions[trade].executor = executor_id;
 
       console.log(project.positions[trade].positions);
-     
     }
     const existingExecutors = project.executors ?? [];
     if (existingExecutors.find((exe) => exe === executor_id)) {
@@ -395,7 +394,7 @@ export class ProjectService {
             console.log("found position", foundPosition);
             position.price = foundPosition.price;
             position.units = foundPosition.units;
-            position.status = 'ASSIGNED'
+            position.status = "ASSIGNED";
           }
         });
       }
@@ -551,7 +550,7 @@ export class ProjectService {
       (position) => position.id === addendum_id
     );
 
-    console.log("addendum", addendum)
+    console.log("addendum", addendum);
 
     if (!addendum) throw Error("Addendum not found");
 
@@ -575,9 +574,9 @@ export class ProjectService {
       const filteredProjects = project.extraPositions.filter(
         (extraPosition) => extraPosition.id !== addendum_id
       );
-      for(const key in addendum.positions) {
+      for (const key in addendum.positions) {
         for (const position of addendum.positions[key].positions) {
-          position.status = 'ACCEPTED'
+          position.status = "ACCEPTED";
         }
       }
       project.extraPositions = [...filteredProjects, addendum];
@@ -637,7 +636,7 @@ export class ProjectService {
       positions: {
         [trade?.name]: {
           billed: false,
-          accepted:false,
+          accepted: false,
           name: trade.name,
           contract: project?.positions[trade.name]?.contract,
           positions: [...shortageOrders],
@@ -663,6 +662,48 @@ export class ProjectService {
         project._id.toString()
       );
     });
+    await this.saveProject(project);
+    return extraPosition;
+  }
+
+  async updateExtraOrder({
+    order_id,
+    project_id,
+    fileURL,
+    comment,
+  }: {
+    order_id: string;
+    project_id: string;
+    fileURL?: string[];
+    comment?: string;
+  }) {
+    const project = await projectService.getProjectById(project_id);
+    if (!project) throw Error("No project with that Id");
+    const extraOrders = project.extraPositions;
+    if (!project.extraPositions) throw Error("No project with that id");
+    for (const extraOrder of extraOrders) {
+      if (extraOrder.id === order_id) {
+        extraOrder.fileURL = fileURL;
+        extraOrder.comment = comment;
+      }
+    }
+    await notificationService.create(
+      "File has been added to addendum",
+      "PROJECT",
+      project.contractor,
+      project_id,
+      order_id
+    );
+    for (const executor of project.executors) {
+      await notificationService.create(
+        "File has been added to addendum",
+        "PROJECT",
+        executor,
+        project_id,
+        order_id
+      );
+    }
+    project.extraPositions = extraOrders;
     return await this.saveProject(project);
   }
 

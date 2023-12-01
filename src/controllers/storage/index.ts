@@ -113,6 +113,58 @@ export const uploadProductImages = async (req: Request, res: Response) => {
     return res.json({ message: error.message });
   }
 };
+export const uploadAddendumFile = async (req: Request, res: Response) => {
+  const { project_id, order_id } = req.params;
+  const imageMimeTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg", "application/pdf"];
+
+  const files = req.files as any[];
+  console.log(req.files);
+
+  files.forEach((file) => {
+    const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
+
+    if (file && !mimeType) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      return res.json({ message: "Only images allowed!" });
+    }
+  });
+
+  try {
+    const project = await projectService.getProjectByExternalId(project_id);
+    if (!project)
+      return res
+        .status(404)
+        .json({ message: `Project with ${project_id} not found` });
+    const addendum = project.extraPositions?.find((extraOrder) => extraOrder.id === order_id )
+    if (!addendum)
+      return res
+        .status(404)
+        .json({ message: `Addendum with ${order_id} not found` });
+    const existingImage = addendum.fileURL ?? [];
+    for (const file of files) {
+      const {
+        uploadParams: { Body },
+        extension,
+        key,
+      } = storage.boostrapFile(file);
+      const response = await storage.uploadFile(
+        process.env.BUCKET_NAME,
+        Body,
+        `/project/${project._id.toString()}/addendum/${extension}.${key}`
+      );
+      existingImage.push(response.publicUrl);
+    }
+    console.log("existingImage", existingImage)
+    const response = await projectService.updateExtraOrder({
+      order_id,
+      fileURL: existingImage,
+      project_id
+    });
+    return res.json(response);
+  } catch (error) {
+    return res.json({ message: error.message });
+  }
+};
 
 type DocumentUploadParamMap = {
   document: (typeof userDocumentsArray)[number];
@@ -276,6 +328,7 @@ export const uploadProjectPositionFile = async (
     return res.json({ message: error.message });
   }
 };
+
 
 export const getAllEmployeesFolder = async (req: Request, res: Response) => {
   const { role } = req.params;
