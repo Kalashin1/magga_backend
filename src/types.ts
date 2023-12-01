@@ -204,12 +204,12 @@ export interface ContractFunctions {
   }) => Promise<Contract>;
   reject: (executorId: string, contractId) => Promise<Contract>;
 }
-
 export interface INotification {
   _id: ObjectId;
   user_id: string;
   shortText: string;
-  objectId?: string;
+  objectId?: string /* this is the primary object on which this notification happens, it is closely related to the type of the NOTIFICATION */;
+  subjectId?: string /* This is the secondary object which this notification happens, it helpes to construct a second param in case where the frontend needs to fetch resource from a route which is like route/:objectId/:subjectId */;
   fileUrl?: string;
   isRead: boolean;
   type: string;
@@ -255,7 +255,7 @@ export type ProjectPositionSuper = {
     executor?: string;
     accepted: boolean;
     name: string;
-    contract?: string
+    contract?: string;
     id: string;
   };
 };
@@ -269,12 +269,14 @@ export type ExtraProjectPositionSuper = {
   acceptedBy?: {
     _id: string;
     role: UserRoleType;
-  }
+  };
   id: string;
   acceptedAt?: number;
   comment: string;
-  positions: ProjectPositionSuper
-}
+  fileURL?: string[];
+  rejectedAt?: number;
+  positions: ProjectPositionSuper;
+};
 
 export interface IProject {
   _id: ObjectId;
@@ -379,7 +381,12 @@ export interface Todo {
   dueDate?: string;
 }
 
-export const INVOICE_STATUS = ["REQUESTED", "ACCEPTED", "DECLINED", "BILLED"] as const;
+export const INVOICE_STATUS = [
+  "REQUESTED",
+  "ACCEPTED",
+  "DECLINED",
+  "BILLED",
+] as const;
 
 export interface InvoiceInterface {
   _id: ObjectId;
@@ -387,10 +394,10 @@ export interface InvoiceInterface {
   draft: string;
   createdAt?: string;
   updatedAt?: string;
-  status: typeof INVOICE_STATUS[number]
+  status: (typeof INVOICE_STATUS)[number];
   owner: string;
   receiver: string;
-  type: "PROJECT"| "SHOP"
+  type: "PROJECT" | "SHOP";
 }
 
 export interface Draft {
@@ -416,8 +423,7 @@ export interface Message {
   position_id?: string;
   trade_id?: string;
   parentMessage?: string;
-  status: typeof MESSAGE_STATUS[number]
+  status: (typeof MESSAGE_STATUS)[number];
 }
 
-
-export const MESSAGE_STATUS = ['SENT', 'DELIVERED', 'READ', 'DELETED'] as const
+export const MESSAGE_STATUS = ["SENT", "DELIVERED", "READ", "DELETED"] as const;

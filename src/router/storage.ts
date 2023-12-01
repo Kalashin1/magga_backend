@@ -10,7 +10,8 @@ import {
   getExecutorsFolder,
   uploadProject,
   uploadProjectPositionFile,
-  uploadProductImages
+  uploadProductImages,
+  uploadAddendumFile
 } from "../controllers/storage";
 import { BUCKET_ROUTES } from "./routes";
 import { getTestingForm } from "../controllers/storage/getTestingForm";
@@ -44,5 +45,7 @@ router.post(BUCKET_ROUTES.UPLOAD_PROJECT, upload.single('project'), uploadProjec
 router.post(BUCKET_ROUTES.UPLOAD_POSITION_DOCUMENT, upload.single('position-document'), uploadProjectPositionFile)
 
 router.patch(BUCKET_ROUTES.UPLOAD_PRODUCT_IMAGE, upload.array('product'), uploadProductImages)
+
+router.patch(BUCKET_ROUTES.UPLOAD_ADDENDUM_IMAGE, upload.array('extraOrder'), uploadAddendumFile)
 
 export default router;

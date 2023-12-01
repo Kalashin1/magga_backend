@@ -31,4 +31,7 @@ export class Notification implements INotification {
 
   @Column()
   objectId?: string;
+
+  @Column()
+  subjectId?: string;
 }
