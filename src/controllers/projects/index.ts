@@ -264,20 +264,53 @@ export const updateMultiplePositionsStatus = async (
   }
 };
 
-
 export const interactWithProjectAddendum = async (
   req: Request,
   res: Response
 ) => {
-  const {user_id, addendum_id, project_id, action } = req.body;
-  console.log(req.body);
+  const { user_id, addendum_id, project_id, action } = req.body;
   try {
-    const payload = await projectService.interactWithExtraOrder(user_id, project_id, addendum_id, action);
+    const payload = await projectService.interactWithExtraOrder(
+      user_id,
+      project_id,
+      addendum_id,
+      action
+    );
     return res.json(payload);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(400).json({ message: error.message });
   }
 };
 
+export const updateMultipleExtraOrderPositions = async (
+  req: Request,
+  res: Response
+) => {
+  const { project_id, positions, status, addendum_id } = req.body;
+  try {
+    const payload = await projectService.updateMultipleExtraOrderPositions({
+      addendum_id,
+      positions,
+      project_id,
+      status,
+    });
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
 
+export const billMultipleAddendums = async (req: Request, res: Response) => {
+  const { addendum_ids, project_id, executor_id } = req.body;
+  try {
+    const payload = await projectService.billMultipleAddendums(
+      addendum_ids,
+      project_id,
+      executor_id
+    );
+    return res.json(payload);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};

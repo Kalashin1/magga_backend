@@ -280,45 +280,54 @@ export class ProjectService {
 
   async updateMultiplePositionByTrade(
     project_id: string,
-    trade: string,
+    trades: string[],
     status: "BILLED" | "COMPLETED" | "NOT FEASIBLE"
   ) {
     const project = await this.getProjectById(project_id);
     if (!project) throw Error("project not found!");
-    const postions = project.positions[trade];
-    if (!postions) throw Error("positions not found");
-    postions.positions.forEach((position) => {
-      position.status = status;
-      if (status === "BILLED") {
-        position.billed = true;
-      }
-    });
-    if (status === "BILLED" && postions.executor && postions.accepted) {
-      postions.billed = true;
-      const amount = postions.positions
-        .map((position) => Number(position.price * parseFloat(position.crowd)))
-        .reduce((prev, current) => prev + current);
-      await draftService.create({
-        amount: amount,
-        positions: postions.positions.map((position) => position.external_id),
-        project: project._id.toString(),
-        user_id: postions.executor,
-        reciepient: project.contractor,
+    const _positions: string[] = [];
+    let _amount = 0;
+    trades.forEach(async (trade) => {
+      const postions = project.positions[trade];
+      if (!postions) throw Error("positions not found");
+      postions.positions.forEach((position) => {
+        position.status = status;
+        if (status === "BILLED") {
+          position.billed = true;
+        }
       });
-    }
-    await notificationService.create(
-      `You have ${status} the positions under ${trade}`,
-      "PROJECT",
-      postions.executor,
-      project._id.toString()
-    );
-    await notificationService.create(
-      `The positions under ${trade} has been ${status}`,
-      "PROJECT",
-      project.contractor,
-      project._id.toString()
-    );
-    project.positions[trade] = postions;
+      if (status === "BILLED" && postions.executor && postions.accepted) {
+        postions.billed = true;
+        _amount += postions.positions
+          .map((position) =>
+            Number(position.price * parseFloat(position.crowd))
+          )
+          .reduce((prev, current) => prev + current);
+        _positions.push(
+          ...postions.positions.map((position) => position.external_id)
+        );
+      }
+      await notificationService.create(
+        `You have ${status} the positions under ${trade}`,
+        "PROJECT",
+        postions.executor,
+        project._id.toString()
+      );
+      await notificationService.create(
+        `The positions under ${trade} has been ${status}`,
+        "PROJECT",
+        project.contractor,
+        project._id.toString()
+      );
+      project.positions[trade] = postions;
+    });
+    await draftService.create({
+      amount: _amount,
+      positions: _positions,
+      project: project._id.toString(),
+      user_id: project.positions[trades[0]].executor,
+      reciepient: project.contractor,
+    });
     return await this.saveProject(project);
   }
 
@@ -614,7 +623,6 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.extraPositions ?? [];
-    const projectPositions = project.positions;
     const trade = await tradeService.retrieveTrade(trade_id);
 
     const creator = await userService.getUser({ _id: creator_id });
@@ -766,6 +774,20 @@ export class ProjectService {
       ...project.extraPositions.filter((extraP) => extraP.id !== extraOrderId),
       existingExtraOrder,
     ];
+    await notificationService.create(
+      `Position with ${existingPosition.external_id} has been updated`,
+      "PROJECT",
+      existingExtraOrder.acceptedBy._id,
+      project_id,
+      existingPosition.external_id
+    );
+    await notificationService.create(
+      `Position with ${existingPosition.external_id} has been updated`,
+      "PROJECT",
+      existingExtraOrder.createdBy._id,
+      project_id,
+      existingPosition.external_id
+    );
     return await this.saveProject(project);
   }
 
@@ -783,6 +805,36 @@ export class ProjectService {
       (position) => position.external_id === external_id
     );
     if (!postion) throw Error("position");
+  }
+
+  async updateMultipleExtraOrderPositions({
+    project_id,
+    positions,
+    status,
+    addendum_id,
+  }: {
+    project_id: string;
+    positions: string[];
+    status: string;
+    addendum_id: string;
+  }) {
+    const project = await this.getProjectById(project_id);
+    if (!project) throw Error("Project with that ID not found");
+    for (const addendum of project.extraPositions) {
+      if (addendum.id === addendum_id) {
+        console.log(addendum.positions["Electricity"].positions);
+        for (const key in addendum.positions) {
+          for (const position of addendum.positions[key].positions) {
+            for (const position_id of positions) {
+              if (position_id === position.external_id) {
+                position.status = status;
+              }
+            }
+          }
+        }
+      }
+    }
+    return await this.saveProject(project);
   }
 
   async updateShortageOrder(
@@ -803,6 +855,47 @@ export class ProjectService {
       position,
     ];
     return await this.saveProject(project);
+  }
+
+  async billMultipleAddendums(
+    addendum_ids: string[],
+    project_id: string,
+    executor_id: string
+  ) {
+    const project = await this.getProjectById(project_id);
+    if (!project) throw Error("Project with that id not found");
+    const executor = await userService.getUser({ _id: executor_id });
+    if (!executor) throw Error("Executor is not found");
+    const billItems: ProjectPositions[] = [];
+    for (const addendum of project.extraPositions) {
+      for (const addendum_id of addendum_ids) {
+        if (addendum_id === addendum.id) {
+          for (const key in addendum.positions) {
+            if (addendum.positions[key].billed) throw Error('You have already billed this position')
+            addendum.positions[key].billed = true;
+            for (const position of addendum.positions[key].positions) {
+              billItems.push(position);
+              position.billed = true;
+              position.status = "BILLED";
+            }
+          }
+        }
+      }
+    }
+    const amount = billItems
+      .map((billItems) =>
+        Math.ceil(billItems.price * parseFloat(billItems.crowd))
+      )
+      .reduce((prev, next) => prev + next);
+    const draft = await draftService.create({
+      positions: billItems.map((billItem) => billItem._id!.toString()),
+      amount,
+      project: project_id,
+      user_id: executor._id.toString(),
+      reciepient: project.contractor,
+    });
+    await this.saveProject(project);
+    return draft;
   }
 
   async getExecutorProjects(executor_id: string) {
