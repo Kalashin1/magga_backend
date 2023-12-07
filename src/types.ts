@@ -234,7 +234,7 @@ export type ProjectPositions = {
   status: string;
   billed: boolean;
   section?: string;
-  documentURL?: string;
+  documentURL?: string[];
   position: number;
 } & Partial<Position>;
 
@@ -324,6 +324,13 @@ export type createProjectParam = {
   careTaker: Pick<User, "email" | "phone"> & { name: string };
 };
 
+export type UpdateMultipleExtraOrderPositionsParam =  {
+  project_id: string;
+  positions: string[];
+  status: string;
+  addendum_id: string;
+}
+ 
 type TradeSchedule = {
   string: string;
 };

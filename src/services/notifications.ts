@@ -9,8 +9,8 @@ export class NotificationService {
     type: string,
     user_id: string,
     objectId?: string,
-    fileUrl?: string,
-    subjectId?: string
+    subjectId?: string,
+    fileUrl?: string
   ) {
     const user = await userService.getUser({ _id: user_id });
     if (!user) throw Error("user with that Id not found");

@@ -31,12 +31,13 @@ export const getOwnerInvoice = async (req: Request, res: Response) => {
         const owner = await userService.getUser({ _id: invoice.owner });
         const receiver = await userService.getUser({ _id: invoice.receiver });
         const draft = await draftService.getDraftById(invoice.draft);
-        const draftProject = await projectService.getProjectById(draft.project);
+        const draftProject = await projectService.getProjectById(draft?.project);
         return { ...invoice, owner, receiver, draft: {...draft, project: draftProject} };
       })
     );
     return res.json(payload);
   } catch (error) {
+    console.log(error)
     return res.status(400).json({ error: error.message });
   }
 };

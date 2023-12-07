@@ -89,7 +89,8 @@ export enum PROJECT_ROUTES {
   UPDATE_MULTIPLE_POSITIONS_BY_TRADE = '/project/postitions/:id',
   UPDATE_MULTIPLE_POSITIONS_STATUS = '/project/multiple/status',
   INTERACT_WITH_ADDENDUM = '/project/addendum/',
-  
+  UPDATE_MULTIPLE_EXTRA_POSITION_STATUS = '/project/addendum/multiple/status',
+  BILL_MULTIPLE_ADDENDUMS = '/project/addendum/multiple/bill',
 }
 
 export enum DRAFT_ROUTES {
