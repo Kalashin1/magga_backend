@@ -44,6 +44,7 @@ export enum BUCKET_ROUTES {
   OWNER_EXECUTORS = '/owner/executor/:owner_id',
   UPLOAD_PROJECT = '/project/upload/:id',
   UPLOAD_POSITION_DOCUMENT = '/project/position/:id/:trade/:position',
+  UPLOAD_EXTRA_POSITION_DOCUMENT = '/project/extra-position/:id/:addendum/:position',
   UPLOAD_PRODUCT_IMAGE = '/product/image/:shop_id/:product_id',
   UPLOAD_ADDENDUM_IMAGE = 'upload/project/addendum/:project_id/:order_id',
 }

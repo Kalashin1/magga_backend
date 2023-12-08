@@ -293,6 +293,16 @@ export class ProjectService {
       postions.positions.forEach((position) => {
         position.status = status;
         if (status === "BILLED") {
+          this.requiredPositions.forEach((reqPos) => {
+            if (
+              position.external_id === reqPos &&
+              !position.documentURL?.length
+            ) {
+              throw Error(
+                "You need to upload a document to this position before you can bill it"
+              );
+            }
+          });
           position.billed = true;
         }
       });
@@ -616,19 +626,22 @@ export class ProjectService {
   async addExtraOrders(
     project_id: string,
     shortageOrders: ProjectPositions[],
-    trade_id: string,
     creator_id: string,
     acceptor_id: string,
     comment: string
   ) {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.extraPositions ?? [];
-    const trade = await tradeService.retrieveTrade(trade_id);
 
     const creator = await userService.getUser({ _id: creator_id });
     const acceptor = await userService.getUser({ _id: acceptor_id });
     if (!creator) throw Error("No user with that id");
     if (!acceptor) throw Error("No user with that Id, acceptor");
+    const trades = await Promise.all(
+      shortageOrders.map((shortageOrder) =>
+        tradeService.retrieveTrade(shortageOrder.trade)
+      )
+    );
     const extraPosition: ExtraProjectPositionSuper = {
       createdAt: new Date().getTime(),
       id: new ObjectId().toString(),
@@ -641,18 +654,19 @@ export class ProjectService {
         role: acceptor.role,
       },
       comment,
-      positions: {
-        [trade?.name]: {
-          billed: false,
-          accepted: false,
-          name: trade.name,
-          contract: project?.positions[trade.name]?.contract,
-          positions: [...shortageOrders],
-          id: trade._id.toString(),
-          executor: acceptor.role === "executor" ? acceptor_id : creator_id,
-        },
-      },
+      positions: {},
     };
+    trades.forEach((trade) => {
+      extraPosition.positions[trade.name] = {
+        billed: false,
+        accepted: false,
+        name: trade.name,
+        contract: project?.positions[trade.name]?.contract,
+        positions: [...shortageOrders],
+        id: trade._id.toString(),
+        executor: acceptor.role === "executor" ? acceptor_id : creator_id,
+      };
+    });
     existingShortageOrders.push(extraPosition);
     project.extraPositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project position ${project.external_id}`;
@@ -753,6 +767,7 @@ export class ProjectService {
     trade_id: string,
     extraOrderId: string
   ) {
+    console.log(project_id, position, trade_id, extraOrderId);
     const project = await this.getProjectById(project_id);
     const trade = await tradeService.retrieveTrade(trade_id);
     const existingExtraOrder = project.extraPositions.find(
@@ -827,6 +842,16 @@ export class ProjectService {
           for (const position of addendum.positions[key].positions) {
             for (const position_id of positions) {
               if (position_id === position.external_id) {
+                this.requiredPositions.forEach((reqPos) => {
+                  if (
+                    position.external_id === reqPos &&
+                    !position.documentURL?.length
+                  ) {
+                    throw Error(
+                      "You need to upload a document to this position before you can bill it"
+                    );
+                  }
+                });
                 position.status = status;
               }
             }
@@ -871,9 +896,20 @@ export class ProjectService {
       for (const addendum_id of addendum_ids) {
         if (addendum_id === addendum.id) {
           for (const key in addendum.positions) {
-            if (addendum.positions[key].billed) throw Error('You have already billed this position')
+            if (addendum.positions[key].billed)
+              throw Error("You have already billed this position");
             addendum.positions[key].billed = true;
             for (const position of addendum.positions[key].positions) {
+              this.requiredPositions.forEach((reqPos) => {
+                if (
+                  position.external_id === reqPos &&
+                  !position.documentURL?.length
+                ) {
+                  throw Error(
+                    "You need to upload a document to this position before you can bill it"
+                  );
+                }
+              });
               billItems.push(position);
               position.billed = true;
               position.status = "BILLED";
@@ -917,6 +953,18 @@ export class ProjectService {
     for (const key in project.positions) {
       for (const position of project.positions[key].positions) {
         if (position_ids.find((pos_id) => pos_id === position.external_id)) {
+          if (status === "BILLED") {
+            this.requiredPositions.forEach((reqPos) => {
+              if (
+                position.external_id === reqPos &&
+                !position.documentURL?.length
+              ) {
+                throw Error(
+                  "You need to upload a document to this position before you can bill it"
+                );
+              }
+            });
+          }
           position.status = status;
         }
       }
@@ -927,6 +975,66 @@ export class ProjectService {
   saveProject(project: Project) {
     return AppDataSource.mongoManager.save(Project, project);
   }
+
+  requiredPositions = [
+    //*Elektro*//
+    "06.08.01.0050",
+    "06.08.01.0200",
+    "06.08.01.0010",
+    "06.08.01.0015",
+    "06.08.01.0020",
+    "06.08.01.0030",
+    "06.08.01.0035",
+    "06.08.01.0040",
+    "06.08.01.0050",
+    "06.08.01.0060",
+    "06.08.01.0065",
+    "06.08.01.0070",
+    "06.08.01.0080",
+    "06.08.01.0090",
+    "06.08.01.0200",
+
+    // Plumbing//
+    "06.01.01.0010",
+    "06.01.01.0015",
+    "06.01.01.0020",
+    "06.01.01.0025",
+    "06.01.01.0050",
+    "06.01.01.0060",
+    "06.01.01.0090",
+    "06.01.01.0100",
+    "06.01.02.0010",
+    "06.01.02.0185",
+    "06.01.02.0190",
+    "06.01.01.0140",
+
+    //Tiles//
+    "06.04.01.0010",
+    "06.04.01.0020",
+    "06.04.01.0030",
+    "06.04.01.0040",
+    "06.04.01.0050",
+    "06.04.01.0060",
+    "06.04.01.0070",
+    "06.04.01.0080",
+    "06.04.01.0090",
+    "06.04.01.0100",
+    "06.04.01.0110",
+    "06.04.02.0020",
+    "06.04.02.0030",
+    "06.04.02.0040",
+    "06.04.02.0050",
+    "06.04.02.0060",
+    "06.04.02.0070",
+    "06.04.02.0080",
+    "06.04.02.0090",
+    "06.04.02.0100",
+    "06.04.02.0110",
+
+    //others//
+    "06.09.01.0010",
+    //"06.09.01.0010",
+  ];
 }
 
 const projectService = new ProjectService();
