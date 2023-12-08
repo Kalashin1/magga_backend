@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, response } from "express";
 import { StorageService } from "../../services/storage";
 import { UserService } from "../../services/user";
 import { Document, LogoUrl, userDocumentsArray } from "../../types";
@@ -101,13 +101,13 @@ export const uploadProductImages = async (req: Request, res: Response) => {
       );
       console.log(response);
       existingImage.push(response.publicUrl);
-      console.log('ended')
+      console.log("ended");
     }
-    console.log("existingImage", existingImage)
+    console.log("existingImage", existingImage);
     const response = await ProductService.update(product_id, {
       imageUrls: existingImage,
     });
-    console.log(response)
+    console.log(response);
     return res.json(response);
   } catch (error) {
     return res.json({ message: error.message });
@@ -115,7 +115,13 @@ export const uploadProductImages = async (req: Request, res: Response) => {
 };
 export const uploadAddendumFile = async (req: Request, res: Response) => {
   const { project_id, order_id } = req.params;
-  const imageMimeTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg", "application/pdf"];
+  const imageMimeTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/svg",
+    "application/pdf",
+  ];
 
   const files = req.files as any[];
   console.log(req.files);
@@ -135,7 +141,9 @@ export const uploadAddendumFile = async (req: Request, res: Response) => {
       return res
         .status(404)
         .json({ message: `Project with ${project_id} not found` });
-    const addendum = project.extraPositions?.find((extraOrder) => extraOrder.id === order_id )
+    const addendum = project.extraPositions?.find(
+      (extraOrder) => extraOrder.id === order_id
+    );
     if (!addendum)
       return res
         .status(404)
@@ -154,11 +162,11 @@ export const uploadAddendumFile = async (req: Request, res: Response) => {
       );
       existingImage.push(response.publicUrl);
     }
-    console.log("existingImage", existingImage)
+    console.log("existingImage", existingImage);
     const response = await projectService.updateExtraOrder({
       order_id,
       fileURL: existingImage,
-      project_id
+      project_id,
     });
     return res.json(response);
   } catch (error) {
@@ -310,25 +318,91 @@ export const uploadProjectPositionFile = async (
   res: Response
 ) => {
   const { id, trade, position } = req.params;
+  const imageMimeTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/svg",
+    "application/pdf",
+  ];
 
+  const files = req.files as any[];
+
+  files.forEach((file) => {
+    const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
+
+    if (file && !mimeType) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      return res.json({ message: "Only images allowed!" });
+    }
+  });
   try {
-    const {
-      extension,
-      key,
-      uploadParams: { Body },
-    } = storage.boostrapFile(req.file);
+    const responses = await Promise.all(
+      files.map((file) => {
+        const {
+          extension,
+          key,
+          uploadParams: { Body },
+        } = storage.boostrapFile(file);
 
-    const response = await storage.uploadFile(
-      process.env.BUCKET_NAME,
-      Body,
-      `/project/${id}/${trade}/${position}/${key}.${extension}`
+        return storage.uploadFile(
+          process.env.BUCKET_NAME,
+          Body,
+          `/project/${id}/${trade}/${position}/${key}.${extension}`
+        );
+      })
     );
-    return res.json(response);
+    const imageURLs = responses.map((response) => response.publicUrl);
+    return res.json(imageURLs);
   } catch (error) {
+    console.log(error);
     return res.json({ message: error.message });
   }
 };
 
+export const uploadExtraPositionFile = async (req: Request, res: Response) => {
+  const { id, addendum, position } = req.params;
+  const imageMimeTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/svg",
+    "application/pdf",
+  ];
+
+  const files = req.files as any[];
+
+  files.forEach((file) => {
+    const mimeType = imageMimeTypes.find((mT) => mT === file.mimetype);
+
+    if (file && !mimeType) {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      return res.json({ message: "Only images allowed!" });
+    }
+  });
+  try {
+    const responses = await Promise.all(
+      files.map((file) => {
+        const {
+          extension,
+          key,
+          uploadParams: { Body },
+        } = storage.boostrapFile(file);
+
+        return storage.uploadFile(
+          process.env.BUCKET_NAME,
+          Body,
+          `/project/${id}/${addendum}/${position}/${key}.${extension}`
+        );
+      })
+    );
+    const imageURLs = responses.map((response) => response.publicUrl);
+    return res.json(imageURLs);
+  } catch (error) {
+    console.log(error);
+    return res.json({ message: error.message });
+  }
+};
 
 export const getAllEmployeesFolder = async (req: Request, res: Response) => {
   const { role } = req.params;
