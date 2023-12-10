@@ -289,6 +289,46 @@ export class ProjectService {
     let _amount = 0;
     trades.forEach(async (trade) => {
       const postions = project.positions[trade];
+      // get addendudms
+      const addendums = project.extraPositions;
+      addendums.forEach((addendum) => {
+        if (addendum.positions[trade]) {
+          addendum.positions[trade].positions.forEach((position) => {
+            if (status === "BILLED") {
+              this.requiredPositions.forEach((reqPos) => {
+                if (
+                  position.external_id === reqPos &&
+                  !position.documentURL?.length
+                ) {
+                  throw Error(
+                    "You need to upload a document to this position before you can bill it"
+                  );
+                }
+              });
+              position.billed = true;
+            }
+
+            if (
+              status == "BILLED" &&
+              addendum.positions[trade].executor &&
+              addendum.positions[trade].accepted
+            ) {
+              position.billed;
+              addendum.positions[trade].billed = true;
+              _amount += addendum.positions[trade].positions
+                .map((position) =>
+                  Number(position.price * parseFloat(position.crowd))
+                )
+                .reduce((prev, current) => prev + current);
+              _positions.push(
+                ...addendum.positions[trade].positions.map(
+                  (position) => position.external_id
+                )
+              );
+            }
+          });
+        }
+      });
       if (!postions) throw Error("positions not found");
       postions.positions.forEach((position) => {
         position.status = status;
