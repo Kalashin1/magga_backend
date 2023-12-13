@@ -10,7 +10,7 @@ import {
   Address,
   Building,
   IProject,
-  ProjectPositions,
+  TradeSchedule,
   PROJECT_STATUS,
   ProjectPositionSuper,
   ExtraProjectPositionSuper,
@@ -55,7 +55,7 @@ export class Project implements IProject {
   construction_started: number;
 
   @Column()
-  sheduleByTrade: { string: string }[];
+  sheduleByTrade:TradeSchedule[];
 
   @Column()
   contractor: string;

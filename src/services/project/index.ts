@@ -514,11 +514,26 @@ export class ProjectService {
 
   async updateProject(
     project_id: string,
-    { dueDate, construction_manager }: IProject
+    { dueDate, construction_manager, sheduleByTrade }: IProject
   ) {
     const project = await this.getProjectById(project_id);
     project.dueDate = dueDate;
     project.construction_manager = construction_manager;
+    project.sheduleByTrade = sheduleByTrade;
+    await notificationService.create(
+      "Project has been updated",
+      "PROJECT",
+      project.contractor,
+      project_id
+    );
+    for (const executor of project.executors) {
+      await notificationService.create(
+        "Project has been updated",
+        "PROJECT",
+        executor,
+        project_id
+      );
+    }
     return await this.saveProject(project);
   }
 
