@@ -331,9 +331,11 @@ export type UpdateMultipleExtraOrderPositionsParam =  {
   addendum_id: string;
 }
  
-type TradeSchedule = {
-  string: string;
-};
+export type TradeSchedule = {
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+}
 
 export type Building = {
   address: string;
