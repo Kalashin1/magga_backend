@@ -99,11 +99,12 @@ export const getDraftById = async (req: Request, res: Response) => {
 
 export const updateDraftStatus = async (req: Request, res: Response) => {
   const { draft_id } = req.params;
-  const { status } = req.body;
+  const { status, timeline } = req.body;
   try {
     const payload = await new DraftSerVice().updateDraftStatus(
       draft_id,
-      status
+      status,
+      timeline
     );
     return res.json(payload);
   } catch (error) {

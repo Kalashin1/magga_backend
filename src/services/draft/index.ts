@@ -4,9 +4,7 @@ import { Draft } from "../../entity/draft";
 import projectService from "../project";
 import userService from "../user";
 import { NotificationService } from "../notifications";
-import { INVOICE_STATUS } from "../../types";
-
-const DRAFT_STATUS = ["ACCEPTED", "REQUESTED", "DECLINED"] as const;
+import { INVOICE_STATUS, TradeSchedule, DRAFT_STATUS } from "../../types";
 const notificationService = new NotificationService();
 
 export class DraftSerVice {
@@ -17,9 +15,29 @@ export class DraftSerVice {
     if (!user) throw Error("User was not found");
     const reciepient = await userService.getUser({ _id: draft.reciepient });
     if (!reciepient) throw Error("Receipient was not found");
+    const _positions = [];
+    for (const pos of draft.positions) {
+      for (const key of Object.keys(project.positions)) {
+        if (project.positions[key].positions) {
+          for (const position of project.positions[key].positions) {
+            if (position.external_id === pos) {
+              _positions.push(position);
+            }
+          }
+        }
+      }
+    }
+    console.log(_positions);
+    const timeline = project.sheduleByTrade.find(
+      (schedule) => schedule.name === _positions[0].tradeName
+    );
     const newDraft = AppDataSource.mongoManager.create(Draft, {
       ...draft,
-      status: DRAFT_STATUS[1],
+      timeline: {
+        startDate: timeline?.startDate ?? new Date().toDateString(),
+        endDate: draft.timeline?.endDate ?? new Date().toDateString(),
+      },
+      status: DRAFT_STATUS[0],
     }) as Draft;
     const savedDraft = await this.save(newDraft);
     await notificationService.create(
@@ -73,9 +91,17 @@ export class DraftSerVice {
     });
   }
 
-  async updateDraftStatus(draft_id: string, status: number) {
+  async updateDraftStatus(
+    draft_id: string,
+    status: number,
+    timeline?: Required<Exclude<TradeSchedule, "name">>
+  ) {
     const draft = await this.getDraftById(draft_id);
-    draft.status = INVOICE_STATUS[status];
+    if (status === -1) {
+      return await AppDataSource.mongoManager.deleteOne(Draft, draft);
+    }
+    draft.status = DRAFT_STATUS[status];
+    draft.timeline = timeline;
     const message = `Status of the draft has been changed draft is now ${DRAFT_STATUS[status]} ${draft_id}`;
     await notificationService.create(message, "DRAFT", draft.user_id);
     await notificationService.create(message, "DRAFT", draft.reciepient);

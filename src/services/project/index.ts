@@ -13,6 +13,7 @@ import {
   CONTRACT_STATUS,
   Message,
   ExtraProjectPositionSuper,
+  TradeSchedule,
 } from "../../types";
 import userService from "../user";
 import { PositionService } from "../position";
@@ -294,19 +295,19 @@ export class ProjectService {
       addendums.forEach((addendum) => {
         if (addendum.positions[trade]) {
           addendum.positions[trade].positions.forEach((position) => {
-            if (status === "BILLED") {
-              this.requiredPositions.forEach((reqPos) => {
-                if (
-                  position.external_id === reqPos &&
-                  !position.documentURL?.length
-                ) {
-                  throw Error(
-                    "You need to upload a document to this position before you can bill it"
-                  );
-                }
-              });
-              position.billed = true;
-            }
+            // if (status === "BILLED") {
+            //   this.requiredPositions.forEach((reqPos) => {
+            //     if (
+            //       position.external_id === reqPos &&
+            //       !position.documentURL?.length
+            //     ) {
+            //       throw Error(
+            //         "You need to upload a document to this position before you can bill it"
+            //       );
+            //     }
+            //   });
+            //   position.billed = true;
+            // }
 
             if (
               status == "BILLED" &&
@@ -333,16 +334,16 @@ export class ProjectService {
       postions.positions.forEach((position) => {
         position.status = status;
         if (status === "BILLED") {
-          this.requiredPositions.forEach((reqPos) => {
-            if (
-              position.external_id === reqPos &&
-              !position.documentURL?.length
-            ) {
-              throw Error(
-                "You need to upload a document to this position before you can bill it"
-              );
-            }
-          });
+          // this.requiredPositions.forEach((reqPos) => {
+          //   if (
+          //     position.external_id === reqPos &&
+          //     !position.documentURL?.length
+          //   ) {
+          //     throw Error(
+          //       "You need to upload a document to this position before you can bill it"
+          //     );
+          //   }
+          // });
           position.billed = true;
         }
       });
@@ -371,13 +372,32 @@ export class ProjectService {
       );
       project.positions[trade] = postions;
     });
-    await draftService.create({
-      amount: _amount,
-      positions: _positions,
-      project: project._id.toString(),
-      user_id: project.positions[trades[0]].executor,
-      reciepient: project.contractor,
-    });
+    let timeline: Required<Pick<TradeSchedule, "startDate" | "endDate">>;
+    if (status === "BILLED") {
+      if (trades.length > 1) {
+        //@ts-ignore
+        timeline = project.sheduleByTrade.find(
+          (schedule) => schedule.name === trades[0]
+        );
+      } else {
+        timeline = {
+          startDate: project?.sheduleByTrade?.find(
+            (schedule) => schedule.name === trades[0]
+          ).startDate,
+          endDate: project?.sheduleByTrade?.find(
+            (schedule) => schedule.name === trades[trades.length - 1]
+          ).endDate,
+        };
+      }
+      return await draftService.create({
+        amount: _amount,
+        positions: _positions,
+        project: project._id.toString(),
+        user_id: project.positions[trades[0]].executor,
+        reciepient: project.contractor,
+        timeline: timeline,
+      });
+    }
     return await this.saveProject(project);
   }
 
