@@ -228,6 +228,7 @@ export interface Position {
   createdAt?: string;
   updatedAt: string;
   contractor?: string;
+  tradeName?: string;
 }
 
 export type ProjectPositions = {
@@ -397,6 +398,14 @@ export const INVOICE_STATUS = [
   "BILLED",
 ] as const;
 
+export const DRAFT_STATUS = [
+  "PENDING",
+  "REQUESTED",
+  "ACCEPTED",
+  "DECLINED",
+  "BILLED",
+] as const;
+
 export interface InvoiceInterface {
   _id: ObjectId;
   external_id: string;
@@ -413,12 +422,16 @@ export interface Draft {
   project: string;
   user_id: string;
   reciepient: string;
-  status: (typeof INVOICE_STATUS)[number];
+  status: (typeof DRAFT_STATUS)[number];
   _id: ObjectId;
   createdAt: string;
   amount: number;
   positions: string[];
   updatedAt: string;
+  timeline?: {
+    startDate: string;
+    endDate: string;
+  }
 }
 
 export interface Message {

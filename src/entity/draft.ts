@@ -1,5 +1,5 @@
-import { Entity, Column, CreateDateColumn, UpdateDateColumn  } from "typeorm";
-import {Draft as DraftInterface} from '../types';
+import { Entity, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { DRAFT_STATUS, Draft as DraftInterface } from "../types";
 import { ObjectId } from "typeorm";
 import { ObjectIdColumn } from "typeorm";
 
@@ -13,7 +13,7 @@ export class Draft implements DraftInterface {
 
   @Column()
   reciepient: string;
-  
+
   @Column()
   project: string;
 
@@ -22,17 +22,20 @@ export class Draft implements DraftInterface {
 
   @Column({
     type: "enum",
-    enum: ["ACCEPTED" , "REQUESTED", "DECLINED", "BILLED"],
-    default: "REQUESTED",
+    enum: DRAFT_STATUS,
+    default: DRAFT_STATUS[0],
   })
-  status: "ACCEPTED" | "REQUESTED" | "DECLINED" |"BILLED";
+  status: (typeof DRAFT_STATUS)[number];
 
   @CreateDateColumn()
   createdAt: string;
 
   @UpdateDateColumn()
   updatedAt: string;
-  
+
   @ObjectIdColumn()
-  _id: ObjectId
+  _id: ObjectId;
+
+  @Column()
+  timeline?: { startDate: string; endDate: string };
 }
