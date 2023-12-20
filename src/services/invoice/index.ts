@@ -10,7 +10,7 @@ export class InvoiceService {
     console.log("draft", draft);
     const invoiceOwner = await userService.getUser({ _id: owner });
     const invoiceReciever = await userService.getUser({ _id: receiver });
-    const existingDraft = await draftService.getDraftById(draft);
+    const existingDraft = await draftService.getDraft(draft);
     if (!invoiceOwner) throw Error("owner of invoice not found");
     if (!invoiceReciever) throw Error("receiver of invoice was not found");
     if (!existingDraft) throw Error("Existing draft not found!");

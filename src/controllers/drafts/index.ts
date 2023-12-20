@@ -73,26 +73,9 @@ export const getDraftById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const draft = await new DraftSerVice().getDraftById(id);
-    const project = await new ProjectService().getProjectById(draft.project);
-    const owner = await new UserService().getUser({ _id: draft.user_id });
-    const reciepient = await new UserService().getUser({
-      _id: draft.reciepient,
-    });
-    const projectPositions: ProjectPositions[] = [];
-    for (const key in project.positions) {
-      projectPositions.push(...project.positions[key].positions);
-    }
-    const positions = [];
-    for (const external_id of draft.positions) {
-      for (const position of projectPositions) {
-        if (position.external_id === external_id) {
-          positions.push(position);
-        }
-      }
-    }
-    const payload = { ...draft, owner, reciepient, project, positions };
-    return res.json(payload);
+    return res.json(draft);
   } catch (error) {
+    console.log(error)
     return res.status(400).json({ message: error.message });
   }
 };
