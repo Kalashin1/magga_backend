@@ -1,35 +1,23 @@
 import { ObjectId } from "mongodb";
 import { AppDataSource } from "../../data-source";
 import { Draft } from "../../entity/draft";
-import projectService from "../project";
-import userService from "../user";
+import projectService, { ProjectService } from "../project";
 import { NotificationService } from "../notifications";
-import { INVOICE_STATUS, TradeSchedule, DRAFT_STATUS } from "../../types";
+import { TradeSchedule, DRAFT_STATUS, ProjectPositions } from "../../types";
 const notificationService = new NotificationService();
+import UserService from "../user";
 
 export class DraftSerVice {
   async create(draft: Partial<Draft>) {
     const project = await projectService.getProjectById(draft.project);
     if (!project) throw Error("Project not found!");
-    const user = await userService.getUser({ _id: draft.user_id });
+    const user = await UserService.getUser({ _id: draft.user_id });
     if (!user) throw Error("User was not found");
-    const reciepient = await userService.getUser({ _id: draft.reciepient });
+    const reciepient = await UserService.getUser({ _id: draft.reciepient });
     if (!reciepient) throw Error("Receipient was not found");
-    const _positions = [];
-    for (const pos of draft.positions) {
-      for (const key of Object.keys(project.positions)) {
-        if (project.positions[key].positions) {
-          for (const position of project.positions[key].positions) {
-            if (position.external_id === pos) {
-              _positions.push(position);
-            }
-          }
-        }
-      }
-    }
-    console.log(_positions);
+    const keys = Object.keys(draft.positions);
     const timeline = project.sheduleByTrade.find(
-      (schedule) => schedule.name === _positions[0].tradeName
+      (schedule) => schedule.name === keys[0]
     );
     const newDraft = AppDataSource.mongoManager.create(Draft, {
       ...draft,
@@ -55,7 +43,7 @@ export class DraftSerVice {
     return await this.save(newDraft);
   }
 
-  async getDraftById(id: string) {
+  async getDraft(id: string) {
     return await AppDataSource.mongoManager.findOne(Draft, {
       where: {
         _id: {
@@ -63,6 +51,58 @@ export class DraftSerVice {
         },
       },
     });
+  }
+
+  async getDraftById(id: string) {
+    const draft = await this.getDraft(id);
+    const project = await new ProjectService().getProjectById(draft.project);
+    const owner = await UserService.getUser({ _id: draft.user_id });
+    const reciepient = await UserService.getUser({
+      _id: draft.reciepient,
+    });
+    const projectPositions: ProjectPositions[] = [];
+    for (const key in project.positions) {
+      projectPositions.push(...project.positions[key].positions);
+    }
+    const positions = [];
+    console.log(draft.positions);
+    for (const key of Object.keys(draft.positions)) {
+      console.log(key);
+      for (const draftPosition of draft.positions[key]) {
+        for (const position of projectPositions) {
+          if (draftPosition.external_id === position.external_id) {
+            position.tradeName = key;
+            position.executor = project.positions[key].executor
+            positions.push(position);
+          }
+        }
+      }
+    }
+    const addendums = [];
+    for (const draft_addendum_id in draft.addendums) {
+      for (const addendum of project.extraPositions) {
+        if (draft_addendum_id === addendum.id) {
+          const positions = [];
+          for (const trade in addendum.positions) {
+            addendum.positions[trade].positions.forEach((position) => {
+              position.executor =
+                addendum.acceptedBy.role === "executor"
+                  ? addendum.acceptedBy._id
+                  : addendum.createdBy._id;
+            });
+            positions.push(...addendum.positions[trade].positions);
+          }
+          addendums.push({
+            id: draft_addendum_id,
+            positions,
+            comment: addendum.comment,
+            createdBy: addendum.createdBy,
+            createdAt: addendum.createdAt,
+          });
+        }
+      }
+    }
+    return { ...draft, owner, reciepient, project, positions, addendums };
   }
 
   async getUserDrafts(user_id: string) {
@@ -96,8 +136,14 @@ export class DraftSerVice {
     status: number,
     timeline?: Required<Exclude<TradeSchedule, "name">>
   ) {
-    const draft = await this.getDraftById(draft_id);
+    const draft = await this.getDraft(draft_id);
     if (status === -1) {
+      const trades = Object.keys(draft.positions);
+      await projectService.updateMultiplePositionByTrade(
+        draft.project,
+        trades,
+        "COMPLETED"
+      );
       return await AppDataSource.mongoManager.deleteOne(Draft, draft);
     }
     draft.status = DRAFT_STATUS[status];

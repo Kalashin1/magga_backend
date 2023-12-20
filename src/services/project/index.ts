@@ -286,12 +286,18 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     if (!project) throw Error("project not found!");
-    const _positions: string[] = [];
+    const _positions: {
+      [key: string]: ProjectPositions[];
+    } = {};
+    let draf_addendums: {
+      [key: string]: ProjectPositions[];
+    } = {};
     let _amount = 0;
     trades.forEach(async (trade) => {
       const postions = project.positions[trade];
       // get addendudms
       const addendums = project.extraPositions;
+      console.log(addendums);
       addendums.forEach((addendum) => {
         if (addendum.positions[trade]) {
           addendum.positions[trade].positions.forEach((position) => {
@@ -308,26 +314,28 @@ export class ProjectService {
             //   });
             //   position.billed = true;
             // }
-
+            console.log(position);
+            position.status = status;
             if (
               status == "BILLED" &&
               addendum.positions[trade].executor &&
               addendum.positions[trade].accepted
             ) {
-              position.billed;
+              position.billed = true;
+              position.status = "BILLED";
               addendum.positions[trade].billed = true;
               _amount += addendum.positions[trade].positions
                 .map((position) =>
                   Number(position.price * parseFloat(position.crowd))
                 )
                 .reduce((prev, current) => prev + current);
-              _positions.push(
-                ...addendum.positions[trade].positions.map(
-                  (position) => position.external_id
-                )
-              );
             }
           });
+          if (status === "BILLED") {
+            console.log("draf_addendums", draf_addendums);
+            draf_addendums[addendum.id] = addendum.positions[trade].positions;
+          }
+          addendum.positions[trade].status = status;
         }
       });
       if (!postions) throw Error("positions not found");
@@ -347,17 +355,16 @@ export class ProjectService {
           position.billed = true;
         }
       });
-      if (status === "BILLED" && postions.executor && postions.accepted) {
+      if (status === "BILLED") {
         postions.billed = true;
         _amount += postions.positions
           .map((position) =>
             Number(position.price * parseFloat(position.crowd))
           )
           .reduce((prev, current) => prev + current);
-        _positions.push(
-          ...postions.positions.map((position) => position.external_id)
-        );
       }
+      _positions[trade] = postions.positions;
+      postions.status = status;
       await notificationService.create(
         `You have ${status} the positions under ${trade}`,
         "PROJECT",
@@ -374,12 +381,12 @@ export class ProjectService {
     });
     let timeline: Required<Pick<TradeSchedule, "startDate" | "endDate">>;
     if (status === "BILLED") {
-      if (trades.length > 1) {
+      if (trades.length === 1) {
         //@ts-ignore
         timeline = project.sheduleByTrade.find(
           (schedule) => schedule.name === trades[0]
         );
-      } else {
+      } else if (trades.length > 1) {
         timeline = {
           startDate: project?.sheduleByTrade?.find(
             (schedule) => schedule.name === trades[0]
@@ -389,9 +396,11 @@ export class ProjectService {
           ).endDate,
         };
       }
+      await this.saveProject(project);
       return await draftService.create({
         amount: _amount,
         positions: _positions,
+        addendums: { ...draf_addendums },
         project: project._id.toString(),
         user_id: project.positions[trades[0]].executor,
         reciepient: project.contractor,
@@ -736,6 +745,7 @@ export class ProjectService {
         billed: false,
         accepted: false,
         name: trade.name,
+        status: "CREATED",
         contract: project?.positions[trade.name]?.contract,
         positions: [...shortageOrders],
         id: trade._id.toString(),
@@ -967,9 +977,13 @@ export class ProjectService {
     const executor = await userService.getUser({ _id: executor_id });
     if (!executor) throw Error("Executor is not found");
     const billItems: ProjectPositions[] = [];
+    const addendums: {
+      [key: string]: ProjectPositions[];
+    } = {};
     for (const addendum of project.extraPositions) {
       for (const addendum_id of addendum_ids) {
         if (addendum_id === addendum.id) {
+          const addendumPositions = [];
           for (const key in addendum.positions) {
             if (addendum.positions[key].billed)
               throw Error("You have already billed this position");
@@ -986,10 +1000,12 @@ export class ProjectService {
                 }
               });
               billItems.push(position);
+              addendumPositions.push(position);
               position.billed = true;
               position.status = "BILLED";
             }
           }
+          addendums[addendum.id] = addendumPositions;
         }
       }
     }
@@ -999,7 +1015,7 @@ export class ProjectService {
       )
       .reduce((prev, next) => prev + next);
     const draft = await draftService.create({
-      positions: billItems.map((billItem) => billItem._id!.toString()),
+      addendums,
       amount,
       project: project_id,
       user_id: executor._id.toString(),

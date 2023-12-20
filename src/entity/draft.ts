@@ -1,5 +1,9 @@
 import { Entity, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { DRAFT_STATUS, Draft as DraftInterface } from "../types";
+import {
+  DRAFT_STATUS,
+  Draft as DraftInterface,
+  ProjectPositions,
+} from "../types";
 import { ObjectId } from "typeorm";
 import { ObjectIdColumn } from "typeorm";
 
@@ -9,7 +13,14 @@ export class Draft implements DraftInterface {
   amount: number;
 
   @Column()
-  positions: string[];
+  positions: {
+    [key: string]: ProjectPositions[];
+  };
+
+  @Column()
+  addendums?: {
+    [key: string]: ProjectPositions[];
+  };
 
   @Column()
   reciepient: string;

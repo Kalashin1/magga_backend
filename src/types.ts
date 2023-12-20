@@ -237,6 +237,7 @@ export type ProjectPositions = {
   section?: string;
   documentURL?: string[];
   position: number;
+  executor?: string
 } & Partial<Position>;
 
 export const PROJECT_STATUS = [
@@ -253,6 +254,7 @@ export type ProjectPositionSuper = {
   [key: string]: {
     positions: ProjectPositions[];
     billed: boolean;
+    status: string;
     executor?: string;
     accepted: boolean;
     name: string;
@@ -278,6 +280,19 @@ export type ExtraProjectPositionSuper = {
   rejectedAt?: number;
   positions: ProjectPositionSuper;
 };
+
+const TIMELINE_ACTION = ['CREATED', 'POSITIONS_ASSIGNED', 'POSITIONS_REJECTED', 'POSITIONS_ACCEPTED', 'POSITION_COMPLETED', 'POSITION_IN_PROGRESS'] as const
+
+type TimeLine = {
+  action: typeof TIMELINE_ACTION[number];
+  position?: string;
+  trade?: string;
+  timestamp: string;
+  takenBy: {
+    user_id: string;
+    role: string;
+  };
+}
 
 export interface IProject {
   _id: ObjectId;
@@ -325,18 +340,18 @@ export type createProjectParam = {
   careTaker: Pick<User, "email" | "phone"> & { name: string };
 };
 
-export type UpdateMultipleExtraOrderPositionsParam =  {
+export type UpdateMultipleExtraOrderPositionsParam = {
   project_id: string;
   positions: string[];
   status: string;
   addendum_id: string;
-}
- 
+};
+
 export type TradeSchedule = {
   name?: string;
   startDate?: string;
   endDate?: string;
-}
+};
 
 export type Building = {
   address: string;
@@ -426,12 +441,17 @@ export interface Draft {
   _id: ObjectId;
   createdAt: string;
   amount: number;
-  positions: string[];
+  positions?: {
+    [key: string]: ProjectPositions[];
+  };
+  addendums?: {
+    [key: string]: ProjectPositions[];
+  };
   updatedAt: string;
   timeline?: {
     startDate: string;
     endDate: string;
-  }
+  };
 }
 
 export interface Message {
