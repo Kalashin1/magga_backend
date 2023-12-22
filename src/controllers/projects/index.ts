@@ -114,6 +114,7 @@ export const assignExecutor = async (req: Request, res: Response) => {
       trades,
       contractor_id
     );
+    console.log("payload", payload);
     return res.json(payload);
   } catch (error) {
     console.log(error);
@@ -146,6 +147,7 @@ export const updateProjectPositionsByTrade = async (
       trade,
       status
     );
+    console.log('payload', payload)
     return res.json(payload);
   } catch (error) {
     console.log(error)
@@ -314,3 +316,15 @@ export const billMultipleAddendums = async (req: Request, res: Response) => {
     return res.status(400).json({ message: error.message });
   }
 };
+
+
+export const getUserProjectStats = async (req: Request, res: Response) => {
+  const {user_id} = req.params;
+  try {
+    const paylaod = await projectService.getUserProjectStats(user_id)
+    return res.json(paylaod)
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({ message: error.message })
+  }
+}

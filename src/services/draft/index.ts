@@ -3,9 +3,10 @@ import { AppDataSource } from "../../data-source";
 import { Draft } from "../../entity/draft";
 import projectService, { ProjectService } from "../project";
 import { NotificationService } from "../notifications";
-import { TradeSchedule, DRAFT_STATUS, ProjectPositions } from "../../types";
+import { TradeSchedule, DRAFT_STATUS, ProjectPositions, TASK_STATUS } from "../../types";
 const notificationService = new NotificationService();
 import UserService from "../user";
+import TodoService from "../todo"
 
 export class DraftSerVice {
   async create(draft: Partial<Draft>) {
@@ -40,7 +41,15 @@ export class DraftSerVice {
       reciepient._id.toString(),
       savedDraft._id.toString()
     );
-    return await this.save(newDraft);
+    await TodoService.create({
+      type: "DRAFT",
+      description: `You have a new draft to attend to ${draft._id}`,
+      status: TASK_STATUS[0],
+      user_id: user._id.toString(),
+      object_id: savedDraft._id.toString(),
+      assignedTo: project.contractor,
+    });
+    return savedDraft;
   }
 
   async getDraft(id: string) {
@@ -145,6 +154,16 @@ export class DraftSerVice {
         "COMPLETED"
       );
       return await AppDataSource.mongoManager.deleteOne(Draft, draft);
+    }
+    if (DRAFT_STATUS[status] === DRAFT_STATUS[2]) {
+      await TodoService.create({
+        type: "DRAFT",
+        description: `You have a new draft to attend to ${draft._id}`,
+        status: TASK_STATUS[0],
+        user_id: draft.reciepient,
+        object_id: draft._id.toString(),
+        assignedTo: draft.user_id,
+      });
     }
     draft.status = DRAFT_STATUS[status];
     draft.timeline = timeline;

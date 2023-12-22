@@ -92,6 +92,7 @@ export enum PROJECT_ROUTES {
   INTERACT_WITH_ADDENDUM = '/project/addendum/',
   UPDATE_MULTIPLE_EXTRA_POSITION_STATUS = '/project/addendum/multiple/status',
   BILL_MULTIPLE_ADDENDUMS = '/project/addendum/multiple/bill',
+  PROJECT_STATS = '/projects/stat/:user_id',
 }
 
 export enum DRAFT_ROUTES {
@@ -104,7 +105,7 @@ export enum DRAFT_ROUTES {
 export enum INVOICE_ROUTES {
   CREATE = '/invoice/create',
   GET_USER_INVOICE = '/invoice/owner/:owner_id/:status',
-  GET_RECIEVER_INVOICE = '/invoice/reciever/:user_id/:status',
+  GET_RECIEVER_INVOICE = '/invoice/receiver/:user_id/:status',
   GET_INVOICE_BY_ID = '/invoice/id/:id',
   GET_INVOICE_BY_EXTERNAL_ID = '/invoice/external_id/:external_id'
 }

@@ -5,11 +5,11 @@ import notificationService from "../notifications";
 import { ObjectId } from "mongodb";
 
 class TodoService {
-  async create(todo: Todo) {
+  async create(todo: Partial<Todo>) {
     const user = await userService.getUser({ _id: todo.user_id });
     if (!user) throw Error("user not found!");
-    const createdTodo = AppDataSource.mongoManager.create(Todo, todo);
-    const savedTodo = await this.save(todo);
+    const createdTodo = AppDataSource.mongoManager.create(Todo, todo as Todo);
+    const savedTodo = await this.save(createdTodo);
     await notificationService.create(
       "You have created a new Task",
       "TODO",
@@ -109,6 +109,5 @@ class TodoService {
     return AppDataSource.mongoManager.save(todo);
   }
 }
-
 
 export default new TodoService();

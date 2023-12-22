@@ -77,6 +77,7 @@ export const getRecieverInvoice = async (req: Request, res: Response) => {
     );
     return res.json(payload);
   } catch (error) {
+    console.log(error)
     return res.status(400).json({ error: error.message });
   }
 };

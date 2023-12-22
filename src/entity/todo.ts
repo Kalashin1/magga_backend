@@ -27,10 +27,10 @@ export class Todo implements TodoInterface {
   @Column()
   object_id: string;
 
-  @Column()
+  @CreateDateColumn()
   createdAt?: string;
 
-  @Column()
+  @UpdateDateColumn()
   updatedAt?: string;
 
   @Column()
