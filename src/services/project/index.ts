@@ -14,6 +14,7 @@ import {
   Message,
   ExtraProjectPositionSuper,
   TradeSchedule,
+  TASK_STATUS,
 } from "../../types";
 import userService from "../user";
 import { PositionService } from "../position";
@@ -23,6 +24,7 @@ import { User } from "../../entity/User";
 import contractService from "../contract";
 import tradeService from "../trades";
 import draftService from "../draft";
+import TodoService from "../todo";
 
 let options = {
   pagerender: pdfTextParser.render_page,
@@ -297,24 +299,24 @@ export class ProjectService {
       const postions = project.positions[trade];
       // get addendudms
       const addendums = project.extraPositions;
-      console.log(addendums);
-      addendums.forEach((addendum) => {
+      console.log("addendums", addendums);
+      addendums?.forEach((addendum) => {
         if (addendum.positions[trade]) {
-          addendum.positions[trade].positions.forEach((position) => {
-            // if (status === "BILLED") {
-            //   this.requiredPositions.forEach((reqPos) => {
-            //     if (
-            //       position.external_id === reqPos &&
-            //       !position.documentURL?.length
-            //     ) {
-            //       throw Error(
-            //         "You need to upload a document to this position before you can bill it"
-            //       );
-            //     }
-            //   });
-            //   position.billed = true;
-            // }
-            console.log(position);
+          addendum?.positions[trade]?.positions?.forEach((position) => {
+            if (status === "BILLED" || status === 'COMPLETED') {
+              this.requiredPositions.forEach((reqPos) => {
+                if (
+                  position.external_id === reqPos &&
+                  !position.documentURL?.length
+                ) {
+                  throw Error(
+                    "You need to upload a document to this position before you can bill or complete it"
+                  );
+                }
+              });
+              position.billed = true;
+            }
+            console.log("position", position);
             position.status = status;
             if (
               status == "BILLED" &&
@@ -341,17 +343,17 @@ export class ProjectService {
       if (!postions) throw Error("positions not found");
       postions.positions.forEach((position) => {
         position.status = status;
-        if (status === "BILLED") {
-          // this.requiredPositions.forEach((reqPos) => {
-          //   if (
-          //     position.external_id === reqPos &&
-          //     !position.documentURL?.length
-          //   ) {
-          //     throw Error(
-          //       "You need to upload a document to this position before you can bill it"
-          //     );
-          //   }
-          // });
+        if (status === "BILLED" || status === "COMPLETED") {
+          this.requiredPositions.forEach((reqPos) => {
+            if (
+              position.external_id === reqPos &&
+              !position.documentURL?.length
+            ) {
+              throw Error(
+                "You need to upload a document to this position before you can bill it"
+              );
+            }
+          });
           position.billed = true;
         }
       });
@@ -407,6 +409,21 @@ export class ProjectService {
         timeline: timeline,
       });
     }
+    const project_trade = Object.keys(project.positions);
+    for (let i = 0; i < project_trade.length; i++) {
+      if (
+        !project.positions[project_trade[i]].billed ||
+        project.positions[project_trade[i]].status !== "COMPLETED"
+      ) {
+        console.log('completed');
+      }
+      if (
+        i === project_trade.length - 1 &&
+        (project.positions[project_trade[i]].billed ||
+          project.positions[project_trade[i]].status === "COMPLETED")
+      )
+        await this.changeProjectStatus(project._id.toString(), 4);
+    }
     return await this.saveProject(project);
   }
 
@@ -451,8 +468,6 @@ export class ProjectService {
       if (project.positions[trade].executor)
         throw Error("Position already assinged!");
       project.positions[trade].executor = executor_id;
-
-      console.log(project.positions[trade].positions);
     }
     const existingExecutors = project.executors ?? [];
     if (existingExecutors.find((exe) => exe === executor_id)) {
@@ -462,7 +477,7 @@ export class ProjectService {
     }
     const executorProjects = executor.projects ?? [];
     if (executorProjects.find((project) => project === project_id)) {
-      console.log("already existing");
+      console.log('found')
     } else {
       executorProjects.push(project._id.toString());
     }
@@ -479,7 +494,6 @@ export class ProjectService {
             const foundPosition = contract.positions.find(
               (_position) => _position.external_id === position.external_id
             );
-            console.log("found position", foundPosition);
             position.price = foundPosition.price;
             position.units = foundPosition.units;
             position.status = "ASSIGNED";
@@ -487,6 +501,7 @@ export class ProjectService {
         });
       }
     });
+    console.log('before notification')
     await notificationService.create(
       "Project has been assigned to you",
       "PROJECT",
@@ -496,7 +511,14 @@ export class ProjectService {
       ...executor,
       projects: executorProjects,
     });
-
+    await TodoService.create({
+      type: "PROJECT_ASSIGNMENT",
+      description: `You have been assigned some positions on project ${project._id}`,
+      status: TASK_STATUS[0],
+      user_id: project.contractor,
+      object_id: project._id.toString(),
+      assignedTo: executor_id,
+    });
     return await this.saveProject({
       ...project,
       executors: existingExecutors,
@@ -768,6 +790,14 @@ export class ProjectService {
         exe,
         project._id.toString()
       );
+    });
+    await TodoService.create({
+      type: "PROJECT_ASSIGNMENT",
+      description: `You have been assigned some extra positions on project ${project._id}`,
+      status: TASK_STATUS[0],
+      user_id: project.contractor,
+      object_id: project._id.toString(),
+      assignedTo: acceptor.role === "executor" ? acceptor_id : creator_id,
     });
     await this.saveProject(project);
     return extraPosition;
@@ -1060,7 +1090,104 @@ export class ProjectService {
         }
       }
     }
+
+    const trades = Object.keys(project.positions);
+
+    for (let i = 0; i < trades.length; i++) {
+      if (
+        !project.positions[trades[i]].billed ||
+        project.positions[trades[i]].status !== "COMPLETED"
+      ) {
+        return;
+      }
+      if (
+        i === trades.length - 1 &&
+        (project.positions[trades[i]].billed ||
+          project.positions[trades[i]].status === "COMPLETED")
+      )
+        this.changeProjectStatus(project._id.toString(), 4);
+    }
     return await this.saveProject(project);
+  }
+
+  async getUserProjectStats(user_id: string) {
+    console.log(user_id);
+    let projects: Project[] = [];
+    let positions: ProjectPositions[] = [];
+    let NotAccepted: ProjectPositions[] = [];
+    let AddendumPositions: ProjectPositions[] = [];
+    let CompletedPostions: ProjectPositions[] = [];
+    let BilledPostions: ProjectPositions[] = [];
+    let user: User;
+    if (user_id) {
+      user = await userService.getUser({ _id: user_id });
+    } else {
+      return;
+    }
+
+    if (!user) throw Error("user not found");
+
+    if (user.role === "contractor") {
+      projects = await this.getContractorProjects(user._id.toString());
+      console.log("projects", projects)
+    }
+
+    if (user?.role === "executor") {
+      projects = await this.getExecutorProjects(user._id.toString());
+    }
+    projects = await this.getExecutorProjects(user._id.toString());
+    for (const project of projects) {
+      for (const trade of Object.keys(project.positions)) {
+        for (const position of project.positions[trade].positions) {
+          positions.push(position);
+          if (position.status === "COMPLETED" || position.status === "BILLED")
+            CompletedPostions.push(position);
+
+          if (position.status === "BILLED") BilledPostions.push(position);
+
+          if (
+            project.positions[trade].executor === user._id.toString() ||
+            (user.role === "contractor" &&
+              project.positions[trade].accepted === false)
+          )
+            if (NotAccepted.find((_project) => _project._id === project._id))
+              return;
+            else NotAccepted.push(position);
+        }
+      }
+
+      if (project.extraPositions) {
+        for (const extraOrder of project.extraPositions) {
+          for (const trade of Object.keys(extraOrder.positions)) {
+            for (const position of extraOrder.positions[trade].positions) {
+              positions.push(position);
+              if (
+                position.status === "COMPLETED" ||
+                position.status === "BILLED"
+              )
+                CompletedPostions.push(position);
+
+              if (position.status === "BILLED") BilledPostions.push(position);
+              if (
+                position.status !== "BILL" ||
+                // TODO: This is a temporary fix, change the type of status to be POSITION_STATUS type
+                // @ts-ignore
+                position.status !== "COMPLETED"
+              )
+                AddendumPositions.push(position);
+            }
+          }
+        }
+      }
+    }
+    console.log(NotAccepted)
+    return [
+      { title: "Total Project Positions", positions },
+      { title: `Not accepted`, positions: NotAccepted },
+      { title: `Pending Extra Positions`, positions: AddendumPositions },
+      { title: `Completed`, positions: CompletedPostions },
+      { title: `Billed`, positions: BilledPostions },
+    ];
   }
 
   saveProject(project: Project) {

@@ -23,6 +23,7 @@ import {
   interactWithProjectAddendum,
   updateMultipleExtraOrderPositions,
   billMultipleAddendums,
+  getUserProjectStats,
 } from "../../controllers/projects";
 
 const router = Router();
@@ -58,5 +59,6 @@ router.post(
   updateMultipleExtraOrderPositions
 );
 router.post(PROJECT_ROUTES.BILL_MULTIPLE_ADDENDUMS, billMultipleAddendums);
+router.get(PROJECT_ROUTES.PROJECT_STATS, getUserProjectStats);
 
 export default router;
