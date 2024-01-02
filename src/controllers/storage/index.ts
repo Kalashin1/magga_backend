@@ -1,18 +1,15 @@
-import { Request, Response, response } from "express";
-import { StorageService } from "../../services/storage";
-import { UserService } from "../../services/user";
+import { Request, Response } from "express";
+import storageService from "../../services/storage";
+import userService from "../../services/user";
 import { Document, LogoUrl, userDocumentsArray } from "../../types";
-import { NotificationService } from "../../services/notifications";
+import notificationService from "../../services/notifications";
 import ProductService from "../../services/products";
 import projectService from "../../services/project";
 
-const storage = new StorageService();
-const userService = new UserService();
-const notificationService = new NotificationService();
 
 export const showAllBuckets = async (req: Request, res: Response) => {
   try {
-    const buckets = await storage.logBuckets();
+    const buckets = await storageService.logBuckets();
     return res.json(buckets);
   } catch (error) {
     return res.status(400).json({ error: error.message });
@@ -36,9 +33,9 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       const {
         extension,
         uploadParams: { Body },
-      } = storage.boostrapFile(req.file);
+      } = storageService.boostrapFile(req.file);
       const user = await userService.getUser({ _id });
-      const response = await storage.uploadAsset({
+      const response = await storageService.uploadAsset({
         extension,
         first_name: user.first_name,
         last_name: user.last_name,
@@ -93,8 +90,8 @@ export const uploadProductImages = async (req: Request, res: Response) => {
         uploadParams: { Body },
         extension,
         key,
-      } = storage.boostrapFile(file);
-      const response = await storage.uploadFile(
+      } = storageService.boostrapFile(file);
+      const response = await storageService.uploadFile(
         process.env.BUCKET_NAME,
         Body,
         `/shop/${shop_id}-${shop.first_name}/products/${product.name}-${product_id}/${extension}.${key}`
@@ -154,8 +151,8 @@ export const uploadAddendumFile = async (req: Request, res: Response) => {
         uploadParams: { Body },
         extension,
         key,
-      } = storage.boostrapFile(file);
-      const response = await storage.uploadFile(
+      } = storageService.boostrapFile(file);
+      const response = await storageService.uploadFile(
         process.env.BUCKET_NAME,
         Body,
         `/project/${project._id.toString()}/addendum/${extension}.${key}`
@@ -201,9 +198,9 @@ export const uploadDocument = async (req: Request, res: Response) => {
     const {
       extension,
       uploadParams: { Body },
-    } = storage.boostrapFile(req.file);
+    } = storageService.boostrapFile(req.file);
     const user = await userService.getUser({ _id });
-    const response = await storage.uploadAsset({
+    const response = await storageService.uploadAsset({
       extension,
       first_name: user.first_name,
       last_name: user.last_name,
@@ -257,9 +254,9 @@ export const uploadLogo = async (req: Request, res: Response) => {
     const {
       extension,
       uploadParams: { Body },
-    } = storage.boostrapFile(req.file);
+    } = storageService.boostrapFile(req.file);
     const user = await userService.getUser({ _id });
-    const response = await storage.uploadAsset({
+    const response = await storageService.uploadAsset({
       extension,
       first_name: user.first_name,
       last_name: user.last_name,
@@ -304,8 +301,8 @@ export const uploadProject = async (req: Request, res: Response) => {
     const {
       extension,
       uploadParams: { Body },
-    } = storage.boostrapFile(req.file);
-    await storage.uploadProject(id, Body, "projects", extension);
+    } = storageService.boostrapFile(req.file);
+    await storageService.uploadProject(id, Body, "projects", extension);
     const response = await projectService.parsePDF(Body, id);
     return res.json(response);
   } catch (error) {
@@ -343,9 +340,9 @@ export const uploadProjectPositionFile = async (
           extension,
           key,
           uploadParams: { Body },
-        } = storage.boostrapFile(file);
+        } = storageService.boostrapFile(file);
 
-        return storage.uploadFile(
+        return storageService.uploadFile(
           process.env.BUCKET_NAME,
           Body,
           `/project/${id}/${trade}/${position}/${key}.${extension}`
@@ -387,9 +384,9 @@ export const uploadExtraPositionFile = async (req: Request, res: Response) => {
           extension,
           key,
           uploadParams: { Body },
-        } = storage.boostrapFile(file);
+        } = storageService.boostrapFile(file);
 
-        return storage.uploadFile(
+        return storageService.uploadFile(
           process.env.BUCKET_NAME,
           Body,
           `/project/${id}/${addendum}/${position}/${key}.${extension}`
@@ -407,7 +404,7 @@ export const uploadExtraPositionFile = async (req: Request, res: Response) => {
 export const getAllEmployeesFolder = async (req: Request, res: Response) => {
   const { role } = req.params;
   try {
-    const users = await storage.getUsersFolders(role);
+    const users = await storageService.getUsersFolders(role);
     return res.json(users);
   } catch (error) {
     return res.json({ message: error.message });
@@ -418,7 +415,7 @@ export const getFiles = async (req: Request, res: Response) => {
   const { prefix } = req.body;
   console.log(req.body);
   try {
-    const files = await storage.listAllFiles(process.env.BUCKET_NAME, prefix);
+    const files = await storageService.listAllFiles(process.env.BUCKET_NAME, prefix);
     return res.json(files);
   } catch (error) {
     return res.json({ message: error.message });
@@ -428,7 +425,7 @@ export const getFiles = async (req: Request, res: Response) => {
 export const getEmployeesFolder = async (req: Request, res: Response) => {
   const { owner_id } = req.params;
   try {
-    const employeesFolder = await storage.getEmployeesFolder(owner_id);
+    const employeesFolder = await storageService.getEmployeesFolder(owner_id);
     return res.json(employeesFolder);
   } catch (error) {
     return res.json({ message: error.message });
@@ -438,7 +435,7 @@ export const getEmployeesFolder = async (req: Request, res: Response) => {
 export const getExecutorsFolder = async (req: Request, res: Response) => {
   const { owner_id } = req.params;
   try {
-    const executorsFolder = await storage.getExecutorsFolders(owner_id);
+    const executorsFolder = await storageService.getExecutorsFolders(owner_id);
     return res.json(executorsFolder);
   } catch (error) {
     return res.json({ message: error.message });

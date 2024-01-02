@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
-import { ProjectService } from "../../services/project";
-
-const projectService = new ProjectService();
+import projectService from "../../services/project";
 
 export const createProject = async (req: Request, res: Response) => {
   const projectParam = req.body;

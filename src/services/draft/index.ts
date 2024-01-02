@@ -2,19 +2,24 @@ import { ObjectId } from "mongodb";
 import { AppDataSource } from "../../data-source";
 import { Draft } from "../../entity/draft";
 import projectService, { ProjectService } from "../project";
-import { NotificationService } from "../notifications";
+import notificationService, { NotificationService } from "../notifications";
 import { TradeSchedule, DRAFT_STATUS, ProjectPositions, TASK_STATUS } from "../../types";
-const notificationService = new NotificationService();
-import UserService from "../user";
-import TodoService from "../todo"
+import userService, { UserService } from "../user";
+import todoService, { TodoService } from "../todo"
 
 export class DraftSerVice {
+  constructor(
+    private projectService: ProjectService,
+    private notificationService: NotificationService,
+    private userService: UserService,
+    private todoService: TodoService
+  ){}
   async create(draft: Partial<Draft>) {
-    const project = await projectService.getProjectById(draft.project);
+    const project = await this.projectService.getProjectById(draft.project);
     if (!project) throw Error("Project not found!");
-    const user = await UserService.getUser({ _id: draft.user_id });
+    const user = await this.userService.getUser({ _id: draft.user_id });
     if (!user) throw Error("User was not found");
-    const reciepient = await UserService.getUser({ _id: draft.reciepient });
+    const reciepient = await this.userService.getUser({ _id: draft.reciepient });
     if (!reciepient) throw Error("Receipient was not found");
     const keys = Object.keys(draft.positions);
     const timeline = project.sheduleByTrade.find(
@@ -29,19 +34,19 @@ export class DraftSerVice {
       status: DRAFT_STATUS[0],
     }) as Draft;
     const savedDraft = await this.save(newDraft);
-    await notificationService.create(
+    await this.notificationService.create(
       "Draft has been created successfully! " + savedDraft._id.toString(),
       "DRAFT",
       user._id.toString(),
       savedDraft._id.toString()
     );
-    await notificationService.create(
+    await this.notificationService.create(
       "Draft has been sent to you " + savedDraft._id.toString(),
       "DRAFT",
       reciepient._id.toString(),
       savedDraft._id.toString()
     );
-    await TodoService.create({
+    await this.todoService.create({
       type: "DRAFT",
       description: `You have a new draft to attend to ${draft._id}`,
       status: TASK_STATUS[0],
@@ -64,9 +69,9 @@ export class DraftSerVice {
 
   async getDraftById(id: string) {
     const draft = await this.getDraft(id);
-    const project = await new ProjectService().getProjectById(draft.project);
-    const owner = await UserService.getUser({ _id: draft.user_id });
-    const reciepient = await UserService.getUser({
+    const project = await this.projectService.getProjectById(draft.project);
+    const owner = await this.userService.getUser({ _id: draft.user_id });
+    const reciepient = await this.userService.getUser({
       _id: draft.reciepient,
     });
     const projectPositions: ProjectPositions[] = [];
@@ -148,7 +153,7 @@ export class DraftSerVice {
     const draft = await this.getDraft(draft_id);
     if (status === -1) {
       const trades = Object.keys(draft.positions);
-      await projectService.updateMultiplePositionByTrade(
+      await this.projectService.updateMultiplePositionByTrade(
         draft.project,
         trades,
         "COMPLETED"
@@ -156,7 +161,7 @@ export class DraftSerVice {
       return await AppDataSource.mongoManager.deleteOne(Draft, draft);
     }
     if (DRAFT_STATUS[status] === DRAFT_STATUS[2]) {
-      await TodoService.create({
+      await this.todoService.create({
         type: "DRAFT",
         description: `You have a new draft to attend to ${draft._id}`,
         status: TASK_STATUS[0],
@@ -168,8 +173,8 @@ export class DraftSerVice {
     draft.status = DRAFT_STATUS[status];
     draft.timeline = timeline;
     const message = `Status of the draft has been changed draft is now ${DRAFT_STATUS[status]} ${draft_id}`;
-    await notificationService.create(message, "DRAFT", draft.user_id);
-    await notificationService.create(message, "DRAFT", draft.reciepient);
+    await this.notificationService.create(message, "DRAFT", draft.user_id);
+    await this.notificationService.create(message, "DRAFT", draft.reciepient);
     return await this.save(draft);
   }
 
@@ -178,6 +183,9 @@ export class DraftSerVice {
   }
 }
 
-const draftService = new DraftSerVice();
-
-export default draftService;
+export default new DraftSerVice(
+  projectService,
+  notificationService,
+  userService,
+  todoService
+);

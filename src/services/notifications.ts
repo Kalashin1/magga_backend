@@ -1,6 +1,5 @@
 import { Notification } from "../entity/notification";
 import { AppDataSource } from "../data-source";
-import userService from "./user";
 import { ObjectId } from "mongodb";
 
 export class NotificationService {
@@ -12,8 +11,6 @@ export class NotificationService {
     subjectId?: string,
     fileUrl?: string
   ) {
-    const user = await userService.getUser({ _id: user_id });
-    if (!user) throw Error("user with that Id not found");
     const notification = await AppDataSource.mongoManager.create(Notification, {
       shortText,
       type,

@@ -2,7 +2,7 @@ import { Project } from "../../entity/project";
 import { AppDataSource } from "../../data-source";
 import PdfParse from "pdf-parse";
 import { translate } from "@vitalets/google-translate-api";
-import pdfTextParser from "../pdf-text-parser";
+import pdfTextParser, { PDFTextParser } from "../pdf-text-parser";
 import {
   Building,
   PROJECT_STATUS,
@@ -16,39 +16,48 @@ import {
   TradeSchedule,
   TASK_STATUS,
 } from "../../types";
-import userService from "../user";
-import { PositionService } from "../position";
-import { NotificationService } from "../notifications";
+import userService, { UserService } from "../user";
+import positionService, { PositionService } from "../position";
+import notificationService, { NotificationService } from "../notifications";
 import { ObjectId } from "mongodb";
 import { User } from "../../entity/User";
-import contractService from "../contract";
-import tradeService from "../trades";
-import draftService from "../draft";
-import TodoService from "../todo";
+import contractService, { ContractService } from "../contract";
+import tradeService, { TradeService } from "../trades";
+import draftService, { DraftSerVice } from "../draft";
+import todoService, { TodoService } from "../todo";
 
 let options = {
   pagerender: pdfTextParser.render_page,
 };
 
-const positionService = new PositionService();
-const notificationService = new NotificationService();
-
 export class ProjectService {
+  constructor(
+    private contractService: ContractService,
+    private tradeService: TradeService,
+    private draftService: DraftSerVice,
+    private todoService: TodoService,
+    private userService: UserService,
+    private positionService: PositionService,
+    private notificationService: NotificationService,
+    private pdfTextParser: PDFTextParser
+  ) {}
   async parsePDF(file: Buffer, id: string): Promise<Partial<Project>> {
     const parsedFile = await PdfParse(file, options);
     const { text } = await translate(parsedFile.text, {
       to: "en",
     });
     console.log("text", text);
-    const client = pdfTextParser.getClientLines(text).join(".\n");
-    const billingDetails = pdfTextParser.getBillingDetails(text).join(".\n");
-    const missions = pdfTextParser.getMission(text);
-    const orderNotes = pdfTextParser.getOrderNotes(text);
-    const mainPositions = pdfTextParser.getOrderItems(text);
-    const individualPositions = pdfTextParser.getIndividualItems(text);
+    const client = this.pdfTextParser.getClientLines(text).join(".\n");
+    const billingDetails = this.pdfTextParser
+      .getBillingDetails(text)
+      .join(".\n");
+    const missions = this.pdfTextParser.getMission(text);
+    const orderNotes = this.pdfTextParser.getOrderNotes(text);
+    const mainPositions = this.pdfTextParser.getOrderItems(text);
+    const individualPositions = this.pdfTextParser.getIndividualItems(text);
 
     const _mainPositions = mainPositions.map((position) =>
-      pdfTextParser.parseLineToPosition(position)
+      this.pdfTextParser.parseLineToPosition(position)
     );
 
     const positions: ProjectPositions[] = await Promise.all(
@@ -60,15 +69,15 @@ export class ProjectService {
         shortText: position.shortText,
         position: index + 1,
         longText: (
-          await positionService.getPositionByExternalId(position.id)
+          await this.positionService.getPositionByExternalId(position.id)
         )?.longText,
         trade: (
-          await positionService.getPositionByExternalId(position.id)
+          await this.positionService.getPositionByExternalId(position.id)
         )?.trade,
       }))
     );
     const _singlePositions = individualPositions.map((position) =>
-      pdfTextParser.parseLineToPosition(position)
+      this.pdfTextParser.parseLineToPosition(position)
     );
     const singlePositions = await Promise.all(
       _singlePositions.map(async (position, index) => ({
@@ -78,15 +87,15 @@ export class ProjectService {
         external_id: position.id,
         shortText: position.shortText,
         longText: (
-          await positionService.getPositionByExternalId(position.id)
+          await this.positionService.getPositionByExternalId(position.id)
         )?.longText,
         position: index + 1,
         trade: (
-          await positionService.getPositionByExternalId(position.id)
+          await this.positionService.getPositionByExternalId(position.id)
         )?.trade,
       }))
     );
-    const trades = await tradeService.retrieveAllTrades();
+    const trades = await this.tradeService.retrieveAllTrades();
     const tradePositions = {};
     for (const trade of trades) {
       const filteredPosition = positions.filter(
@@ -109,8 +118,8 @@ export class ProjectService {
         accepted: false,
       };
     }
-    const details = pdfTextParser.parseApartmentInfo(missions.join(".\n"));
-    const notes = pdfTextParser.parseOrderNotes(orderNotes);
+    const details = this.pdfTextParser.parseApartmentInfo(missions.join(".\n"));
+    const notes = this.pdfTextParser.parseOrderNotes(orderNotes);
 
     parsedFile.text = text;
     return {
@@ -125,11 +134,11 @@ export class ProjectService {
       dueDate: details["end of execution"],
       rentalStatus: details["rental status"],
       positions: tradePositions,
-      careTaker: pdfTextParser.parseCareTaker(
+      careTaker: this.pdfTextParser.parseCareTaker(
         details["caretaker"],
         details.tel
       ),
-      commissioned_by: pdfTextParser.parseCommisioner(
+      commissioned_by: this.pdfTextParser.parseCommisioner(
         details["commissioned by"]
       ),
       contractor: id,
@@ -147,12 +156,14 @@ export class ProjectService {
         "Project With that Id already exists, contact your contractor"
       );
     }
-    const contractor = await userService.getUser({ _id: params.contractor });
+    const contractor = await this.userService.getUser({
+      _id: params.contractor,
+    });
     if (!contractor || contractor.role !== "contractor")
       throw Error("No contractor with that Id");
     const newProject = await AppDataSource.mongoManager.create(Project, params);
     const project = await this.saveProject(newProject);
-    await notificationService.create(
+    await this.notificationService.create(
       "New contract created successfully " + project._id.toString(),
       "PROJECT",
       contractor._id.toString(),
@@ -170,11 +181,11 @@ export class ProjectService {
     executor_id: string,
     trades: string[]
   ) {
-    const project = await projectService.getProjectById(project_id);
+    const project = await this.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
-    const executor = await userService.getUser({ _id: executor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
     if (!executor) throw Error("No executor with that ID!");
-    const contracts = await contractService.getContract({
+    const contracts = await this.contractService.getContract({
       contractor: project.contractor,
       executor: executor_id,
       status: CONTRACT_STATUS[1],
@@ -211,7 +222,7 @@ export class ProjectService {
     if (unAcceptedTrades.length < 1) {
       project.status = PROJECT_STATUS[2];
     }
-    await notificationService.create(
+    await this.notificationService.create(
       `Executor ${
         executor.first_name
       } has accepted the following positions; ${trades.join(", ")}`,
@@ -219,7 +230,7 @@ export class ProjectService {
       project.contractor,
       project._id.toString()
     );
-    await notificationService.create(
+    await this.notificationService.create(
       `You have accepted the following positions`,
       "PROJECT",
       executor_id,
@@ -234,9 +245,9 @@ export class ProjectService {
     trades: string[]
   ) {
     console.log("executor_id", executor_id);
-    const project = await projectService.getProjectById(project_id);
+    const project = await this.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
-    const executor = await userService.getUser({ _id: executor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
     if (!executor) throw Error("No executor with that ID!");
     console.log("trades", trades);
     for (const trade of trades) {
@@ -263,7 +274,7 @@ export class ProjectService {
       (project) => project !== project_id
     );
     executor.projects = updatedExecutorProjects;
-    await notificationService.create(
+    await this.notificationService.create(
       `Executor ${
         executor.first_name
       } has rejected the following positions; ${trades.join(", ")}`,
@@ -271,13 +282,13 @@ export class ProjectService {
       project.contractor,
       project._id.toString()
     );
-    await notificationService.create(
+    await this.notificationService.create(
       `You have rejected the following positions`,
       "PROJECT",
       executor_id,
       project_id
     );
-    await userService.save(executor);
+    await this.userService.save(executor);
     return await this.saveProject(project);
   }
 
@@ -303,7 +314,7 @@ export class ProjectService {
       addendums?.forEach((addendum) => {
         if (addendum.positions[trade]) {
           addendum?.positions[trade]?.positions?.forEach((position) => {
-            if (status === "BILLED" || status === 'COMPLETED') {
+            if (status === "BILLED" || status === "COMPLETED") {
               this.requiredPositions.forEach((reqPos) => {
                 if (
                   position.external_id === reqPos &&
@@ -367,13 +378,13 @@ export class ProjectService {
       }
       _positions[trade] = postions.positions;
       postions.status = status;
-      await notificationService.create(
+      await this.notificationService.create(
         `You have ${status} the positions under ${trade}`,
         "PROJECT",
         postions.executor,
         project._id.toString()
       );
-      await notificationService.create(
+      await this.notificationService.create(
         `The positions under ${trade} has been ${status}`,
         "PROJECT",
         project.contractor,
@@ -399,7 +410,7 @@ export class ProjectService {
         };
       }
       await this.saveProject(project);
-      return await draftService.create({
+      return await this.draftService.create({
         amount: _amount,
         positions: _positions,
         addendums: { ...draf_addendums },
@@ -415,7 +426,7 @@ export class ProjectService {
         !project.positions[project_trade[i]].billed ||
         project.positions[project_trade[i]].status !== "COMPLETED"
       ) {
-        console.log('completed');
+        console.log("completed");
       }
       if (
         i === project_trade.length - 1 &&
@@ -453,13 +464,13 @@ export class ProjectService {
     trades: string[],
     contractor_id: string
   ) {
-    const executor = await userService.getUser({ _id: executor_id });
-    const contractor = await userService.getUser({ _id: contractor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
+    const contractor = await this.userService.getUser({ _id: contractor_id });
     if (!executor) throw Error("error fetching executor");
     if (!contractor) throw Error("error fetching contractor");
 
     const project = await this.getProjectById(project_id);
-    const contracts = await contractService.getContract({
+    const contracts = await this.contractService.getContract({
       contractor: project.contractor,
       executor: executor_id,
       status: CONTRACT_STATUS[1],
@@ -477,7 +488,7 @@ export class ProjectService {
     }
     const executorProjects = executor.projects ?? [];
     if (executorProjects.find((project) => project === project_id)) {
-      console.log('found')
+      console.log("found");
     } else {
       executorProjects.push(project._id.toString());
     }
@@ -501,8 +512,8 @@ export class ProjectService {
         });
       }
     });
-    console.log('before notification')
-    await notificationService.create(
+    console.log("before notification");
+    await this.notificationService.create(
       "Project has been assigned to you",
       "PROJECT",
       executor._id.toString()
@@ -511,7 +522,7 @@ export class ProjectService {
       ...executor,
       projects: executorProjects,
     });
-    await TodoService.create({
+    await this.todoService.create({
       type: "PROJECT_ASSIGNMENT",
       description: `You have been assigned some positions on project ${project._id}`,
       status: TASK_STATUS[0],
@@ -546,14 +557,14 @@ export class ProjectService {
     }
 
     const message = `Status of project ${project.external_id} has been updated. The project status is now ${PROJECT_STATUS[status]}`;
-    await notificationService.create(
+    await this.notificationService.create(
       message,
       "PROJECT",
       project.contractor,
       project._id.toString()
     );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(
+      await this.notificationService.create(
         message,
         "PROJECT",
         exe,
@@ -571,14 +582,14 @@ export class ProjectService {
     project.dueDate = dueDate;
     project.construction_manager = construction_manager;
     project.sheduleByTrade = sheduleByTrade;
-    await notificationService.create(
+    await this.notificationService.create(
       "Project has been updated",
       "PROJECT",
       project.contractor,
       project_id
     );
     for (const executor of project.executors) {
-      await notificationService.create(
+      await this.notificationService.create(
         "Project has been updated",
         "PROJECT",
         executor,
@@ -595,7 +606,7 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     const extraPositions = project.positions;
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     for (let position of positions) {
       for (let extraPosition of extraPositions[trade.name].positions) {
         if (position._id === extraPosition._id)
@@ -605,14 +616,14 @@ export class ProjectService {
     extraPositions[trade.name].positions.push(...positions);
     project.positions = extraPositions;
     const message = `${positions.length} Extra positions has been added to project ${project.external_id}`;
-    await notificationService.create(
+    await this.notificationService.create(
       message,
       "PROJECT",
       project.contractor,
       project._id.toString()
     );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(
+      await this.notificationService.create(
         message,
         "PROJECT",
         exe,
@@ -628,7 +639,7 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.shortagePositions;
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     for (let shortageOrder of shortageOrders) {
       for (let existingShortageOrder of existingShortageOrders[trade.name]
         .positions) {
@@ -642,14 +653,14 @@ export class ProjectService {
     existingShortageOrders[trade.name].positions.push(...shortageOrders);
     project.shortagePositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project shortages ${project.external_id}`;
-    await notificationService.create(
+    await this.notificationService.create(
       message,
       "PROJECT",
       project.contractor,
       project._id.toString()
     );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(
+      await this.notificationService.create(
         message,
         "PROJECT",
         exe,
@@ -665,9 +676,9 @@ export class ProjectService {
     addendum_id: string,
     action: "ACCEPT" | "REJECT"
   ) {
-    const user = await userService.getUser({ _id: user_id });
+    const user = await this.userService.getUser({ _id: user_id });
     if (!user) throw Error("user not found");
-    const project = await projectService.getProjectById(project_id);
+    const project = await this.getProjectById(project_id);
 
     if (!project) throw Error("Project not found");
 
@@ -714,13 +725,13 @@ export class ProjectService {
       project.extraPositions = filteredProjects;
     }
     console.log(addendum);
-    await notificationService.create(
+    await this.notificationService.create(
       `Addendum has been ${action}ED by ${user.first_name}`,
       "PROJECT",
       addendum.createdBy?._id,
       project._id.toString()
     );
-    await notificationService.create(
+    await this.notificationService.create(
       `You have ${action}ED this project.`,
       "PROJECT",
       user._id.toString(),
@@ -739,8 +750,8 @@ export class ProjectService {
     const project = await this.getProjectById(project_id);
     const existingShortageOrders = project.extraPositions ?? [];
 
-    const creator = await userService.getUser({ _id: creator_id });
-    const acceptor = await userService.getUser({ _id: acceptor_id });
+    const creator = await this.userService.getUser({ _id: creator_id });
+    const acceptor = await this.userService.getUser({ _id: acceptor_id });
     if (!creator) throw Error("No user with that id");
     if (!acceptor) throw Error("No user with that Id, acceptor");
     const trades = await Promise.all(
@@ -777,21 +788,21 @@ export class ProjectService {
     existingShortageOrders.push(extraPosition);
     project.extraPositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project position ${project.external_id}`;
-    await notificationService.create(
+    await this.notificationService.create(
       message,
       "PROJECT",
       project.contractor,
       project._id.toString()
     );
     project.executors.forEach(async (exe) => {
-      await notificationService.create(
+      await this.notificationService.create(
         message,
         "PROJECT",
         exe,
         project._id.toString()
       );
     });
-    await TodoService.create({
+    await this.todoService.create({
       type: "PROJECT_ASSIGNMENT",
       description: `You have been assigned some extra positions on project ${project._id}`,
       status: TASK_STATUS[0],
@@ -814,7 +825,7 @@ export class ProjectService {
     fileURL?: string[];
     comment?: string;
   }) {
-    const project = await projectService.getProjectById(project_id);
+    const project = await this.getProjectById(project_id);
     if (!project) throw Error("No project with that Id");
     const extraOrders = project.extraPositions;
     if (!project.extraPositions) throw Error("No project with that id");
@@ -824,7 +835,7 @@ export class ProjectService {
         extraOrder.comment = comment;
       }
     }
-    await notificationService.create(
+    await this.notificationService.create(
       "File has been added to addendum",
       "PROJECT",
       project.contractor,
@@ -832,7 +843,7 @@ export class ProjectService {
       order_id
     );
     for (const executor of project.executors) {
-      await notificationService.create(
+      await this.notificationService.create(
         "File has been added to addendum",
         "PROJECT",
         executor,
@@ -864,7 +875,7 @@ export class ProjectService {
     trade_id: string
   ) {
     const project = await this.getProjectById(project_id);
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     const existingPosition = project.positions[trade.name].positions.find(
       (pos) => pos.external_id === position.external_id
     );
@@ -884,7 +895,7 @@ export class ProjectService {
   ) {
     console.log(project_id, position, trade_id, extraOrderId);
     const project = await this.getProjectById(project_id);
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     const existingExtraOrder = project.extraPositions.find(
       (extraP) => extraP.id === extraOrderId
     );
@@ -904,14 +915,14 @@ export class ProjectService {
       ...project.extraPositions.filter((extraP) => extraP.id !== extraOrderId),
       existingExtraOrder,
     ];
-    await notificationService.create(
+    await this.notificationService.create(
       `Position with ${existingPosition.external_id} has been updated`,
       "PROJECT",
       existingExtraOrder.acceptedBy._id,
       project_id,
       existingPosition.external_id
     );
-    await notificationService.create(
+    await this.notificationService.create(
       `Position with ${existingPosition.external_id} has been updated`,
       "PROJECT",
       existingExtraOrder.createdBy._id,
@@ -929,7 +940,7 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     if (!project) throw Error("project not found");
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     if (!trade) throw Error("Trade not found!");
     const postion = project.positions[trade.name].positions.find(
       (position) => position.external_id === external_id
@@ -983,7 +994,7 @@ export class ProjectService {
     trade_id: string
   ) {
     const project = await this.getProjectById(project_id);
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     const existingPosition = project.shortagePositions[
       trade.name
     ].positions.find((pos) => pos._id === existingPosition._id);
@@ -1004,7 +1015,7 @@ export class ProjectService {
   ) {
     const project = await this.getProjectById(project_id);
     if (!project) throw Error("Project with that id not found");
-    const executor = await userService.getUser({ _id: executor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
     if (!executor) throw Error("Executor is not found");
     const billItems: ProjectPositions[] = [];
     const addendums: {
@@ -1044,7 +1055,7 @@ export class ProjectService {
         Math.ceil(billItems.price * parseFloat(billItems.crowd))
       )
       .reduce((prev, next) => prev + next);
-    const draft = await draftService.create({
+    const draft = await this.draftService.create({
       addendums,
       amount,
       project: project_id,
@@ -1056,7 +1067,7 @@ export class ProjectService {
   }
 
   async getExecutorProjects(executor_id: string) {
-    const executor = await userService.getUser({ _id: executor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
     const existingProjects = executor.projects ?? [];
     const projects = await Promise.all(
       existingProjects.map((project) => this.getProjectById(project))
@@ -1120,7 +1131,7 @@ export class ProjectService {
     let BilledPostions: ProjectPositions[] = [];
     let user: User;
     if (user_id) {
-      user = await userService.getUser({ _id: user_id });
+      user = await this.userService.getUser({ _id: user_id });
     } else {
       return;
     }
@@ -1129,7 +1140,7 @@ export class ProjectService {
 
     if (user.role === "contractor") {
       projects = await this.getContractorProjects(user._id.toString());
-      console.log("projects", projects)
+      console.log("projects", projects);
     }
 
     if (user?.role === "executor") {
@@ -1180,7 +1191,7 @@ export class ProjectService {
         }
       }
     }
-    console.log(NotAccepted)
+    console.log(NotAccepted);
     return [
       { title: "Total Project Positions", positions },
       { title: `Not accepted`, positions: NotAccepted },
@@ -1255,6 +1266,13 @@ export class ProjectService {
   ];
 }
 
-const projectService = new ProjectService();
-
-export default projectService;
+export default new ProjectService(
+  contractService,
+  tradeService,
+  draftService,
+  todoService,
+  userService,
+  positionService,
+  notificationService,
+  pdfTextParser
+);

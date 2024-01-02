@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { InvoiceService } from "../../services/invoice";
+import invoiceService from "../../services/invoice";
 import userService from "../../services/user";
 import draftService from "../../services/draft";
 import projectService from "../../services/project";
@@ -7,7 +7,7 @@ import projectService from "../../services/project";
 export const createInvoice = async (req: Request, res: Response) => {
   const { payload } = req.body;
   try {
-    const invoice = await new InvoiceService().create(payload);
+    const invoice = await invoiceService.create(payload);
     const owner = await userService.getUser({ _id: invoice.owner });
     const receiver = await userService.getUser({ _id: invoice.receiver });
     const draft = await draftService.getDraft(invoice.draft);
@@ -27,7 +27,7 @@ export const createInvoice = async (req: Request, res: Response) => {
 export const getOwnerInvoice = async (req: Request, res: Response) => {
   const { owner_id, status } = req.params;
   try {
-    const invoices = await new InvoiceService().getOwnerInvoices(
+    const invoices = await invoiceService.getOwnerInvoices(
       owner_id,
       status
     );
@@ -57,7 +57,7 @@ export const getOwnerInvoice = async (req: Request, res: Response) => {
 export const getRecieverInvoice = async (req: Request, res: Response) => {
   const { user_id, status } = req.params;
   try {
-    const invoices = await new InvoiceService().getRecieverInvoices(
+    const invoices = await invoiceService.getRecieverInvoices(
       user_id,
       status
     );
@@ -85,7 +85,7 @@ export const getRecieverInvoice = async (req: Request, res: Response) => {
 export const getInvoiceById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const invoice = await new InvoiceService().getInvoiceById(id);
+    const invoice = await invoiceService.getInvoiceById(id);
     const owner = await userService.getUser({ _id: invoice.owner });
     const receiver = await userService.getUser({ _id: invoice.receiver });
     const draft = await draftService.getDraft(invoice.draft);
@@ -105,7 +105,7 @@ export const getInvoiceById = async (req: Request, res: Response) => {
 export const getInvoiceByExternalId = async (req: Request, res: Response) => {
   const { external_id } = req.params;
   try {
-    const invoice = await new InvoiceService().getInvoiceByExternalId(
+    const invoice = await invoiceService.getInvoiceByExternalId(
       external_id
     );
     const owner = await userService.getUser({ _id: invoice.owner });

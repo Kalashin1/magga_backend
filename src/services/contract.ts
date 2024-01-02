@@ -7,10 +7,10 @@ import { TradeService } from "./trades";
 import { ObjectId } from "mongodb";
 import { NotificationService } from "./notifications";
 
-const userService = new UserService();
+const notificationService = new NotificationService();
+const userService = new UserService(notificationService);
 const positionService = new PositionService();
 const tradeService = new TradeService();
-const notificationService = new NotificationService();
 
 export type CreateContractParam = {
   executor_id: string;
@@ -26,8 +26,16 @@ export type GetContractParams = {
 };
 
 export class ContractService implements ContractFunctions {
+
+  constructor(
+    private notificationService: NotificationService,
+    private userService: UserService,
+    private positionService: PositionService,
+    private tradeService: TradeService 
+  ) {}
+
   async send(executorId: string, contract_id: string) {
-    const executor = await userService.getUser({ _id: executorId });
+    const executor = await this.userService.getUser({ _id: executorId });
     const contract = await this.getContractById(contract_id);
     contract.executor = executor._id.toString();
     await this.saveContract(contract);
@@ -40,13 +48,13 @@ export class ContractService implements ContractFunctions {
     positions,
     trade_id,
   }: CreateContractParam) {
-    const executor = await userService.getUser({ _id: executor_id });
-    const contractor = await userService.getUser({ _id: contractor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
+    const contractor = await this.userService.getUser({ _id: contractor_id });
 
-    const trade = await tradeService.retrieveTrade(trade_id);
+    const trade = await this.tradeService.retrieveTrade(trade_id);
     const contract = AppDataSource.mongoManager.create(Contract, {});
     contract.executor = executor_id;
-    const existingPositions = await positionService.getPositionsByContractor(contractor_id, trade_id);
+    const existingPositions = await this.positionService.getPositionsByContractor(contractor_id, trade_id);
     if (existingPositions[0]) {
       console.log('existing position')
       contract.positions = positions
@@ -97,9 +105,9 @@ export class ContractService implements ContractFunctions {
     });
     const contracts = await Promise.all(
       _contracts.map(async (contract) => {
-        const trade = await tradeService.retrieveTrade(contract.trade);
-        const executor = await userService.getUser({ _id: contract.executor });
-        const contractor = await userService.getUser({
+        const trade = await this.tradeService.retrieveTrade(contract.trade);
+        const executor = await this.userService.getUser({ _id: contract.executor });
+        const contractor = await this.userService.getUser({
           _id: contract.executor,
         });
         return { ...contract, trade, executor, contractor };
@@ -115,7 +123,7 @@ export class ContractService implements ContractFunctions {
     executor_id: string;
     contract_id: string;
   }) {
-    const executor = await userService.getUser({
+    const executor = await this.userService.getUser({
       _id: new ObjectId(executor_id),
     });
     if (!executor) throw Error("executor not found");
@@ -124,7 +132,7 @@ export class ContractService implements ContractFunctions {
     contract.executor = executor._id.toString();
     contract.status = CONTRACT_STATUS[1];
     contract.acceptedAt = new Date().getTime()
-    const contractor = await userService.getUser({
+    const contractor = await this.userService.getUser({
       _id: contract.contractor,
     });
     await notificationService.create(
@@ -143,10 +151,10 @@ export class ContractService implements ContractFunctions {
 
   async terminateContract(contract_id: string) {
     const contract = await this.getContractById(contract_id);
-    const contractor = await userService.getUser({
+    const contractor = await this.userService.getUser({
       _id: contract.contractor,
     });
-    const executor = await userService.getUser({
+    const executor = await this.userService.getUser({
       _id: contract.contractor,
     });
     await notificationService.create(
@@ -166,10 +174,10 @@ export class ContractService implements ContractFunctions {
   }
 
   async reject(executor_id: string, contract_id: string) {
-    const executor = await userService.getUser({ _id: executor_id });
+    const executor = await this.userService.getUser({ _id: executor_id });
     if (!executor) throw Error("executor not found");
     const contract = await this.getContractById(contract_id);
-    const contractor = await userService.getUser({
+    const contractor = await this.userService.getUser({
       _id: contract.contractor,
     });
     await notificationService.create(
@@ -193,5 +201,10 @@ export class ContractService implements ContractFunctions {
   }
 }
 
-const contractService = new ContractService();
+const contractService = new ContractService(
+  notificationService,
+  userService,
+  positionService,
+  tradeService
+);
 export default contractService;
