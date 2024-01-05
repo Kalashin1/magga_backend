@@ -95,11 +95,11 @@ export class UserService {
       username: user.username,
     });
     await appSource.save(User, user);
-    await this.notificationService.create(
-      'Recent login to your dashboard',
-      'Auth',
-      user._id.toString(),
-    )
+    // await this.notificationService.create(
+    //   'Recent login to your dashboard',
+    //   'Auth',
+    //   user._id.toString(),
+    // )
     return user;
   }
 
@@ -166,11 +166,11 @@ export class UserService {
       user.resetPasswordToken = token;
       await AppDataSource.mongoManager.save(User, user);
     }
-    await this.notificationService.create(
-      'You recently requested a password reset token',
-      'Auth',
-      user._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'You recently requested a password reset token',
+    //   'Auth',
+    //   user._id.toString()
+    // )
     return token;
   }
 
@@ -246,11 +246,11 @@ export class UserService {
       role: user.role,
     });
     await AppDataSource.mongoManager.save(user);
-    await this.notificationService.create(
-      'Your profile has been updated successfully!',
-      'Profile-Update',
-      user._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'Your profile has been updated successfully!',
+    //   'Profile-Update',
+    //   user._id.toString()
+    // )
     return user;
   }
 
@@ -299,7 +299,7 @@ export class UserService {
     document.status = status;
     const filteredDocuments = documents.filter((doc) => doc.name !== name)
     user.documents = [document, ...filteredDocuments]
-    const updatedUser = await AppDataSource.mongoManager.save(User, user);
+    await AppDataSource.mongoManager.save(User, user);
     await this.notificationService.create(
       'Your document has been updated successfully!',
       'Profile-Update',
@@ -329,11 +329,6 @@ export class UserService {
       ...existingStandIns,
     ];
     await AppDataSource.mongoManager.save(User, owner);
-    await this.notificationService.create(
-      'Stand in has been assigned successfully',
-      'Stand-In',
-      owner._id.toString()
-    )
     await this.notificationService.create(
       'You have been assigned as a stand-in',
       'Stand-In',
@@ -488,11 +483,11 @@ export class UserService {
     employee.creator = employeeCreator;
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
-    await this.notificationService.create(
-      'You have created a new employee account successfully',
-      'Employee',
-      employee_id
-    )
+    // await this.notificationService.create(
+    //   'You have created a new employee account successfully',
+    //   'Employee',
+    //   employee_id
+    // )
     return { employee, owner };
   }
 
@@ -511,11 +506,11 @@ export class UserService {
     owner.employees = filteredEmployees;
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
-    await this.notificationService.create(
-      `You have successfully deleted employee ${employee.first_name} ${employee.last_name}`,
-      'Employee',
-      employee_id
-    )
+    // await this.notificationService.create(
+    //   `You have successfully deleted employee ${employee.first_name} ${employee.last_name}`,
+    //   'Employee',
+    //   employee_id
+    // )
     return {employee, owner};
   }
 
@@ -549,11 +544,11 @@ export class UserService {
     executor.creator = executorCreator;
     await AppDataSource.mongoManager.save(User, executor);
     await AppDataSource.mongoManager.save(User, owner);
-    await this.notificationService.create(
-      'You have created a new executor account',
-      'Executor',
-      owner._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'You have created a new executor account',
+    //   'Executor',
+    //   owner._id.toString()
+    // )
     return { executor, owner };
   }
 
@@ -601,11 +596,11 @@ export class UserService {
     }
     await AppDataSource.mongoManager.save(User, subAccount);
     await AppDataSource.mongoManager.save(User, owner);
-    await this.notificationService.create(
-      'You have successfully completed your profile',
-      'Profile-Update',
-      subAccount._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'You have successfully completed your profile',
+    //   'Profile-Update',
+    //   subAccount._id.toString()
+    // )
     return {subAccount, owner}
   }
 

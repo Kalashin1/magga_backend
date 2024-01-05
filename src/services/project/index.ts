@@ -15,6 +15,7 @@ import {
   ExtraProjectPositionSuper,
   TradeSchedule,
   TASK_STATUS,
+  TASK_TYPE,
 } from "../../types";
 import userService, { UserService } from "../user";
 import positionService, { PositionService } from "../position";
@@ -46,7 +47,6 @@ export class ProjectService {
     const { text } = await translate(parsedFile.text, {
       to: "en",
     });
-    console.log("text", text);
     const client = this.pdfTextParser.getClientLines(text).join(".\n");
     const billingDetails = this.pdfTextParser
       .getBillingDetails(text)
@@ -151,6 +151,7 @@ export class ProjectService {
     const existingProject = await this.getProjectByExternalId(
       params.external_id
     );
+    const allProjects = await AppDataSource.mongoManager.find(Project, {})
     if (existingProject) {
       throw Error(
         "Project With that Id already exists, contact your contractor"
@@ -161,13 +162,19 @@ export class ProjectService {
     });
     if (!contractor || contractor.role !== "contractor")
       throw Error("No contractor with that Id");
-    const newProject = await AppDataSource.mongoManager.create(Project, params);
+    const newProject = await AppDataSource.mongoManager.create(Project, {
+      ...params,
+      projectNumber: allProjects.length + 1
+    });
     const project = await this.saveProject(newProject);
-    await this.notificationService.create(
-      "New contract created successfully " + project._id.toString(),
-      "PROJECT",
-      contractor._id.toString(),
-      project._id.toString()
+    await this.todoService.create(
+      {
+        user_id: contractor._id.toString(),
+        type: TASK_TYPE[0],
+        description: 'You have created a new Project, You need to assign it to an executor.',
+        object_id: project._id.toString(),
+        status: TASK_STATUS[0]
+      }
     );
     const projects = contractor.projects ?? [];
     projects.push(project._id.toString());
@@ -205,7 +212,6 @@ export class ProjectService {
             const foundPosition = contract.positions.find(
               (_position) => _position.external_id === position.external_id
             );
-            console.log("found position", foundPosition);
             position.price = foundPosition.price;
             position.units = foundPosition.units;
             position.status = "ACCEPTED";
@@ -225,16 +231,10 @@ export class ProjectService {
     await this.notificationService.create(
       `Executor ${
         executor.first_name
-      } has accepted the following positions; ${trades.join(", ")}`,
+      } has accepted the following positions; ${trades.join(", ")}.`,
       "PROJECT",
       project.contractor,
       project._id.toString()
-    );
-    await this.notificationService.create(
-      `You have accepted the following positions`,
-      "PROJECT",
-      executor_id,
-      project_id
     );
     return await this.saveProject(project);
   }
@@ -244,18 +244,15 @@ export class ProjectService {
     executor_id: string,
     trades: string[]
   ) {
-    console.log("executor_id", executor_id);
     const project = await this.getProjectById(project_id);
     if (!project) throw Error("No project with that ID!");
     const executor = await this.userService.getUser({ _id: executor_id });
     if (!executor) throw Error("No executor with that ID!");
-    console.log("trades", trades);
     for (const trade of trades) {
       if (
         project.positions[trade] &&
         project.positions[trade].executor === executor_id
       ) {
-        console.log("assigned");
         project.positions[trade].accepted = false;
         project.executor = null;
         project.positions[trade].executor = null;
@@ -282,12 +279,6 @@ export class ProjectService {
       project.contractor,
       project._id.toString()
     );
-    await this.notificationService.create(
-      `You have rejected the following positions`,
-      "PROJECT",
-      executor_id,
-      project_id
-    );
     await this.userService.save(executor);
     return await this.saveProject(project);
   }
@@ -310,7 +301,6 @@ export class ProjectService {
       const postions = project.positions[trade];
       // get addendudms
       const addendums = project.extraPositions;
-      console.log("addendums", addendums);
       addendums?.forEach((addendum) => {
         if (addendum.positions[trade]) {
           addendum?.positions[trade]?.positions?.forEach((position) => {
@@ -327,7 +317,6 @@ export class ProjectService {
               });
               position.billed = true;
             }
-            console.log("position", position);
             position.status = status;
             if (
               status == "BILLED" &&
@@ -345,7 +334,6 @@ export class ProjectService {
             }
           });
           if (status === "BILLED") {
-            console.log("draf_addendums", draf_addendums);
             draf_addendums[addendum.id] = addendum.positions[trade].positions;
           }
           addendum.positions[trade].status = status;
@@ -378,12 +366,7 @@ export class ProjectService {
       }
       _positions[trade] = postions.positions;
       postions.status = status;
-      await this.notificationService.create(
-        `You have ${status} the positions under ${trade}`,
-        "PROJECT",
-        postions.executor,
-        project._id.toString()
-      );
+     
       await this.notificationService.create(
         `The positions under ${trade} has been ${status}`,
         "PROJECT",
@@ -426,7 +409,7 @@ export class ProjectService {
         !project.positions[project_trade[i]].billed ||
         project.positions[project_trade[i]].status !== "COMPLETED"
       ) {
-        console.log("completed");
+        continue;
       }
       if (
         i === project_trade.length - 1 &&
@@ -482,13 +465,13 @@ export class ProjectService {
     }
     const existingExecutors = project.executors ?? [];
     if (existingExecutors.find((exe) => exe === executor_id)) {
-      console.log("already existing");
+      
     } else {
       existingExecutors.push(executor_id);
     }
     const executorProjects = executor.projects ?? [];
     if (executorProjects.find((project) => project === project_id)) {
-      console.log("found");
+      
     } else {
       executorProjects.push(project._id.toString());
     }
@@ -512,23 +495,16 @@ export class ProjectService {
         });
       }
     });
-    console.log("before notification");
-    await this.notificationService.create(
-      "Project has been assigned to you",
-      "PROJECT",
-      executor._id.toString()
-    );
     await AppDataSource.mongoManager.save(User, {
       ...executor,
       projects: executorProjects,
     });
     await this.todoService.create({
-      type: "PROJECT_ASSIGNMENT",
+      type: TASK_TYPE[0],
       description: `You have been assigned some positions on project ${project._id}`,
       status: TASK_STATUS[0],
-      user_id: project.contractor,
+      user_id: executor_id,
       object_id: project._id.toString(),
-      assignedTo: executor_id,
     });
     return await this.saveProject({
       ...project,
@@ -557,19 +533,14 @@ export class ProjectService {
     }
 
     const message = `Status of project ${project.external_id} has been updated. The project status is now ${PROJECT_STATUS[status]}`;
-    await this.notificationService.create(
-      message,
-      "PROJECT",
-      project.contractor,
-      project._id.toString()
-    );
     project.executors.forEach(async (exe) => {
-      await this.notificationService.create(
-        message,
-        "PROJECT",
-        exe,
-        project._id.toString()
-      );
+      await this.todoService.create({
+        user_id: exe,
+        object_id: project_id,
+        type: TASK_TYPE[0],
+        status: TASK_STATUS[0],
+        description: message
+      });
     });
     return await this.saveProject(project);
   }
@@ -616,12 +587,7 @@ export class ProjectService {
     extraPositions[trade.name].positions.push(...positions);
     project.positions = extraPositions;
     const message = `${positions.length} Extra positions has been added to project ${project.external_id}`;
-    await this.notificationService.create(
-      message,
-      "PROJECT",
-      project.contractor,
-      project._id.toString()
-    );
+    
     project.executors.forEach(async (exe) => {
       await this.notificationService.create(
         message,
@@ -653,12 +619,7 @@ export class ProjectService {
     existingShortageOrders[trade.name].positions.push(...shortageOrders);
     project.shortagePositions = existingShortageOrders;
     const message = `${shortageOrders.length} Extra positions has been added to project shortages ${project.external_id}`;
-    await this.notificationService.create(
-      message,
-      "PROJECT",
-      project.contractor,
-      project._id.toString()
-    );
+    
     project.executors.forEach(async (exe) => {
       await this.notificationService.create(
         message,
@@ -685,8 +646,6 @@ export class ProjectService {
     const addendum = project.extraPositions.find(
       (position) => position.id === addendum_id
     );
-
-    console.log("addendum", addendum);
 
     if (!addendum) throw Error("Addendum not found");
 
@@ -724,7 +683,6 @@ export class ProjectService {
       );
       project.extraPositions = filteredProjects;
     }
-    console.log(addendum);
     await this.notificationService.create(
       `Addendum has been ${action}ED by ${user.first_name}`,
       "PROJECT",
@@ -883,7 +841,6 @@ export class ProjectService {
       (pos) => pos.external_id !== existingPosition.external_id
     );
     project.positions[trade.name].positions = [...filteredPositions, position];
-    console.log("position", position);
     return await this.saveProject(project);
   }
 
@@ -893,7 +850,6 @@ export class ProjectService {
     trade_id: string,
     extraOrderId: string
   ) {
-    console.log(project_id, position, trade_id, extraOrderId);
     const project = await this.getProjectById(project_id);
     const trade = await this.tradeService.retrieveTrade(trade_id);
     const existingExtraOrder = project.extraPositions.find(
@@ -915,20 +871,7 @@ export class ProjectService {
       ...project.extraPositions.filter((extraP) => extraP.id !== extraOrderId),
       existingExtraOrder,
     ];
-    await this.notificationService.create(
-      `Position with ${existingPosition.external_id} has been updated`,
-      "PROJECT",
-      existingExtraOrder.acceptedBy._id,
-      project_id,
-      existingPosition.external_id
-    );
-    await this.notificationService.create(
-      `Position with ${existingPosition.external_id} has been updated`,
-      "PROJECT",
-      existingExtraOrder.createdBy._id,
-      project_id,
-      existingPosition.external_id
-    );
+    
     return await this.saveProject(project);
   }
 
@@ -963,7 +906,6 @@ export class ProjectService {
     if (!project) throw Error("Project with that ID not found");
     for (const addendum of project.extraPositions) {
       if (addendum.id === addendum_id) {
-        console.log(addendum.positions["Electricity"].positions);
         for (const key in addendum.positions) {
           for (const position of addendum.positions[key].positions) {
             for (const position_id of positions) {
@@ -1140,7 +1082,6 @@ export class ProjectService {
 
     if (user.role === "contractor") {
       projects = await this.getContractorProjects(user._id.toString());
-      console.log("projects", projects);
     }
 
     if (user?.role === "executor") {
@@ -1161,7 +1102,7 @@ export class ProjectService {
             (user.role === "contractor" &&
               project.positions[trade].accepted === false)
           )
-            if (NotAccepted.find((_project) => _project._id === project._id))
+            if (NotAccepted.find((_position) => _position.external_id === position.external_id))
               return;
             else NotAccepted.push(position);
         }
@@ -1191,7 +1132,6 @@ export class ProjectService {
         }
       }
     }
-    console.log(NotAccepted);
     return [
       { title: "Total Project Positions", positions },
       { title: `Not accepted`, positions: NotAccepted },

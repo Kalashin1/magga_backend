@@ -297,6 +297,7 @@ type TimeLine = {
 export interface IProject {
   _id: ObjectId;
   contractor: string;
+  projectNumber: number;
   executors: string[];
   status: (typeof PROJECT_STATUS)[number];
   positions: ProjectPositionSuper;
@@ -393,10 +394,17 @@ export const TASK_STATUS = [
   "OVER-DUE",
 ] as const;
 
+export const TASK_TYPE = [
+  'PROJECT',
+  'DRAFT',
+  'ADDENDUM',
+  'INVOICE'
+]
+
 export interface Todo {
   _id: ObjectId;
   user_id: string;
-  type: string;
+  type: (typeof TASK_TYPE)[number];
   description?: string;
   status: (typeof TASK_STATUS)[number];
   object_id: string;

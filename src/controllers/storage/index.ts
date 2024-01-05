@@ -52,6 +52,7 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       );
       return res.json({ ...response, user });
     } catch (error) {
+      console.log(error)
       return res.status(400).json(error);
     }
   }
@@ -302,7 +303,7 @@ export const uploadProject = async (req: Request, res: Response) => {
       extension,
       uploadParams: { Body },
     } = storageService.boostrapFile(req.file);
-    await storageService.uploadProject(id, Body, "projects", extension);
+    // await storageService.uploadProject(id, Body, "projects", extension);
     const response = await projectService.parsePDF(Body, id);
     return res.json(response);
   } catch (error) {

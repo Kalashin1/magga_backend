@@ -7,7 +7,6 @@ import {
   CreateDateColumn,
 } from "typeorm";
 import {
-  Address,
   Building,
   IProject,
   TradeSchedule,
@@ -96,4 +95,7 @@ export class Project implements IProject {
 
   @Column()
   canceled_at: number;
+
+  @Column()
+  projectNumber: number
 }

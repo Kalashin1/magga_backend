@@ -319,6 +319,7 @@ export const billMultipleAddendums = async (req: Request, res: Response) => {
 export const getUserProjectStats = async (req: Request, res: Response) => {
   const {user_id} = req.params;
   try {
+    console.log(user_id)
     const paylaod = await projectService.getUserProjectStats(user_id)
     return res.json(paylaod)
   } catch (error) {
