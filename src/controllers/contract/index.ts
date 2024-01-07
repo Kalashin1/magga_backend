@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import { ContractService } from "../../services/contract";
+import contractService from "../../services/contract";
 import tradeService from "../../services/trades";
 import userService from "../../services/user";
 
-const contractService = new ContractService();
 
 export const createContract = async (req: Request, res: Response) => {
   const { executor_id, contractor_id, positions, trade_id } = req.body;

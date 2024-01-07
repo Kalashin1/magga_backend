@@ -1,12 +1,11 @@
 import { Storage } from "@google-cloud/storage";
 import path = require("path");
 import * as crypto from "crypto";
-import { UserDocuments, userDocumentsArray } from "../types";
+import { userDocumentsArray } from "../types";
 import * as Key from "./key.json";
 import { AppDataSource } from "../data-source";
 import { User, UserRoleType } from "../entity/User";
 import { ObjectId } from "mongodb";
-import projectService from "./project";
 require("dotenv").config();
 
 export class StorageService {

@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
-import { ProjectService } from "../../services/project";
-
-const projectService = new ProjectService();
+import projectService from "../../services/project";
 
 export const createProject = async (req: Request, res: Response) => {
   const projectParam = req.body;
@@ -321,6 +319,7 @@ export const billMultipleAddendums = async (req: Request, res: Response) => {
 export const getUserProjectStats = async (req: Request, res: Response) => {
   const {user_id} = req.params;
   try {
+    console.log(user_id)
     const paylaod = await projectService.getUserProjectStats(user_id)
     return res.json(paylaod)
   } catch (error) {

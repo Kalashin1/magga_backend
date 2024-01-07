@@ -18,9 +18,11 @@ import { Trades } from "../entity/trades";
 import { NotificationService } from "./notifications";
 require("dotenv").config();
 
-const notificationService = new NotificationService()
-
 export class UserService {
+
+  constructor(
+    private notificationService: NotificationService
+  ) {}
 
   async createUser({
     email,
@@ -93,11 +95,11 @@ export class UserService {
       username: user.username,
     });
     await appSource.save(User, user);
-    await notificationService.create(
-      'Recent login to your dashboard',
-      'Auth',
-      user._id.toString(),
-    )
+    // await this.notificationService.create(
+    //   'Recent login to your dashboard',
+    //   'Auth',
+    //   user._id.toString(),
+    // )
     return user;
   }
 
@@ -121,7 +123,7 @@ export class UserService {
       role,
     });
     await AppDataSource.mongoManager.save(User, subUser);
-    await notificationService.create(
+    await this.notificationService.create(
       'You have successfully created a new sub user account',
       'Sub Account Creation',
       user._id.toString()
@@ -164,11 +166,11 @@ export class UserService {
       user.resetPasswordToken = token;
       await AppDataSource.mongoManager.save(User, user);
     }
-    await notificationService.create(
-      'You recently requested a password reset token',
-      'Auth',
-      user._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'You recently requested a password reset token',
+    //   'Auth',
+    //   user._id.toString()
+    // )
     return token;
   }
 
@@ -190,7 +192,7 @@ export class UserService {
     if (!user) throw new AuthError("update-password", "no user with that code");
     user.password = await this.hashPassword(password);
     await Users.save(user);
-    await notificationService.create(
+    await this.notificationService.create(
       'Your password has been updated successfully',
       'Auth',
       user._id.toString()
@@ -244,11 +246,11 @@ export class UserService {
       role: user.role,
     });
     await AppDataSource.mongoManager.save(user);
-    await notificationService.create(
-      'Your profile has been updated successfully!',
-      'Profile-Update',
-      user._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'Your profile has been updated successfully!',
+    //   'Profile-Update',
+    //   user._id.toString()
+    // )
     return user;
   }
 
@@ -297,8 +299,8 @@ export class UserService {
     document.status = status;
     const filteredDocuments = documents.filter((doc) => doc.name !== name)
     user.documents = [document, ...filteredDocuments]
-    const updatedUser = await AppDataSource.mongoManager.save(User, user);
-    await notificationService.create(
+    await AppDataSource.mongoManager.save(User, user);
+    await this.notificationService.create(
       'Your document has been updated successfully!',
       'Profile-Update',
       user._id.toString()
@@ -327,12 +329,7 @@ export class UserService {
       ...existingStandIns,
     ];
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
-      'Stand in has been assigned successfully',
-      'Stand-In',
-      owner._id.toString()
-    )
-    await notificationService.create(
+    await this.notificationService.create(
       'You have been assigned as a stand-in',
       'Stand-In',
       _id
@@ -355,12 +352,12 @@ export class UserService {
     );
     owner.standIn = updatedStandIns;
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
+    await this.notificationService.create(
       'Stand in has been deleted successfully',
       'Stand-In',
       owner._id.toString()
     )
-    await notificationService.create(
+    await this.notificationService.create(
       'You have been unassigned as a stand-in',
       'Stand-In',
       employee_id
@@ -387,7 +384,7 @@ export class UserService {
     updatedBankDetails.push(foundBankDetails);
     owner.bankDetails = updatedBankDetails;
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
+    await this.notificationService.create(
       'Bank Details updated successfully',
       'Profile-Update',
       owner._id.toString()
@@ -412,7 +409,7 @@ export class UserService {
     owner.bankDetails = updateBankDetails;
     console.log(updateBankDetails);
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
+    await this.notificationService.create(
       'Bank details deleted successfully!',
       'Profile-Update',
       owner_id,
@@ -434,7 +431,7 @@ export class UserService {
     }
     owner.trades = [trade, ...existingTrades];
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
+    await this.notificationService.create(
       'Trade assinged successfully!',
       'Trade',
       owner._id.toString()
@@ -448,7 +445,7 @@ export class UserService {
     const filteredTrade = existingTrades.filter((exT) => exT._id.toString() !== tradeId);
     owner.trades = filteredTrade;
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
+    await this.notificationService.create(
       'Trade has been deleted successfully',
       'Trade',
       owner_id
@@ -486,11 +483,11 @@ export class UserService {
     employee.creator = employeeCreator;
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
-      'You have created a new employee account successfully',
-      'Employee',
-      employee_id
-    )
+    // await this.notificationService.create(
+    //   'You have created a new employee account successfully',
+    //   'Employee',
+    //   employee_id
+    // )
     return { employee, owner };
   }
 
@@ -509,11 +506,11 @@ export class UserService {
     owner.employees = filteredEmployees;
     await AppDataSource.mongoManager.save(User, employee);
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
-      `You have successfully deleted employee ${employee.first_name} ${employee.last_name}`,
-      'Employee',
-      employee_id
-    )
+    // await this.notificationService.create(
+    //   `You have successfully deleted employee ${employee.first_name} ${employee.last_name}`,
+    //   'Employee',
+    //   employee_id
+    // )
     return {employee, owner};
   }
 
@@ -547,11 +544,11 @@ export class UserService {
     executor.creator = executorCreator;
     await AppDataSource.mongoManager.save(User, executor);
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
-      'You have created a new executor account',
-      'Executor',
-      owner._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'You have created a new executor account',
+    //   'Executor',
+    //   owner._id.toString()
+    // )
     return { executor, owner };
   }
 
@@ -571,7 +568,7 @@ export class UserService {
     await AppDataSource.mongoManager.save(User, executor);
     await AppDataSource.mongoManager.save(User, owner);
     await AppDataSource.mongoManager.softDelete(User, executor)
-    await notificationService.create(
+    await this.notificationService.create(
       `You have succcesfully deleted executor ${executor._id} account`,
       'Executor',
       owner._id.toString()
@@ -599,11 +596,11 @@ export class UserService {
     }
     await AppDataSource.mongoManager.save(User, subAccount);
     await AppDataSource.mongoManager.save(User, owner);
-    await notificationService.create(
-      'You have successfully completed your profile',
-      'Profile-Update',
-      subAccount._id.toString()
-    )
+    // await this.notificationService.create(
+    //   'You have successfully completed your profile',
+    //   'Profile-Update',
+    //   subAccount._id.toString()
+    // )
     return {subAccount, owner}
   }
 
@@ -648,6 +645,8 @@ export class UserService {
   }
 }
 
-const userService = new UserService();
+
+const notificationService = new NotificationService()
+const userService = new UserService(notificationService);
 
 export default userService;

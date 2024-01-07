@@ -1,13 +1,12 @@
 import { ObjectId } from "mongodb";
 import { AppDataSource } from "../data-source";
 import { TradeColorEnum, Trades } from "../entity/trades";
-import { User } from "../entity/User";
 import { NotificationService } from "./notifications";
-import { Position } from "../types";
 import positionService, { CreatePositionParams } from "./position";
 
 
 export class TradeService {
+
   async createNewTradeService(
     name: string,
     color: TradeColorEnum,
@@ -68,6 +67,4 @@ export class TradeService {
   }
 }
 
-const tradeService = new TradeService();
-
-export default tradeService;
+export default new TradeService();

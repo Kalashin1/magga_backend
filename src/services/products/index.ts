@@ -1,18 +1,23 @@
 import { Product } from "../../entity/product";
 import { AppDataSource } from "../../data-source";
 import { ObjectId } from "mongodb";
-import userService from "../user";
-import notificationService from "../notifications";
+import userService, { UserService } from "../user";
+import notificationService, { NotificationService } from "../notifications";
 import XLSX from 'xlsx';
 class ProductService {
+  constructor(
+    private userService: UserService,
+    private notificationService: NotificationService
+  ){}
+
   async create(param: Product) {
-    const shop = await userService.getUser({ _id: param.shop });
+    const shop = await this.userService.getUser({ _id: param.shop });
     if (!shop) throw Error("No shop with that ID!");
 
     const product = await this.save(
       AppDataSource.mongoManager.create(Product, param)
     );
-    await notificationService.create(
+    await this.notificationService.create(
       "New Product Added",
       "PRODUCT",
       shop._id.toString(),
@@ -67,7 +72,7 @@ class ProductService {
     const workbook = XLSX.read(file);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(sheet) as Partial<Product[]>;
-    const shop = await userService.getUser({ _id: shop_id })
+    const shop = await this.userService.getUser({ _id: shop_id })
     data.forEach((product) => {
       product.shop = shop_id
     });
@@ -76,4 +81,7 @@ class ProductService {
   }
 }
 
-export default new ProductService();
+export default new ProductService(
+  userService,
+  notificationService
+);

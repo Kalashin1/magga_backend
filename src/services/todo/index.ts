@@ -4,7 +4,7 @@ import userService from "../user";
 import notificationService from "../notifications";
 import { ObjectId } from "mongodb";
 
-class TodoService {
+export class TodoService {
   async create(todo: Partial<Todo>) {
     const user = await userService.getUser({ _id: todo.user_id });
     if (!user) throw Error("user not found!");
@@ -108,6 +108,7 @@ class TodoService {
   save(todo: Todo) {
     return AppDataSource.mongoManager.save(todo);
   }
+  
 }
 
 export default new TodoService();

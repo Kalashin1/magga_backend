@@ -26,7 +26,7 @@ export const getTodoById = async (req: Request, res: Response) => {
 export const getUserTodos = async (req: Request, res: Response) => {
   const { user_id, status } = req.params;
   try {
-    if (Number(status) === -1
+    if (Number(status) !== -1
     ) {
       const todo = await TodoService.getUserTodosByStatus(user_id, status);
       return res.json(todo);

@@ -1,11 +1,8 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
-import { StorageService } from "../services/storage";
-import { UserService } from "../services/user";
+import storageService  from "../services/storage";
+import userService  from "../services/user";
 import { Request, Response } from "express";
-
-const userService = new UserService();
-const storageService = new StorageService();
 
 export const assignStandIn = async (req: Request, res: Response) => {
   const {owner_id} = req.params;
