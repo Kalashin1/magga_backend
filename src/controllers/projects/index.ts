@@ -53,10 +53,33 @@ export const getExecutorProjects = async (req: Request, res: Response) => {
   }
 };
 
+export const acceptProject = async (req: Request, res: Response) => {
+  const {project_id, executor_id, trades} = req.body;
+  try {
+    const payload = await projectService.acceptProject(project_id, executor_id, trades)
+    return res.json(payload);
+  }
+  catch(error) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+export const rejectProject = async (req: Request, res: Response) => {
+  const {project_id, executor_id, trades} = req.body;
+  try {
+    const payload = await projectService.rejectProject(project_id, executor_id, trades)
+    return res.json(payload);
+  }
+  catch(error) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
 export const getContractProjects = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const projects = await projectService.getContractorProjects(id);
+    console.log(projects)
     return res.json(projects);
   } catch (error) {
     return res.status(400).json({ message: error.message });

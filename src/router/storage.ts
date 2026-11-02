@@ -8,7 +8,8 @@ import {
   getFiles,
   getEmployeesFolder,
   getExecutorsFolder,
-  uploadProject
+  uploadProject,
+  uploadProjectPositionFile
 } from "../controllers/storage";
 import { BUCKET_ROUTES } from "./routes";
 import { getTestingForm } from "../controllers/storage/getTestingForm";
@@ -38,5 +39,7 @@ router.get(BUCKET_ROUTES.EMPLOYEES_FOLDER, getAllEmployeesFolder);
 router.patch(BUCKET_ROUTES.GET_FILE, getFiles);
 
 router.post(BUCKET_ROUTES.UPLOAD_PROJECT, upload.single('project'), uploadProject);
+
+router.post(BUCKET_ROUTES.UPLOAD_POSITION_DOCUMENT, upload.single('position-document'), uploadProjectPositionFile)
 
 export default router;

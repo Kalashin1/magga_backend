@@ -253,6 +253,7 @@ export type ProjectPositionSuper = {
     positions: ProjectPositions[];
     billed: false;
     executor: string;
+    accepted: boolean;
     name: string;
     contract?: string
     id: string;
